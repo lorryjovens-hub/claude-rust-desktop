@@ -28,15 +28,15 @@ src-tauri/gen/
 
 # Build artifacts
 *.msi
-*.exe
 *.dmg
 *.app
 
 # OS
 Thumbs.db
 
-# APK and release files
+# Release files (binaries)
 release-apk/
+release-exe/
 *.apk
 
 # Cargo lock (for libraries)
