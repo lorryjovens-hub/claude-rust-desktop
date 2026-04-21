@@ -9,6 +9,7 @@ import {
   IconPlusCircle,
   IconArtifactsExact,
   IconProjects,
+  IconModels,
   IconDotsHorizontal,
   IconStarOutline,
   IconPencil,
@@ -166,6 +167,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
       case 'Chats': return <IconChatBubble size={size} className={className} />;
       case 'Projects': return <IconProjects size={size} className={className} />;
       case 'Artifacts': return <IconArtifactsExact size={size} className={className} />;
+      case 'Models': return <IconModels size={size} className={className} />;
       case 'Code': return <IconCode size={size} className={className} />;
       default: return <IconChatBubble size={size} className={className} />;
     }
@@ -195,6 +197,10 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
     }
     if (label === 'Artifacts') {
       navigate('/artifacts');
+      return;
+    }
+    if (label === 'Models') {
+      navigate('/models');
       return;
     }
     if (label === 'Code') {
@@ -496,7 +502,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
               <button
                 key={item.label}
                 onClick={() => handleNavClick(item.label)}
-                className={`w-full flex items-center justify-start text-claude-text hover:bg-claude-hover rounded-lg transition-colors group overflow-hidden whitespace-nowrap ${(location.pathname === '/chats' && item.label === 'Chats') || (location.pathname === '/projects' && item.label === 'Projects') ? 'bg-claude-hover' : ''}`}
+                className={`w-full flex items-center justify-start text-claude-text hover:bg-claude-hover rounded-lg transition-colors group overflow-hidden whitespace-nowrap ${(location.pathname === '/chats' && item.label === 'Chats') || (location.pathname === '/projects' && item.label === 'Projects') || (location.pathname === '/models' && item.label === 'Models') ? 'bg-claude-hover' : ''}`}
                 style={{
                   fontWeight: 400,
                   paddingTop: '2px',

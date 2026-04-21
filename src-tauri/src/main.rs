@@ -4,8 +4,10 @@ mod bridge;
 mod commands;
 mod engine;
 mod tools;
+mod remote;
 
 use bridge::BridgeServer;
+use tauri::Manager;
 
 fn main() {
     let builder = tauri::Builder::default()
@@ -17,10 +19,17 @@ fn main() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_notification::init())
         .setup(|app| {
+            // Start bridge server
             tauri::async_runtime::spawn(async move {
                 let bridge = BridgeServer::new();
                 if let Err(e) = bridge.start(30080).await {
                     eprintln!("[Bridge] Failed to start: {}", e);
+                }
+            });
+            // Start remote WebSocket server for mobile communication
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = remote::start_remote_server(30081).await {
+                    eprintln!("[Remote] Failed to start: {}", e);
                 }
             });
             if let Some(window) = app.get_webview_window("main") {
@@ -43,6 +52,7 @@ fn main() {
             commands::get_app_path,
             commands::check_update,
             commands::install_update,
+            commands::get_remote_connection_info,
         ]);
 
     #[cfg(mobile)]

@@ -13,6 +13,7 @@ import UpgradePlan from './components/UpgradePlan';
 import DocumentPanel from './components/DocumentPanel';
 import ArtifactsPanel from './components/ArtifactsPanel';
 import ArtifactsPage from './components/ArtifactsPage';
+import ProviderSettings from './components/ProviderSettings';
 import DraggableDivider from './components/DraggableDivider';
 import { DocumentInfo } from './components/DocumentCard';
 import AdminLayout from './components/admin/AdminLayout';
@@ -26,6 +27,7 @@ import AdminAnnouncements from './components/admin/AdminAnnouncements';
 import ChatsPage from './components/ChatsPage';
 import CustomizePage from './components/CustomizePage';
 import ProjectsPage from './components/ProjectsPage';
+import RemoteConnect from './components/RemoteConnect';
 import { tauriAPI } from './utils/tauriAPI';
 
 const isTauri = typeof window !== 'undefined' && !!(window as any).__TAURI_INTERNALS__;
@@ -508,6 +510,12 @@ const Layout = () => {
                   handleNewChat();
                   window.location.hash = '#/';
                 }} />
+              ) : location.pathname === '/models' ? (
+                <div className="flex-1 overflow-y-auto min-w-0">
+                  <div className="max-w-6xl pt-16 pl-12 pb-32 pr-12">
+                    <ProviderSettings />
+                  </div>
+                </div>
               ) : (
                 <MainContent onNewChat={refreshSidebar} resetKey={newChatKey} tunerConfig={tunerConfig} onOpenDocument={handleOpenDocument} onArtifactsUpdate={handleArtifactsUpdate} onOpenArtifacts={handleOpenArtifacts} onTitleChange={handleTitleChange} onChatModeChange={handleChatModeChange} />
               )}
@@ -554,6 +562,8 @@ const Layout = () => {
           </div>
         </div>
       )}
+      {/* Remote Connect floating button */}
+      <RemoteConnect />
     </>
   );
 };
@@ -577,6 +587,7 @@ const App = () => {
         <Route path="/customize" element={<Layout />} />
         <Route path="/projects" element={<Layout />} />
         <Route path="/artifacts" element={<Layout />} />
+        <Route path="/models" element={<Layout />} />
         <Route path="/chat/:id" element={<Layout />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -3,7 +3,7 @@ use axum::{
     extract::{Query, State},
     http::StatusCode,
     response::sse::{Event, KeepAlive, Sse},
-    routing::{delete, get, post},
+    routing::{delete, get, post, patch},
     Json, Router,
 };
 use futures::stream::{Stream, StreamExt};
@@ -22,7 +22,6 @@ pub struct BridgeServer {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[derive(Deserialize)]
 pub struct ChatRequest {
     pub conversation_id: String,
     pub messages: Option<Vec<serde_json::Value>>,
@@ -110,6 +109,32 @@ impl BridgeServer {
             .route("/api/projects", get(projects_list))
             .route("/api/projects", post(projects_create))
             .route("/api/upload", post(upload_handler))
+            // Skills API
+            .route("/api/skills", get(skills_list))
+            .route("/api/skills", post(skills_create))
+            .route("/api/skills/{id}", get(skills_get))
+            .route("/api/skills/{id}", patch(skills_update))
+            .route("/api/skills/{id}", delete(skills_delete))
+            .route("/api/skills/{id}/toggle", patch(skills_toggle))
+            .route("/api/skills/{id}/file", get(skills_file))
+            // Artifacts API
+            .route("/api/artifacts", get(artifacts_list))
+            .route("/api/artifacts/content", get(artifacts_content))
+            // GitHub Connector API
+            .route("/api/github/status", get(github_status))
+            .route("/api/github/auth-url", get(github_auth_url))
+            .route("/api/github/disconnect", post(github_disconnect))
+            .route("/api/github/repos", get(github_repos))
+            .route("/api/github/repos/{owner}/{repo}/tree", get(github_tree))
+            .route("/api/github/repos/{owner}/{repo}/contents", get(github_contents))
+            // Providers API
+            .route("/api/providers", get(providers_list))
+            .route("/api/providers", post(providers_create))
+            .route("/api/providers/{id}", get(providers_get))
+            .route("/api/providers/{id}", patch(providers_update))
+            .route("/api/providers/{id}", delete(providers_delete))
+            .route("/api/providers/{id}/test-websearch", post(providers_test_websearch))
+            .route("/api/providers/models", get(providers_models))
             .layer(cors)
             .with_state(engine_pool);
 
@@ -191,7 +216,8 @@ async fn chat_stream_handler(
 
         let req = ChatRequest {
             conversation_id: query.conversation_id.clone(),
-            messages,
+            messages: Some(messages),
+            message: None,
             model: query.model.clone(),
             user_mode: query.user_mode.clone(),
             env_token: query.env_token.clone(),
@@ -344,6 +370,282 @@ async fn projects_create() -> Json<serde_json::Value> {
 
 async fn upload_handler() -> Json<serde_json::Value> {
     Json(serde_json::json!({ "ok": true }))
+}
+
+// ═════════════════════════════════════════════════════════════════
+// Skills API handlers
+// ═════════════════════════════════════════════════════════════════
+
+use std::collections::HashMap;
+
+static SKILLS_STORE: once_cell::sync::Lazy<tokio::sync::Mutex<HashMap<String, serde_json::Value>>> =
+    once_cell::sync::Lazy::new(|| tokio::sync::Mutex::new(HashMap::new()));
+
+async fn skills_list() -> Json<serde_json::Value> {
+    let store = SKILLS_STORE.lock().await;
+    let skills: Vec<&serde_json::Value> = store.values().collect();
+    Json(serde_json::json!({
+        "examples": [],
+        "my_skills": skills
+    }))
+}
+
+async fn skills_create(Json(req): Json<serde_json::Value>) -> Json<serde_json::Value> {
+    let id = uuid::Uuid::new_v4().to_string();
+    let mut skill = req.clone();
+    if let Some(obj) = skill.as_object_mut() {
+        obj.insert("id".to_string(), serde_json::json!(id));
+        obj.insert("enabled".to_string(), serde_json::json!(true));
+        obj.insert("created_at".to_string(), serde_json::json!(chrono::Utc::now().to_rfc3339()));
+    }
+    let mut store = SKILLS_STORE.lock().await;
+    store.insert(id.clone(), skill.clone());
+    Json(skill)
+}
+
+async fn skills_get(axum::extract::Path(id): axum::extract::Path<String>) -> Result<Json<serde_json::Value>, StatusCode> {
+    let store = SKILLS_STORE.lock().await;
+    match store.get(&id) {
+        Some(skill) => Ok(Json(skill.clone())),
+        None => Err(StatusCode::NOT_FOUND),
+    }
+}
+
+async fn skills_update(
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    let mut store = SKILLS_STORE.lock().await;
+    match store.get_mut(&id) {
+        Some(skill) => {
+            if let Some(obj) = skill.as_object_mut() {
+                if let Some(name) = req.get("name") {
+                    obj.insert("name".to_string(), name.clone());
+                }
+                if let Some(description) = req.get("description") {
+                    obj.insert("description".to_string(), description.clone());
+                }
+                if let Some(content) = req.get("content") {
+                    obj.insert("content".to_string(), content.clone());
+                }
+            }
+            Ok(Json(skill.clone()))
+        }
+        None => Err(StatusCode::NOT_FOUND),
+    }
+}
+
+async fn skills_delete(axum::extract::Path(id): axum::extract::Path<String>) -> Json<serde_json::Value> {
+    let mut store = SKILLS_STORE.lock().await;
+    store.remove(&id);
+    Json(serde_json::json!({ "ok": true }))
+}
+
+async fn skills_toggle(
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    let mut store = SKILLS_STORE.lock().await;
+    match store.get_mut(&id) {
+        Some(skill) => {
+            if let Some(obj) = skill.as_object_mut() {
+                if let Some(enabled) = req.get("enabled") {
+                    obj.insert("enabled".to_string(), enabled.clone());
+                }
+            }
+            Ok(Json(skill.clone()))
+        }
+        None => Err(StatusCode::NOT_FOUND),
+    }
+}
+
+async fn skills_file(
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Query(params): Query<HashMap<String, String>>,
+) -> Json<serde_json::Value> {
+    let _ = id;
+    let path = params.get("path").cloned().unwrap_or_default();
+    Json(serde_json::json!({
+        "content": format!("// Content of {}", path)
+    }))
+}
+
+// ═════════════════════════════════════════════════════════════════
+// Artifacts API handlers
+// ═════════════════════════════════════════════════════════════════
+
+async fn artifacts_list() -> Json<serde_json::Value> {
+    Json(serde_json::json!({ "artifacts": [] }))
+}
+
+async fn artifacts_content(Query(params): Query<HashMap<String, String>>) -> Json<serde_json::Value> {
+    let path = params.get("path").cloned().unwrap_or_default();
+    Json(serde_json::json!({
+        "content": format!("<!-- Artifact content from {} -->", path)
+    }))
+}
+
+// ═════════════════════════════════════════════════════════════════
+// GitHub Connector API handlers
+// ═════════════════════════════════════════════════════════════════
+
+async fn github_status() -> Json<serde_json::Value> {
+    Json(serde_json::json!({
+        "connected": false,
+        "user": null
+    }))
+}
+
+async fn github_auth_url() -> Json<serde_json::Value> {
+    // Return a placeholder URL - user needs to set up GitHub OAuth app
+    Json(serde_json::json!({
+        "url": "https://github.com/login/oauth/authorize?client_id=YOUR_CLIENT_ID&scope=repo"
+    }))
+}
+
+async fn github_disconnect() -> Json<serde_json::Value> {
+    Json(serde_json::json!({ "ok": true }))
+}
+
+async fn github_repos() -> Json<serde_json::Value> {
+    Json(serde_json::json!({ "repos": [] }))
+}
+
+async fn github_tree(
+    axum::extract::Path((owner, repo)): axum::extract::Path<(String, String)>,
+    Query(params): Query<HashMap<String, String>>,
+) -> Json<serde_json::Value> {
+    let _ = (owner, repo, params);
+    Json(serde_json::json!({ "tree": [] }))
+}
+
+async fn github_contents(
+    axum::extract::Path((owner, repo)): axum::extract::Path<(String, String)>,
+    Query(params): Query<HashMap<String, String>>,
+) -> Json<serde_json::Value> {
+    let _ = (owner, repo, params);
+    Json(serde_json::json!({ "content": "" }))
+}
+
+// ═════════════════════════════════════════════════════════════════
+// Providers API handlers
+// ═════════════════════════════════════════════════════════════════
+
+static PROVIDERS_STORE: once_cell::sync::Lazy<tokio::sync::Mutex<HashMap<String, serde_json::Value>>> =
+    once_cell::sync::Lazy::new(|| tokio::sync::Mutex::new(HashMap::new()));
+
+async fn providers_list() -> Json<serde_json::Value> {
+    let store = PROVIDERS_STORE.lock().await;
+    let providers: Vec<serde_json::Value> = store.values().cloned().collect();
+    Json(serde_json::json!(providers))
+}
+
+async fn providers_create(Json(req): Json<serde_json::Value>) -> Json<serde_json::Value> {
+    let id = uuid::Uuid::new_v4().to_string();
+    let mut provider = req.clone();
+    if let Some(obj) = provider.as_object_mut() {
+        obj.insert("id".to_string(), serde_json::json!(id));
+        if obj.get("enabled").is_none() {
+            obj.insert("enabled".to_string(), serde_json::json!(true));
+        }
+        if obj.get("models").is_none() {
+            obj.insert("models".to_string(), serde_json::json!([]));
+        }
+    }
+    let mut store = PROVIDERS_STORE.lock().await;
+    store.insert(id.clone(), provider.clone());
+    Json(provider)
+}
+
+async fn providers_get(axum::extract::Path(id): axum::extract::Path<String>) -> Result<Json<serde_json::Value>, StatusCode> {
+    let store = PROVIDERS_STORE.lock().await;
+    match store.get(&id) {
+        Some(p) => Ok(Json(p.clone())),
+        None => Err(StatusCode::NOT_FOUND),
+    }
+}
+
+async fn providers_update(
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    let mut store = PROVIDERS_STORE.lock().await;
+    match store.get_mut(&id) {
+        Some(provider) => {
+            if let Some(obj) = provider.as_object_mut() {
+                if let Some(name) = req.get("name") {
+                    obj.insert("name".to_string(), name.clone());
+                }
+                if let Some(base_url) = req.get("baseUrl") {
+                    obj.insert("baseUrl".to_string(), base_url.clone());
+                }
+                if let Some(api_key) = req.get("apiKey") {
+                    obj.insert("apiKey".to_string(), api_key.clone());
+                }
+                if let Some(format) = req.get("format") {
+                    obj.insert("format".to_string(), format.clone());
+                }
+                if let Some(models) = req.get("models") {
+                    obj.insert("models".to_string(), models.clone());
+                }
+                if let Some(enabled) = req.get("enabled") {
+                    obj.insert("enabled".to_string(), enabled.clone());
+                }
+                if let Some(supports_web_search) = req.get("supportsWebSearch") {
+                    obj.insert("supportsWebSearch".to_string(), supports_web_search.clone());
+                }
+                if let Some(web_search_strategy) = req.get("webSearchStrategy") {
+                    obj.insert("webSearchStrategy".to_string(), web_search_strategy.clone());
+                }
+            }
+            Ok(Json(provider.clone()))
+        }
+        None => Err(StatusCode::NOT_FOUND),
+    }
+}
+
+async fn providers_delete(axum::extract::Path(id): axum::extract::Path<String>) -> Json<serde_json::Value> {
+    let mut store = PROVIDERS_STORE.lock().await;
+    store.remove(&id);
+    Json(serde_json::json!({ "ok": true }))
+}
+
+async fn providers_test_websearch(axum::extract::Path(id): axum::extract::Path<String>) -> Json<serde_json::Value> {
+    let _ = id;
+    // Return a mock result - in production this would test the provider's web search capability
+    Json(serde_json::json!({
+        "ok": false,
+        "reason": "Web search test not implemented in bridge"
+    }))
+}
+
+async fn providers_models() -> Json<serde_json::Value> {
+    let store = PROVIDERS_STORE.lock().await;
+    let mut models = Vec::new();
+    for provider in store.values() {
+        if let Some(enabled) = provider.get("enabled") {
+            if !enabled.as_bool().unwrap_or(true) {
+                continue;
+            }
+        }
+        let provider_id = provider.get("id").and_then(|v| v.as_str()).unwrap_or("");
+        let provider_name = provider.get("name").and_then(|v| v.as_str()).unwrap_or("");
+        if let Some(provider_models) = provider.get("models").and_then(|v| v.as_array()) {
+            for m in provider_models {
+                if let Some(model_obj) = m.as_object() {
+                    if model_obj.get("enabled").and_then(|v| v.as_bool()).unwrap_or(true) {
+                        models.push(serde_json::json!({
+                            "id": model_obj.get("id").and_then(|v| v.as_str()).unwrap_or(""),
+                            "name": model_obj.get("name").and_then(|v| v.as_str()).unwrap_or(""),
+                            "providerId": provider_id,
+                            "providerName": provider_name,
+                        }));
+                    }
+                }
+            }
+        }
+    }
+    Json(serde_json::json!(models))
 }
 
 fn resolve_api_url(user_mode: &Option<String>, env_base_url: &str) -> String {

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Claude Rust 远程连接</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0d0d0d;
+      color: #e8e8e8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      padding: 16px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #333;
+      text-align: center;
+    }
+    .header h1 { font-size: 18px; font-weight: 600; }
+    .header p { font-size: 12px; color: #888; margin-top: 4px; }
+    .content { flex: 1; padding: 16px; overflow-y: auto; }
+    .section { margin-bottom: 20px; }
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #C6613F;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 16px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      color: #e8e8e8;
+      font-size: 14px;
+      outline: none;
+    }
+    input[type="text"]:focus { border-color: #C6613F; }
+    button {
+      padding: 12px 20px;
+      background: #C6613F;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:active { opacity: 0.8; }
+    button.secondary {
+      background: #2a2a2a;
+      border: 1px solid #333;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: #1a1a1a;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #666;
+    }
+    .status-dot.connected { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
+    .status-dot.connecting { background: #fbbf24; animation: pulse 1s infinite; }
+    .status-text { font-size: 14px; color: #888; }
+    .status-text.connected { color: #4ade80; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .message {
+      padding: 12px 16px;
+      border-radius: 16px;
+      max-width: 85%;
+      font-size: 14px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .message.user {
+      align-self: flex-end;
+      background: #C6613F;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .message.assistant {
+      align-self: flex-start;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #e8e8e8;
+      border-bottom-left-radius: 4px;
+    }
+    .message-input {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      background: #1a1a1a;
+      border-top: 1px solid #333;
+    }
+    .message-input input {
+      flex: 1;
+      padding: 12px 16px;
+      background: #0d0d0d;
+      border: 1px solid #333;
+      border-radius: 24px;
+      color: #e8e8e8;
+      font-size: 14px;
+      outline: none;
+    }
+    .message-input button {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .logs {
+      background: #0d0d0d;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #888;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    .log-entry { margin-bottom: 4px; }
+    .voice-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #C6613F;
+      color: white;
+      border: none;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .voice-btn:active { transform: scale(0.95); }
+    .voice-btn.listening {
+      background: #dc2626;
+      animation: pulse 1s infinite;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Claude Rust 远程</h1>
+    <p>手机端远程控制桌面客户端</p>
+  </div>
+
+  <div class="content">
+    <!-- Connection Section -->
+    <div class="section" id="connectSection">
+      <div class="section-title">连接设置</div>
+      <div class="input-group">
+        <input type="text" id="wsUrl" placeholder="ws://192.168.1.x:30081/ws" value="">
+      </div>
+      <div class="input-group">
+        <input type="text" id="deviceName" placeholder="设备名称" value="手机">
+        <button onclick="connect()" id="connectBtn">连接</button>
+      </div>
+      <div class="status">
+        <div class="status-dot" id="statusDot"></div>
+        <span class="status-text" id="statusText">未连接</span>
+      </div>
+    </div>
+
+    <!-- Chat Section -->
+    <div class="section hidden" id="chatSection">
+      <div class="section-title">对话</div>
+      <div class="chat-container" id="chatContainer"></div>
+    </div>
+
+    <!-- Voice Section -->
+    <div class="section hidden" id="voiceSection">
+      <div class="section-title">语音输入</div>
+      <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+      <p style="text-align: center; font-size: 12px; color: #888;" id="voiceStatus">点击开始语音输入</p>
+    </div>
+
+    <!-- Logs -->
+    <div class="section">
+      <div class="section-title">日志</div>
+      <div class="logs" id="logs"></div>
+    </div>
+  </div>
+
+  <!-- Message Input -->
+  <div class="message-input hidden" id="messageInput">
+    <input type="text" id="messageText" placeholder="输入消息..." onkeypress="if(event.key==='Enter')sendMessage()">
+    <button onclick="sendMessage()">➤</button>
+  </div>
+
+  <script>
+    let ws = null;
+    let isConnected = false;
+    let isAuthenticated = false;
+    let deviceId = 'mobile_' + Math.random().toString(36).substr(2, 9);
+    let recognition = null;
+    let isListening = false;
+
+    function log(msg) {
+      const logs = document.getElementById('logs');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logs.appendChild(entry);
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    function updateStatus(status, text) {
+      const dot = document.getElementById('statusDot');
+      const txt = document.getElementById('statusText');
+      dot.className = 'status-dot ' + status;
+      txt.className = 'status-text ' + status;
+      txt.textContent = text;
+    }
+
+    function connect() {
+      const url = document.getElementById('wsUrl').value.trim();
+      const name = document.getElementById('deviceName').value.trim() || '手机';
+
+      if (!url) {
+        log('请输入 WebSocket 地址');
+        return;
+      }
+
+      log('正在连接...');
+      updateStatus('connecting', '连接中...');
+
+      ws = new WebSocket(url);
+
+      ws.onopen = () => {
+        log('WebSocket 已连接');
+        updateStatus('connected', '已连接');
+        isConnected = true;
+
+        // Send auth request
+        ws.send(JSON.stringify({
+          type: 'auth_request',
+          device_name: name,
+          device_id: deviceId
+        }));
+        log('已发送认证请求');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleMessage(data);
+        } catch (e) {
+          log('收到消息: ' + event.data.slice(0, 100));
+        }
+      };
+
+      ws.onclose = () => {
+        log('WebSocket 已断开');
+        updateStatus('', '未连接');
+        isConnected = false;
+        isAuthenticated = false;
+        hideChat();
+      };
+
+      ws.onerror = (err) => {
+        log('WebSocket 错误');
+        updateStatus('', '连接失败');
+        console.error(err);
+      };
+    }
+
+    function handleMessage(data) {
+      switch (data.type) {
+        case 'pong':
+          log('服务器响应 pong');
+          break;
+        case 'auth_response':
+          if (data.approved) {
+            isAuthenticated = true;
+            log('认证通过！');
+            showChat();
+          } else {
+            log('等待桌面端授权...');
+          }
+          break;
+        case 'chat_response':
+          addMessage('assistant', data.content);
+          break;
+        case 'error':
+          log('错误: ' + data.message);
+          break;
+        default:
+          log('收到: ' + JSON.stringify(data).slice(0, 100));
+      }
+    }
+
+    function showChat() {
+      document.getElementById('chatSection').classList.remove('hidden');
+      document.getElementById('voiceSection').classList.remove('hidden');
+      document.getElementById('messageInput').classList.remove('hidden');
+      document.getElementById('connectSection').classList.add('hidden');
+    }
+
+    function hideChat() {
+      document.getElementById('chatSection').classList.add('hidden');
+      document.getElementById('voiceSection').classList.add('hidden');
+      document.getElementById('messageInput').classList.add('hidden');
+      document.getElementById('connectSection').classList.remove('hidden');
+    }
+
+    function addMessage(role, content) {
+      const container = document.getElementById('chatContainer');
+      const msg = document.createElement('div');
+      msg.className = 'message ' + role;
+      msg.textContent = content;
+      container.appendChild(msg);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('messageText');
+      const text = input.value.trim();
+      if (!text || !isAuthenticated) return;
+
+      addMessage('user', text);
+      input.value = '';
+
+      ws.send(JSON.stringify({
+        type: 'chat_request',
+        conversation_id: 'remote_' + Date.now(),
+        message: text,
+        model: 'claude-sonnet-4-20250514'
+      }));
+      log('已发送消息');
+    }
+
+    // Voice input using Web Speech API
+    function toggleVoice() {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        log('浏览器不支持语音识别');
+        return;
+      }
+
+      if (isListening) {
+        stopVoice();
+      } else {
+        startVoice();
+      }
+    }
+
+    function startVoice() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'zh-CN';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        isListening = true;
+        document.getElementById('voiceBtn').classList.add('listening');
+        document.getElementById('voiceStatus').textContent = '正在聆听...';
+        log('语音识别开始');
+      };
+
+      recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        log('识别结果: ' + text);
+        document.getElementById('messageText').value = text;
+        sendMessage();
+      };
+
+      recognition.onerror = (event) => {
+        log('语音识别错误: ' + event.error);
+        stopVoice();
+      };
+
+      recognition.onend = () => {
+        stopVoice();
+      };
+
+      recognition.start();
+    }
+
+    function stopVoice() {
+      isListening = false;
+      if (recognition) {
+        recognition.stop();
+        recognition = null;
+      }
+      document.getElementById('voiceBtn').classList.remove('listening');
+      document.getElementById('voiceStatus').textContent = '点击开始语音输入';
+    }
+
+    // Auto-fill local IP from URL params
+    const params = new URLSearchParams(window.location.search);
+    const autoIp = params.get('ip');
+    if (autoIp) {
+      document.getElementById('wsUrl').value = `ws://${autoIp}:30081/ws`;
+    }
+
+    log('页面已加载，请输入 WebSocket 地址进行连接');
+  </script>
+</body>
+</html>

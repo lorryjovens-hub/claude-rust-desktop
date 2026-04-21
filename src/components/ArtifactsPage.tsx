@@ -16,26 +16,25 @@ interface InspirationItem {
   code_file?: string;
 }
 
-/** Renders artifact HTML in an iframe via Blob URL (avoids srcdoc CSP issues in Electron) */
+/** Renders artifact HTML in an iframe via srcdoc (works in Tauri with proper CSP) */
 const ArtifactIframe = React.forwardRef<HTMLIFrameElement, { html: string; title: string }>(
   ({ html, title }, ref) => {
-    const [blobUrl, setBlobUrl] = useState<string | null>(null);
+    // Sanitize html for srcdoc usage - escape any problematic chars
+    const sanitizedHtml = html
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
 
-    useEffect(() => {
-      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      setBlobUrl(url);
-      return () => URL.revokeObjectURL(url);
-    }, [html]);
-
-    if (!blobUrl) return null;
     return (
       <iframe
         ref={ref}
-        src={blobUrl}
+        srcDoc={html}
         className="w-full border-0 bg-white"
         style={{ minHeight: '400px', height: '500px' }}
         title={title}
+        sandbox="allow-scripts allow-same-origin allow-popups"
       />
     );
   }

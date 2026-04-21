@@ -272,3 +272,33 @@ pub async fn check_update(_app: AppHandle) -> Result<serde_json::Value, String> 
 pub async fn install_update(app: AppHandle) -> Result<(), String> {
     app.restart();
 }
+
+// ═════════════════════════════════════════════════════════════════
+// Remote / Mobile Communication Commands
+// ═════════════════════════════════════════════════════════════════
+
+#[derive(Serialize)]
+pub struct RemoteConnectionInfo {
+    pub local_ip: String,
+    pub ws_port: u16,
+    pub ws_url: String,
+    pub qr_code_svg: String,
+}
+
+#[tauri::command]
+pub async fn get_remote_connection_info() -> Result<RemoteConnectionInfo, String> {
+    let local_ip = crate::remote::get_local_ip()
+        .unwrap_or_else(|| "127.0.0.1".to_string());
+    let ws_port = 30081u16;
+    let ws_url = format!("ws://{}:{}/ws", local_ip, ws_port);
+
+    // Generate QR code as SVG data URL
+    let qr_code_svg = crate::remote::generate_qr_code_data_url(&ws_url);
+
+    Ok(RemoteConnectionInfo {
+        local_ip,
+        ws_port,
+        ws_url,
+        qr_code_svg,
+    })
+}

@@ -8,6 +8,7 @@ import { addStreaming, removeStreaming, isStreaming } from '../streamingState';
 import MarkdownRenderer from './MarkdownRenderer';
 import ResearchPanel from './ResearchPanel';
 import ModelSelector, { SelectableModel } from './ModelSelector';
+import VoiceChat from './VoiceChat';
 import FileUploadPreview, { PendingFile } from './FileUploadPreview';
 import AddFromGithubModal, { GithubAddPayload } from './AddFromGithubModal';
 import MessageAttachments from './MessageAttachments';
@@ -1344,6 +1345,9 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
   // Plan mode state
   const [planMode, setPlanMode] = useState(false);
 
+  // Voice chat: track last assistant message for TTS
+  const [lastAssistantMessage, setLastAssistantMessage] = useState('');
+
   // 草稿持久化 refs（跟踪最新值，供 effect cleanup 读取）
   const inputTextRef = useRef(inputText);
   inputTextRef.current = inputText;
@@ -1905,6 +1909,14 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
       el.scrollTo({ top: el.scrollHeight, behavior });
     }
   };
+
+  // Track last assistant message for voice chat TTS
+  useEffect(() => {
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg && lastMsg.role === 'assistant' && lastMsg.content && !loading) {
+      setLastAssistantMessage(extractTextContent(lastMsg.content));
+    }
+  }, [messages, loading]);
 
   const scheduleScrollToBottomAfterRender = useCallback((attempts = 6) => {
     const run = (remaining: number) => {
@@ -3721,6 +3733,11 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                   )}
                 </div>
                 <div className="flex items-center gap-3">
+                  <VoiceChat
+                    onSendMessage={(text) => handleSend(text)}
+                    isStreaming={loading}
+                    lastAssistantMessage={lastAssistantMessage}
+                  />
                   <ModelSelector
                     currentModelString={currentModelString}
                     models={selectorModels}
@@ -4104,6 +4121,11 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                     })()}
                   </div>
                   <div className="flex items-center gap-3">
+                    <VoiceChat
+                      onSendMessage={(text) => handleSend(text)}
+                      isStreaming={loading}
+                      lastAssistantMessage={lastAssistantMessage}
+                    />
                     <ModelSelector
                       currentModelString={currentModelString}
                       models={selectorModels}

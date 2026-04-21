@@ -34,3 +34,10 @@ src-tauri/gen/
 
 # OS
 Thumbs.db
+
+# APK and release files
+release-apk/
+*.apk
+
+# Cargo lock (for libraries)
+# src-tauri/Cargo.lock

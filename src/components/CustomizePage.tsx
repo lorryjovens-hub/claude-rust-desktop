@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import MarkdownRenderer, { CodeBlock } from './MarkdownRenderer';
 import { getSkills, getSkillDetail, getSkillFile, createSkill, updateSkill, deleteSkill, toggleSkill, getGithubStatus, getGithubAuthUrl, disconnectGithub } from '../api';
+import { defaultSkills } from '../data/defaultSkills';
 import searchIconImg from '../assets/icons/search-icon.png';
 import skillsImg from '../assets/icons/skills.png';
 import connectorsImg from '../assets/icons/connectors.png';
@@ -231,11 +232,23 @@ const CustomizePage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void
   const handleGithubConnect = async () => {
     try {
       const { url } = await getGithubAuthUrl();
-      // Open in system browser (Electron) or new window (web)
+      if (!url) {
+        console.error('GitHub auth URL is empty');
+        return;
+      }
+      // Open in system browser (Tauri) or new window (web)
       import('../utils/tauriAPI').then(m => {
-        m.tauriAPI.openExternal(url);
+        if (m.tauriAPI.isTauri) {
+          m.tauriAPI.openExternal(url);
+        } else {
+          window.open(url, '_blank');
+        }
       }).catch(() => window.open(url, '_blank'));
-    } catch (e) { console.error('GitHub auth error:', e); }
+    } catch (e) {
+      console.error('GitHub auth error:', e);
+      // Fallback: show a message to the user
+      alert('GitHub connection requires backend support. Please ensure the API server is running.');
+    }
   };
 
   const handleGithubDisconnect = async () => {
@@ -278,6 +291,11 @@ const CustomizePage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void
       const exList: Skill[] = data.examples || [];
       const myList: Skill[] = data.my_skills || [];
 
+      // If API returns empty, use default skills as fallback
+      if (exList.length === 0 && myList.length === 0) {
+        exList.push(...defaultSkills.examples);
+      }
+
       // Sort examples: skill-creator first, then alphabetical
       exList.sort((a, b) => {
         if (a.source_dir === 'skill-creator') return -1;
@@ -299,7 +317,20 @@ const CustomizePage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void
           // setExpandedSkills(prev => new Set(prev).add(sc.id));
         }
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error('Failed to fetch skills, using defaults:', e);
+      // Use default skills on error
+      const exList = [...defaultSkills.examples];
+      setExamples(exList);
+      setMySkills([]);
+      if (!selectedSkillId && !creating) {
+        const sc = exList.find(s => s.source_dir === 'skill-creator');
+        if (sc) {
+          sc.enabled = true;
+          selectSkill(sc.id);
+        }
+      }
+    }
     setLoading(false);
   }, [creating, selectedSkillId]);
 
