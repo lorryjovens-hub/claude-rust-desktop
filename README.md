@@ -1,3 +1,11 @@
+<img width="1725" height="1050" alt="ScreenShot_2026-04-23_171429_536" src="https://github.com/user-attachments/assets/fb35306a-7bb7-42b8-8adc-6a9cc1955c0a" />
+<img width="2397" height="1767" alt="ScreenShot_2026-04-24_012507_346" src="https://github.com/user-attachments/assets/ef166c5c-926b-4105-85cc-83a1f4b6e5b0" />
+<img width="1071" height="543" alt="ScreenShot_2026-04-23_214124_728" src="https://github.com/user-attachments/assets/59478130-f1e5-40af-aa89-52ff1818a692" />
+<img width="2379" height="1787" alt="ScreenShot_2026-04-24_012552_679" src="https://github.com/user-attachments/assets/1b194971-f540-4b23-822e-118984b84a28" />
+<img width="2376" height="1790" alt="ScreenShot_2026-04-24_012534_235" src="https://github.com/user-attachments/assets/79d749a7-ed9e-438f-8987-1b46a0cdb8c1" />
+<img width="2409" height="1797" alt="ScreenShot_2026-04-24_012518_314" src="https://github.com/user-attachments/assets/9b6951ab-3761-4d66-9745-dc5dbacc2894" />
+
+
 # Claude Rust Desktop
 
 <div align="center">
