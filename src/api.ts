@@ -985,6 +985,28 @@ export async function toggleSkill(id: string, enabled: boolean) {
   return res.json();
 }
 
+// Marketplace
+export async function getMarketplaceSkills(params: { q?: string; category?: string } = {}) {
+  const query = new URLSearchParams();
+  if (params.q) query.set('q', params.q);
+  if (params.category) query.set('category', params.category);
+  const res = await request(`/marketplace/skills?${query.toString()}`);
+  return res.json();
+}
+
+export async function getMarketplaceSkillDetail(id: string) {
+  const res = await request(`/marketplace/skills/${id}`);
+  return res.json();
+}
+
+export async function importMarketplaceSkill(id: string, name: string) {
+  const res = await request('/marketplace/import', {
+    method: 'POST',
+    body: JSON.stringify({ id, name }),
+  });
+  return res.json();
+}
+
 // GitHub Connector
 export async function getGithubStatus() {
   const res = await fetch(`${API_BASE}/github/status`);
@@ -1048,6 +1070,70 @@ export async function materializeGithub(
   return res.json();
 }
 
+// ═══ MCP Servers ═══
+
+export interface McpServer {
+  id: string;
+  name: string;
+  command: string;
+  args: string[];
+  env: Record<string, string>;
+  enabled: boolean;
+}
+
+export interface McpServerStatus {
+  id: string;
+  running: boolean;
+  pid?: number;
+  error?: string;
+}
+
+export async function getMcpServers(): Promise<McpServer[]> {
+  const res = await request('/mcp/servers');
+  return res.json();
+}
+
+export async function getMcpServer(id: string): Promise<McpServer> {
+  const res = await request(`/mcp/servers/${id}`);
+  return res.json();
+}
+
+export async function createMcpServer(data: Partial<McpServer>): Promise<McpServer> {
+  const res = await request('/mcp/servers', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+export async function updateMcpServer(id: string, data: Partial<McpServer>): Promise<McpServer> {
+  const res = await request(`/mcp/servers/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+export async function deleteMcpServer(id: string): Promise<{ ok: boolean }> {
+  const res = await request(`/mcp/servers/${id}`, { method: 'DELETE' });
+  return res.json();
+}
+
+export async function startMcpServer(id: string): Promise<McpServerStatus> {
+  const res = await request(`/mcp/servers/${id}/start`, { method: 'POST' });
+  return res.json();
+}
+
+export async function stopMcpServer(id: string): Promise<{ ok: boolean }> {
+  const res = await request(`/mcp/servers/${id}/stop`, { method: 'POST' });
+  return res.json();
+}
+
+export async function getMcpServerStatus(): Promise<McpServerStatus[]> {
+  const res = await request('/mcp/servers/status');
+  return res.json();
+}
+
 // 流式对话（核心）
 export async function sendMessage(
   conversationId: string,
@@ -1063,32 +1149,45 @@ export async function sendMessage(
   onDocumentDraft?: (draft: { draft_id: string; title?: string; format?: string; preview?: string; preview_available?: boolean; done?: boolean; document?: any }) => void,
   onCodeExecution?: (data: { type: string; executionId: string; code?: string; language?: string; files?: Array<{ id: string; name: string }>; stdout?: string; stderr?: string; images?: string[]; error?: string | null }) => void,
   onToolUse?: (event: { type: 'start' | 'input' | 'done'; tool_use_id: string; tool_name?: string; tool_input?: any; content?: string; is_error?: boolean; textBefore?: string }) => void,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  providerConfig?: { apiKey: string; baseUrl: string; model: string; format?: string }
 ) {
   const token = getToken();
   let fullText = '';
   try {
+    // Build request body
+    const requestBody: any = {
+      conversation_id: conversationId,
+      message,
+      attachments: attachments || undefined,
+      user_mode: getUserModeForConversation(conversationId),
+      user_profile: (() => {
+        try {
+          const p = JSON.parse(localStorage.getItem('user_profile') || localStorage.getItem('user') || '{}');
+          const wf = p.work_function;
+          const pp = p.personal_preferences;
+          return (wf || pp) ? { work_function: wf, personal_preferences: pp } : undefined;
+        } catch { return undefined; }
+      })(),
+    };
+
+    // If providerConfig is provided, use it directly; otherwise fall back to env creds
+    if (providerConfig) {
+      requestBody.env_token = providerConfig.apiKey;
+      requestBody.env_base_url = providerConfig.baseUrl;
+      requestBody.model = providerConfig.model;
+      requestBody.provider_format = providerConfig.format || 'openai';
+    } else {
+      Object.assign(requestBody, resolveEnvCreds(getUserModeForConversation(conversationId)));
+    }
+
     const res = await fetch(`${API_BASE}/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        conversation_id: conversationId,
-        message,
-        attachments: attachments || undefined,
-        ...resolveEnvCreds(getUserModeForConversation(conversationId)),
-        user_mode: getUserModeForConversation(conversationId),
-        user_profile: (() => {
-          try {
-            const p = JSON.parse(localStorage.getItem('user_profile') || localStorage.getItem('user') || '{}');
-            const wf = p.work_function;
-            const pp = p.personal_preferences;
-            return (wf || pp) ? { work_function: wf, personal_preferences: pp } : undefined;
-          } catch { return undefined; }
-        })(),
-      }),
+      body: JSON.stringify(requestBody),
       signal,
     });
 

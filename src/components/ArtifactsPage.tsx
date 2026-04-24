@@ -19,14 +19,8 @@ interface InspirationItem {
 /** Renders artifact HTML in an iframe via srcdoc (works in Tauri with proper CSP) */
 const ArtifactIframe = React.forwardRef<HTMLIFrameElement, { html: string; title: string }>(
   ({ html, title }, ref) => {
-    // Sanitize html for srcdoc usage - escape any problematic chars
-    const sanitizedHtml = html
-      .replace(/&/g, '&amp;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-
+    // Use the HTML directly - srcDoc handles the embedding safely
+    // No need to escape HTML entities as that would show source code instead of rendered content
     return (
       <iframe
         ref={ref}

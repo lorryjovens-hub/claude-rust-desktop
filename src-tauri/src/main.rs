@@ -3,14 +3,19 @@
 mod bridge;
 mod commands;
 mod engine;
+mod mcp;
+mod skills;
 mod tools;
 mod remote;
+
+#[cfg(target_os = "android")]
+mod android_jni;
 
 use bridge::BridgeServer;
 use tauri::Manager;
 
-fn main() {
-    let builder = tauri::Builder::default()
+fn setup_app<R: tauri::Runtime>(builder: tauri::Builder<R>) -> tauri::Builder<R> {
+    builder
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -32,6 +37,7 @@ fn main() {
                     eprintln!("[Remote] Failed to start: {}", e);
                 }
             });
+            #[cfg(not(target_os = "android"))]
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
             }
@@ -53,14 +59,48 @@ fn main() {
             commands::check_update,
             commands::install_update,
             commands::get_remote_connection_info,
-        ]);
+        ])
+}
 
-    #[cfg(mobile)]
-    {
-        builder = builder
-            .plugin(tauri_plugin_haptics::init())
-            .plugin(tauri_plugin_barcode_scanner::init());
-    }
+#[cfg(mobile)]
+fn setup_mobile<R: tauri::Runtime>(builder: tauri::Builder<R>) -> tauri::Builder<R> {
+    builder
+        .plugin(tauri_plugin_haptics::init())
+        .plugin(tauri_plugin_barcode_scanner::init())
+}
+
+#[cfg(not(mobile))]
+fn setup_mobile<R: tauri::Runtime>(builder: tauri::Builder<R>) -> tauri::Builder<R> {
+    builder
+}
+
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+fn main() {
+    let builder = tauri::Builder::default();
+    let builder = setup_app(builder);
+    let builder = setup_mobile(builder);
+
+    builder
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
+
+#[cfg(target_os = "android")]
+fn main() {
+    let builder = tauri::Builder::default();
+    let builder = setup_app(builder);
+    let builder = setup_mobile(builder);
+
+    builder
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
+
+#[cfg(target_os = "ios")]
+fn main() {
+    let builder = tauri::Builder::default();
+    let builder = setup_app(builder);
+    let builder = setup_mobile(builder);
 
     builder
         .run(tauri::generate_context!())

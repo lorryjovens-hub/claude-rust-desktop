@@ -19,6 +19,9 @@ import DocumentCreationProcess, { DocumentDraftInfo } from './DocumentCreationPr
 import CodeExecution from './CodeExecution';
 import ToolDiffView, { shouldUseDiffView, hasExpandableContent, getToolStats } from './ToolDiffView';
 import { executeCode, sendCodeResult, setStatusCallback } from '../pyodideRunner';
+import { useLongPress } from '../hooks/useLongPress';
+import { useTouchDevice } from '../hooks/useMobile';
+import MobileMessageMenu from './MobileMessageMenu';
 
 function formatChatError(err: string): string {
   const lower = (err || '').toLowerCase();
@@ -536,40 +539,62 @@ interface MessageListProps {
   onSetMessages: React.Dispatch<React.SetStateAction<any[]>>;
   messageContentRefs: React.MutableRefObject<Map<number, HTMLDivElement>>;
   onOpenResearch?: (msgId: string) => void;
+  isTouchDevice: boolean;
+  onMessageLongPress?: (msg: any, idx: number, x: number, y: number) => void;
 }
 
-const MessageList = React.memo<MessageListProps>(({
-  messages, loading, expandedMessages, editingMessageIdx, editingContent,
+// Individual message item component to support hooks per message
+interface MessageItemProps {
+  msg: any;
+  idx: number;
+  loading: boolean;
+  expandedMessages: Set<number>;
+  editingMessageIdx: number | null;
+  editingContent: string;
+  copiedMessageIdx: number | null;
+  compactStatus: { state: string; message?: string };
+  onSetEditingContent: (v: string) => void;
+  onEditCancel: () => void;
+  onEditSave: () => void;
+  onToggleExpand: (idx: number) => void;
+  onResend: (content: string, idx: number) => void;
+  onEdit: (content: string, idx: number) => void;
+  onCopy: (content: string, idx: number) => void;
+  onOpenDocument?: (doc: DocumentInfo) => void;
+  onSetMessages: React.Dispatch<React.SetStateAction<any[]>>;
+  messageContentRefs: React.MutableRefObject<Map<number, HTMLDivElement>>;
+  onOpenResearch?: (msgId: string) => void;
+  isTouchDevice: boolean;
+  onMessageLongPress?: (msg: any, idx: number, x: number, y: number) => void;
+  messages: any[];
+}
+
+const MessageItem = React.memo<MessageItemProps>(({
+  msg, idx, loading, expandedMessages, editingMessageIdx, editingContent,
   copiedMessageIdx, compactStatus, onSetEditingContent, onEditCancel, onEditSave,
   onToggleExpand, onResend, onEdit, onCopy, onOpenDocument, onSetMessages,
-  messageContentRefs, onOpenResearch,
+  messageContentRefs, onOpenResearch, isTouchDevice, onMessageLongPress, messages,
 }) => {
+  const longPressHandlers = isTouchDevice && onMessageLongPress ? useLongPress({
+    threshold: 600,
+    onLongPress: (e) => {
+      const touch = (e as React.TouchEvent).touches?.[0] || (e as React.TouchEvent).changedTouches?.[0];
+      if (touch) {
+        onMessageLongPress(msg, idx, touch.clientX, touch.clientY);
+      }
+    },
+  }) : null;
+
   return (
-    <>
-      <style>{`
-        @keyframes shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-        .animate-shimmer-text {
-          background: linear-gradient(90deg, var(--text-claude-secondary) 45%, var(--text-claude-main) 50%, var(--text-claude-secondary) 55%);
-          background-size: 200% 100%;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: shimmer 4s linear infinite;
-        }
-      `}</style>
-      {messages.map((msg: any, idx: number) => (
-        <div key={idx} className="mb-6 group">
-          {(msg.is_summary === 1 || msg.is_compact_boundary) && (
-            <div className="flex items-center gap-3 mb-5 mt-2">
-              <div className="flex-1 h-px bg-claude-border" />
-              <span className="text-[12px] text-claude-textSecondary whitespace-nowrap">Context compacted above this point</span>
-              <div className="flex-1 h-px bg-claude-border" />
-            </div>
-          )}
-          {(msg.is_summary === 1 || msg.is_compact_boundary) ? null : msg.role === 'user' ? (
+    <div className="mb-6 group" {...(longPressHandlers?.handlers || {})}>
+      {(msg.is_summary === 1 || msg.is_compact_boundary) && (
+        <div className="flex items-center gap-3 mb-5 mt-2">
+          <div className="flex-1 h-px bg-claude-border" />
+          <span className="text-[12px] text-claude-textSecondary whitespace-nowrap">Context compacted above this point</span>
+          <div className="flex-1 h-px bg-claude-border" />
+        </div>
+      )}
+      {(msg.is_summary === 1 || msg.is_compact_boundary) ? null : msg.role === 'user' ? (
             editingMessageIdx === idx ? (
               <div className="w-full bg-[#F0EEE7] dark:bg-claude-btnHover rounded-xl p-3 border border-black/5 dark:border-white/10">
                 <div className="bg-white dark:bg-black/20 rounded-lg border border-black/10 dark:border-white/10 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all p-3">
@@ -1031,7 +1056,58 @@ const MessageList = React.memo<MessageListProps>(({
               )}
             </div>
           )}
-        </div>
+    </div>
+  );
+});
+
+const MessageList = React.memo<MessageListProps>(({
+  messages, loading, expandedMessages, editingMessageIdx, editingContent,
+  copiedMessageIdx, compactStatus, onSetEditingContent, onEditCancel, onEditSave,
+  onToggleExpand, onResend, onEdit, onCopy, onOpenDocument, onSetMessages,
+  messageContentRefs, onOpenResearch, isTouchDevice, onMessageLongPress,
+}) => {
+  return (
+    <>
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        .animate-shimmer-text {
+          background: linear-gradient(90deg, var(--text-claude-secondary) 45%, var(--text-claude-main) 50%, var(--text-claude-secondary) 55%);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: shimmer 4s linear infinite;
+        }
+      `}</style>
+      {messages.map((msg: any, idx: number) => (
+        <MessageItem
+          key={idx}
+          msg={msg}
+          idx={idx}
+          loading={loading}
+          expandedMessages={expandedMessages}
+          editingMessageIdx={editingMessageIdx}
+          editingContent={editingContent}
+          copiedMessageIdx={copiedMessageIdx}
+          compactStatus={compactStatus}
+          onSetEditingContent={onSetEditingContent}
+          onEditCancel={onEditCancel}
+          onEditSave={onEditSave}
+          onToggleExpand={onToggleExpand}
+          onResend={onResend}
+          onEdit={onEdit}
+          onCopy={onCopy}
+          onOpenDocument={onOpenDocument}
+          onSetMessages={onSetMessages}
+          messageContentRefs={messageContentRefs}
+          onOpenResearch={onOpenResearch}
+          isTouchDevice={isTouchDevice}
+          onMessageLongPress={onMessageLongPress}
+          messages={messages}
+        />
       ))}
     </>
   );
@@ -1304,6 +1380,24 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
       }
     }
     return false;
+  }, [providersCache, currentModelString]);
+
+  // Get provider config for the current model (for self-hosted mode with providers)
+  const getCurrentProviderConfig = useCallback(() => {
+    if (!providersCache.length || !currentModelString) return undefined;
+    const bareModel = currentModelString.replace(/-thinking$/, '');
+    for (const p of providersCache) {
+      const model = (p.models || []).find(m => m.id === bareModel);
+      if (model && p.apiKey && p.baseUrl) {
+        return {
+          apiKey: p.apiKey,
+          baseUrl: p.baseUrl,
+          model: bareModel,
+          format: p.format || 'openai',
+        };
+      }
+    }
+    return undefined;
   }, [providersCache, currentModelString]);
   useEffect(() => {
     if (!webSearchToast) return;
@@ -2725,7 +2819,8 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
           return newMsgs;
         });
       },
-      controller.signal
+      controller.signal,
+      getCurrentProviderConfig()
     );
   };
 
@@ -2985,7 +3080,8 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
       },
       undefined,
       undefined,
-      controller.signal
+      controller.signal,
+      getCurrentProviderConfig()
     );
   };
 
@@ -3187,7 +3283,8 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
       },
       undefined,
       undefined,
-      controller.signal
+      controller.signal,
+      getCurrentProviderConfig()
     );
   };
 
@@ -3203,6 +3300,55 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
       return next;
     });
   };
+
+  // === Mobile touch interactions ===
+  const isTouchDeviceVal = useTouchDevice();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuPosition, setMobileMenuPosition] = useState({ x: 0, y: 0 });
+  const [mobileMenuMessage, setMobileMenuMessage] = useState<any>(null);
+  const [mobileMenuIdx, setMobileMenuIdx] = useState<number>(-1);
+
+  const handleMessageLongPress = useCallback((msg: any, idx: number, x: number, y: number) => {
+    setMobileMenuMessage(msg);
+    setMobileMenuIdx(idx);
+    setMobileMenuPosition({ x, y });
+    setMobileMenuOpen(true);
+  }, []);
+
+  const handleMobileMenuClose = useCallback(() => {
+    setMobileMenuOpen(false);
+    setMobileMenuMessage(null);
+    setMobileMenuIdx(-1);
+  }, []);
+
+  const handleMobileCopy = useCallback(() => {
+    if (mobileMenuMessage && mobileMenuIdx >= 0) {
+      handleCopyMessage(mobileMenuMessage.content, mobileMenuIdx);
+    }
+  }, [mobileMenuMessage, mobileMenuIdx]);
+
+  const handleMobileRegenerate = useCallback(() => {
+    if (mobileMenuMessage && mobileMenuIdx >= 0) {
+      handleResendMessage(mobileMenuMessage.content, mobileMenuIdx);
+    }
+  }, [mobileMenuMessage, mobileMenuIdx]);
+
+  const handleMobileEdit = useCallback(() => {
+    if (mobileMenuMessage && mobileMenuIdx >= 0) {
+      handleEditMessage(mobileMenuMessage.content, mobileMenuIdx);
+    }
+  }, [mobileMenuMessage, mobileMenuIdx]);
+
+  const handleMobileDelete = useCallback(() => {
+    if (mobileMenuIdx >= 0 && activeId) {
+      const msg = messages[mobileMenuIdx];
+      if (msg?.id) {
+        deleteMessagesFrom(activeId, msg.id, []).then(() => {
+          setMessages(prev => prev.filter((_, i) => i !== mobileMenuIdx));
+        }).catch(() => {});
+      }
+    }
+  }, [mobileMenuIdx, activeId, messages]);
 
   // === 文件上传相关 ===
   const ACCEPTED_TYPES = 'image/png,image/jpeg,image/jpg,image/gif,image/webp,application/pdf,.docx,.xlsx,.pptx,.odt,.rtf,.epub,.txt,.md,.csv,.json,.xml,.yaml,.yml,.js,.jsx,.ts,.tsx,.py,.java,.cpp,.c,.h,.cs,.go,.rs,.rb,.php,.swift,.kt,.scala,.html,.css,.scss,.less,.sql,.sh,.bash,.vue,.svelte,.lua,.r,.m,.pl,.ex,.exs';
@@ -3814,6 +3960,8 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
               onSetMessages={setMessages}
               messageContentRefs={messageContentRefs}
               onOpenResearch={(msgId) => setOpenedResearchMsgId(msgId)}
+              isTouchDevice={isTouchDeviceVal}
+              onMessageLongPress={handleMessageLongPress}
             />
             <div ref={messagesEndRef} />
           </div>
@@ -4477,6 +4625,21 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
           </>
         );
       })()}
+
+      {/* Mobile message long-press menu */}
+      <MobileMessageMenu
+        isOpen={mobileMenuOpen}
+        onClose={handleMobileMenuClose}
+        position={mobileMenuPosition}
+        onCopy={handleMobileCopy}
+        onRegenerate={handleMobileRegenerate}
+        onEdit={handleMobileEdit}
+        onDelete={handleMobileDelete}
+        canEdit={mobileMenuMessage?.role === 'user'}
+        canRegenerate={mobileMenuMessage?.role === 'user'}
+        canDelete={mobileMenuIdx >= 0}
+        isUser={mobileMenuMessage?.role === 'user'}
+      />
     </div>
   );
 };

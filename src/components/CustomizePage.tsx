@@ -4,9 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Search, Trash2, Sparkles, LayoutGrid, FileText,
   ChevronRight, ChevronDown, Folder, File, MoreHorizontal, Info, Eye, Code,
-  Settings, Check, MessageSquare, ClipboardList, Upload, Github, X, FolderPlus
+  Settings, Check, MessageSquare, ClipboardList, Upload, Github, X, FolderPlus, Store,
+  Server
 } from 'lucide-react';
 import MarkdownRenderer, { CodeBlock } from './MarkdownRenderer';
+import MarketplacePanel from './MarketplacePanel';
+import McpSettingsPanel from './McpSettingsPanel';
 import { getSkills, getSkillDetail, getSkillFile, createSkill, updateSkill, deleteSkill, toggleSkill, getGithubStatus, getGithubAuthUrl, disconnectGithub } from '../api';
 import { defaultSkills } from '../data/defaultSkills';
 import searchIconImg from '../assets/icons/search-icon.png';
@@ -199,7 +202,7 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({
 
 const CustomizePage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void }) => {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'overview' | 'skills' | 'connectors'>('overview');
+  const [tab, setTab] = useState<'overview' | 'skills' | 'connectors' | 'marketplace' | 'mcp'>('overview');
   const [examples, setExamples] = useState<Skill[]>([]);
   const [mySkills, setMySkills] = useState<Skill[]>([]);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
@@ -476,7 +479,7 @@ const CustomizePage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void
         </div>
         <nav className="flex-1 px-2 space-y-1">
           <button onClick={() => setTab('skills')}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-[15px] font-medium rounded-lg transition-colors ${tab === 'skills' ? 'bg-claude-hover text-claude-text' : 'text-claude-text hover:bg-claude-hover'}`}>
+            className={`w-full flex items-center gap-3 px-3 py-2 text-[15px] font-medium rounded-lg transition-colors ${tab === 'skills' || tab === 'marketplace' ? 'bg-claude-hover text-claude-text' : 'text-claude-text hover:bg-claude-hover'}`}>
             <img src={skillsImg} alt="" className="w-[22px] h-[22px] dark:invert" />
             Skills
           </button>
@@ -485,22 +488,47 @@ const CustomizePage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void
             <img src={connectorsImg} alt="" className="w-[22px] h-[22px] dark:invert" />
             Connectors
           </button>
+          <button onClick={() => setTab('mcp')}
+            className={`w-full flex items-center gap-3 px-3 py-2 text-[15px] font-medium rounded-lg transition-colors ${tab === 'mcp' ? 'bg-claude-hover text-claude-text' : 'text-claude-text hover:bg-claude-hover'}`}>
+            <Server size={22} className="opacity-70" />
+            MCP Servers
+          </button>
         </nav>
       </div>
 
       {/* 2. Middle Column: Skills List or Connectors List */}
-      {tab === 'skills' ? (
+      {tab === 'skills' || tab === 'marketplace' ? (
         <div className="w-[300px] border-r border-claude-border flex flex-col flex-shrink-0 bg-claude-bg">
           {/* Header */}
           <div className="h-14 px-4 flex items-center justify-between border-b border-claude-border">
-            <span className="font-semibold text-claude-text">Skills</span>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-claude-text">{tab === 'marketplace' ? 'Marketplace' : 'Skills'}</span>
+              {tab === 'skills' && (
+                <button
+                  onClick={() => setTab('marketplace')}
+                  className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full hover:opacity-90 transition-opacity"
+                >
+                  <Store size={10} />
+                  Browse
+                </button>
+              )}
+            </div>
             <div className="flex items-center gap-2 relative">
+              {tab === 'marketplace' && (
+                <button
+                  onClick={() => setTab('skills')}
+                  className="p-1.5 rounded-md hover:bg-claude-hover text-claude-textSecondary hover:text-claude-text transition-colors"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+              )}
               <button
                 onClick={() => setShowSearchInput(!showSearchInput)}
                 className="p-1.5 rounded-md hover:bg-claude-hover text-claude-textSecondary hover:text-claude-text transition-colors group"
               >
                 <Search size={21} className="opacity-70 group-hover:opacity-100 transition-opacity" />
               </button>
+              {tab === 'skills' && (
               <div className="relative">
                 <button
                   onClick={() => setShowPlusMenu(!showPlusMenu)}
@@ -528,6 +556,7 @@ const CustomizePage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void
                   </>
                 )}
               </div>
+              )}
             </div>
           </div>
 
@@ -829,7 +858,17 @@ const CustomizePage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void
               </div>
             </div>
           </div>
-        ) : detail ? (
+        ) : tab === 'marketplace' ? (
+            <MarketplacePanel
+              onBack={() => setTab('skills')}
+              onImportComplete={() => {
+                setTab('skills');
+                fetchList();
+              }}
+            />
+          ) : tab === 'mcp' ? (
+            <McpSettingsPanel />
+          ) : detail ? (
           // Detail View
           <div className="flex flex-col h-full overflow-hidden">
             {/* Header */}

@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       reportCompressedSize: false,
-      target: process.env.TAURI_ENV_PLATFORM === 'windows' ? 'chrome105' : 'safari14',
+      target: process.env.TAURI_ENV_PLATFORM === 'windows' ? 'chrome105' : process.env.TAURI_ENV_PLATFORM === 'android' ? 'chrome100' : 'safari14',
       minify: !process.env.TAURI_ENV_DEBUG ? 'esbuild' : false,
       sourcemap: !!process.env.TAURI_ENV_DEBUG,
       rollupOptions: {

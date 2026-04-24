@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, Smartphone, MonitorIcon, LogOut, MoreHorizontal, Check, X } from 'lucide-react';
+import { ChevronRight, Smartphone, MonitorIcon, LogOut, MoreHorizontal, Check, X, Globe } from 'lucide-react';
 import { getUserProfile, updateUserProfile, getUserUsage, getGatewayUsage, getSessions, deleteSession, logoutOtherSessions, changePassword, deleteAccount, logout, getProviderModels } from '../api';
 import ProviderSettings from './ProviderSettings';
+import { useI18n } from '../i18n';
 
 interface SettingsPageProps {
   onClose: () => void;
@@ -46,6 +47,7 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; sessionId: string } | null>(null);
   const [sendKey, setSendKey] = useState(localStorage.getItem('sendKey') || 'enter'); // enter or ctrl+enter
   const [newlineKey, setNewlineKey] = useState(localStorage.getItem('newlineKey') || (localStorage.getItem('sendKey') === 'enter' ? 'shift_enter' : 'enter'));
+  const { lang, setLang, t } = useI18n();
 
   const isSelfHosted = localStorage.getItem('user_mode') === 'selfhosted';
 
@@ -686,6 +688,32 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
           <h3 className="text-[16px] font-semibold text-claude-text mb-5">外观</h3>
 
           <div className="space-y-6">
+            {/* Language Switcher */}
+            <div>
+              <label className="block text-[13px] font-medium text-claude-textSecondary mb-2">语言 / Language</label>
+              <div className="flex gap-3">
+                {([
+                  { value: 'zh', label: '中文' },
+                  { value: 'en', label: 'English' },
+                ] as const).map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setLang(opt.value)}
+                    className={`
+                      flex items-center gap-2 px-4 py-2.5 rounded-lg border text-[14px] transition-all
+                      ${lang === opt.value
+                        ? 'border-[#3b82f6]/80 bg-blue-500/5 text-claude-text font-medium'
+                        : 'border-claude-border bg-claude-input hover:border-[#CCC] text-claude-textSecondary'
+                      }
+                    `}
+                  >
+                    <Globe size={16} className={lang === opt.value ? 'text-[#3b82f6]' : 'text-claude-textSecondary'} />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div>
               <label className="block text-[13px] font-medium text-claude-textSecondary mb-2">颜色模式</label>
               <div className="flex gap-3">

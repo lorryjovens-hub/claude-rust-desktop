@@ -591,6 +591,7 @@ dependencies = [
  "chrono",
  "futures",
  "glob",
+ "jni",
  "local-ip-address",
  "once_cell",
  "open",

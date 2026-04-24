@@ -1,5 +1,5 @@
 use serde::Serialize;
-use tauri::{AppHandle, Manager};
+use tauri::{Manager, State};
 
 #[derive(Serialize)]
 pub struct PlatformInfo {
@@ -18,17 +18,18 @@ pub async fn get_platform() -> Result<PlatformInfo, String> {
 }
 
 #[tauri::command]
-pub async fn get_app_path(app: AppHandle) -> Result<String, String> {
+pub async fn get_app_path(app: State<'_, tauri::AppHandle>) -> Result<String, String> {
     let path = app.path().app_data_dir().map_err(|e| e.to_string())?;
     Ok(path.to_string_lossy().to_string())
 }
 
 #[tauri::command]
-pub async fn select_directory(app: AppHandle) -> Result<Option<String>, String> {
+pub async fn select_directory(app: State<'_, tauri::AppHandle>) -> Result<Option<String>, String> {
     use tauri_plugin_dialog::{DialogExt, FilePath};
     use tokio::sync::oneshot;
 
     let (tx, rx) = oneshot::channel::<Option<FilePath>>();
+    let app = app.inner().clone();
 
     #[cfg(not(mobile))]
     {
@@ -111,7 +112,7 @@ pub async fn open_external_url(url: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn resize_window(app: AppHandle, width: f64, height: f64) -> Result<(), String> {
+pub async fn resize_window(app: State<'_, tauri::AppHandle>, width: f64, height: f64) -> Result<(), String> {
     #[cfg(not(mobile))]
     {
         if let Some(window) = app.get_webview_window("main") {
@@ -125,7 +126,7 @@ pub async fn resize_window(app: AppHandle, width: f64, height: f64) -> Result<()
 
 #[tauri::command]
 pub async fn export_workspace(
-    app: AppHandle,
+    app: State<'_, tauri::AppHandle>,
     _workspace_id: String,
     context_markdown: String,
     default_filename: String,
@@ -264,13 +265,17 @@ pub async fn execute_tool(
 }
 
 #[tauri::command]
-pub async fn check_update(_app: AppHandle) -> Result<serde_json::Value, String> {
+pub async fn check_update(_app: State<'_, tauri::AppHandle>) -> Result<serde_json::Value, String> {
     Ok(serde_json::json!({ "has_update": false }))
 }
 
 #[tauri::command]
-pub async fn install_update(app: AppHandle) -> Result<(), String> {
-    app.restart();
+pub async fn install_update(app: State<'_, tauri::AppHandle>) -> Result<(), String> {
+    #[allow(unreachable_code)]
+    {
+        app.restart();
+        Ok(())
+    }
 }
 
 // ═════════════════════════════════════════════════════════════════

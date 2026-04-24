@@ -896,18 +896,36 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
       {showHelpModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40" onClick={() => setShowHelpModal(false)}>
           <div
-            className="bg-claude-input rounded-2xl shadow-xl w-[360px] p-6"
+            className="bg-claude-input rounded-2xl shadow-xl w-[380px] p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-[16px] font-semibold text-claude-text mb-2">售后支持</h3>
-            <p className="text-[14px] text-claude-textSecondary mb-3">售后 QQ 群号：</p>
-            <div className="px-4 py-3 mb-6 rounded-xl bg-claude-btn-hover text-[20px] font-semibold tracking-wide text-claude-text text-center select-all">
-              1083610043
+            <h3 className="text-[16px] font-semibold text-claude-text mb-4 text-center">Claude 开发交流群</h3>
+            {/* QQ Group QR Code */}
+            <div className="flex flex-col items-center mb-4">
+              <div className="w-[200px] h-[200px] rounded-xl overflow-hidden bg-white mb-3 flex items-center justify-center">
+                <img
+                  src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://qm.qq.com/q/629466903"
+                  alt="QQ群二维码"
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    const el = e.target as HTMLImageElement;
+                    el.style.display = 'none';
+                  }}
+                />
+              </div>
+              <p className="text-[13px] text-claude-textSecondary">扫一扫二维码，加入群聊</p>
             </div>
-            <div className="flex justify-end">
+            {/* QQ Group Number */}
+            <div className="px-4 py-3 mb-4 rounded-xl bg-claude-btn-hover">
+              <p className="text-[13px] text-claude-textSecondary mb-1 text-center">QQ 群号</p>
+              <div className="text-[22px] font-semibold tracking-wide text-claude-text text-center select-all">
+                629466903
+              </div>
+            </div>
+            <div className="flex justify-center">
               <button
                 onClick={() => setShowHelpModal(false)}
-                className="px-4 py-2 text-[13px] text-claude-text bg-claude-btn-hover hover:bg-claude-hover rounded-lg transition-colors"
+                className="px-6 py-2 text-[13px] text-claude-text bg-claude-btn-hover hover:bg-claude-hover rounded-lg transition-colors"
               >
                 关闭
               </button>

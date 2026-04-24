@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { FileText, ChevronDown, Trash, Pencil, Star, BellRing, Menu, Folder, ArrowLeft, ArrowRight } from 'lucide-react';
 import Sidebar from './components/Sidebar';
+import MobileNav from './components/MobileNav';
+import MobileSidebar from './components/MobileSidebar';
 import MainContent from './components/MainContent';
 import { IconSidebarToggle } from './components/Icons';
 import { updateConversation, deleteConversation, exportConversation, getUnreadAnnouncements, markAnnouncementRead, getSystemStatus } from './api';
@@ -29,6 +31,8 @@ import CustomizePage from './components/CustomizePage';
 import ProjectsPage from './components/ProjectsPage';
 import RemoteConnect from './components/RemoteConnect';
 import { tauriAPI } from './utils/tauriAPI';
+import { useMobile } from './hooks/useMobile';
+import { useSwipeBack } from './hooks/useSwipeBack';
 
 const isTauri = typeof window !== 'undefined' && !!(window as any).__TAURI_INTERNALS__;
 
@@ -217,6 +221,8 @@ const ChatHeader = ({
 };
 
 const Layout = () => {
+  const isMobile = useMobile();
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [unreadAnnouncements, setUnreadAnnouncements] = useState<Array<{ id: number; title: string; content: string; created_at: string; updated_at?: string }>>([]);
   const [activeAnnouncementId, setActiveAnnouncementId] = useState<number | null>(null);
   const [isMarkingAnnouncementRead, setIsMarkingAnnouncementRead] = useState(false);
@@ -313,6 +319,18 @@ const Layout = () => {
     setNavIndex(newIndex);
     navigate(navHistory[newIndex]);
   };
+
+  // Mobile swipe back gesture
+  const swipeBack = useSwipeBack({
+    enabled: isMobile,
+    onSwipeBack: () => {
+      if (canGoBack) {
+        handleNavBack();
+      } else if (location.pathname !== '/') {
+        navigate('/');
+      }
+    },
+  });
 
   useEffect(() => {
     setShowSettings(false);
@@ -462,30 +480,63 @@ const Layout = () => {
   return (
     <>
       <div className="relative flex w-full h-screen overflow-hidden bg-claude-bg font-sans antialiased">
-        <div className="absolute top-0 left-0 w-full z-50 flex items-center select-none pointer-events-none bg-claude-bg border-b border-claude-border transition-all duration-300" style={{ WebkitAppRegion: 'drag', height: `${titleBarHeight}px` } as React.CSSProperties}>
-          <div className="h-full flex items-center pr-2 gap-0.5" style={{ pointerEvents: 'auto', WebkitAppRegion: 'no-drag', paddingLeft: isMac ? '78px' : '4px' } as React.CSSProperties}>
-            <Tooltip text="Menu"><button onClick={() => { }} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-claude-textSecondary hover:text-claude-text transition-colors"><Menu size={18} className="opacity-80" /></button></Tooltip>
-            <Tooltip text={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}><button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-claude-textSecondary hover:text-claude-text transition-colors"><IconSidebarToggle size={26} className="dark:invert transition-[filter] duration-200" /></button></Tooltip>
-            {canGoBack ? (
-              <Tooltip text="Back"><button onClick={handleNavBack} className="p-1.5 rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/5" style={{ color: '#73726C' }}><ArrowLeft size={16} strokeWidth={1.5} /></button></Tooltip>
-            ) : (<span className="p-1.5" style={{ color: '#B7B5B0' }}><ArrowLeft size={16} strokeWidth={1.5} /></span>)}
-            {canGoForward ? (
-              <Tooltip text="Forward"><button onClick={handleNavForward} className="p-1.5 rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/5" style={{ color: '#73726C' }}><ArrowRight size={16} strokeWidth={1.5} /></button></Tooltip>
-            ) : (<span className="p-1.5" style={{ color: '#B7B5B0' }}><ArrowRight size={16} strokeWidth={1.5} /></span>)}
+        {/* Desktop Title Bar */}
+        {!isMobile && (
+          <div className="absolute top-0 left-0 w-full z-50 flex items-center select-none pointer-events-none bg-claude-bg border-b border-claude-border transition-all duration-300" style={{ WebkitAppRegion: 'drag', height: `${titleBarHeight}px` } as React.CSSProperties}>
+            <div className="h-full flex items-center pr-2 gap-0.5" style={{ pointerEvents: 'auto', WebkitAppRegion: 'no-drag', paddingLeft: isMac ? '78px' : '4px' } as React.CSSProperties}>
+              <Tooltip text="Menu"><button onClick={() => { }} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-claude-textSecondary hover:text-claude-text transition-colors"><Menu size={18} className="opacity-80" /></button></Tooltip>
+              <Tooltip text={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}><button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-claude-textSecondary hover:text-claude-text transition-colors"><IconSidebarToggle size={26} className="dark:invert transition-[filter] duration-200" /></button></Tooltip>
+              {canGoBack ? (
+                <Tooltip text="Back"><button onClick={handleNavBack} className="p-1.5 rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/5" style={{ color: '#73726C' }}><ArrowLeft size={16} strokeWidth={1.5} /></button></Tooltip>
+              ) : (<span className="p-1.5" style={{ color: '#B7B5B0' }}><ArrowLeft size={16} strokeWidth={1.5} /></span>)}
+              {canGoForward ? (
+                <Tooltip text="Forward"><button onClick={handleNavForward} className="p-1.5 rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/5" style={{ color: '#73726C' }}><ArrowRight size={16} strokeWidth={1.5} /></button></Tooltip>
+              ) : (<span className="p-1.5" style={{ color: '#B7B5B0' }}><ArrowRight size={16} strokeWidth={1.5} /></span>)}
+            </div>
           </div>
-        </div>
-        <Sidebar isCollapsed={isSidebarCollapsed} toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)} refreshTrigger={refreshTrigger} onNewChatClick={handleNewChat} onOpenSettings={() => { setShowSettings(true); setShowUpgrade(false); }} onOpenUpgrade={() => { setShowUpgrade(true); setShowSettings(false); }} onCloseOverlays={() => { setShowSettings(false); setShowUpgrade(false); }} tunerConfig={tunerConfig} setTunerConfig={setTunerConfig} />
+        )}
+        {/* Mobile Header */}
+        {isMobile && (
+          <div className="absolute top-0 left-0 w-full z-50 flex items-center justify-between px-4 bg-claude-bg border-b border-claude-border" style={{ height: `${titleBarHeight}px` }}>
+            <button onClick={() => setShowMobileSidebar(true)} className="p-2 -ml-2 hover:bg-claude-hover rounded-lg">
+              <Menu size={20} className="text-claude-text" />
+            </button>
+            <span className="text-sm font-medium text-claude-text">Claude</span>
+            <div className="w-8" />
+          </div>
+        )}
+        {/* Desktop Sidebar */}
+        {!isMobile && (
+          <Sidebar isCollapsed={isSidebarCollapsed} toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)} refreshTrigger={refreshTrigger} onNewChatClick={handleNewChat} onOpenSettings={() => { setShowSettings(true); setShowUpgrade(false); }} onOpenUpgrade={() => { setShowUpgrade(true); setShowSettings(false); }} onCloseOverlays={() => { setShowSettings(false); setShowUpgrade(false); }} tunerConfig={tunerConfig} setTunerConfig={setTunerConfig} />
+        )}
+        {/* Mobile Sidebar Drawer */}
+        {isMobile && (
+          <MobileSidebar
+            isOpen={showMobileSidebar}
+            onClose={() => setShowMobileSidebar(false)}
+            onNewChat={handleNewChat}
+            onOpenSettings={() => { setShowSettings(true); setShowUpgrade(false); }}
+            onOpenUpgrade={() => { setShowUpgrade(true); setShowSettings(false); }}
+            refreshTrigger={refreshTrigger}
+          />
+        )}
         <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative" style={{ paddingTop: `${titleBarHeight}px` }}>
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center rounded-xl p-0.5 pointer-events-auto" style={{ backgroundColor: 'var(--bg-mode-tabs)' as React.CSSProperties['backgroundColor'] }}>
-            <Tooltip text="Chat" shortcut="Ctrl+1"><button className="px-3.5 py-1 text-[13px] font-medium rounded-[10px] text-claude-text shadow-sm transition-colors" style={{ backgroundColor: 'var(--bg-mode-tab-active)', fontFamily: 'Inter, system-ui, -apple-system, sans-serif', letterSpacing: '0.01em' }}>Chat</button></Tooltip>
-            <Tooltip text="Cowork" shortcut="Ctrl+2"><button className="px-3.5 py-1 text-[13px] font-medium rounded-[10px] text-claude-textSecondary hover:text-claude-text transition-colors" style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif', letterSpacing: '0.01em' }}>Cowork</button></Tooltip>
-            <Tooltip text="Code" shortcut="Ctrl+3"><button className="px-3.5 py-1 text-[13px] font-medium rounded-[10px] text-claude-textSecondary hover:text-claude-text transition-colors" style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif', letterSpacing: '0.01em' }}>Code</button></Tooltip>
-          </div>
+          {!isMobile && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center rounded-xl p-0.5 pointer-events-auto" style={{ backgroundColor: 'var(--bg-mode-tabs)' as React.CSSProperties['backgroundColor'] }}>
+              <Tooltip text="Chat" shortcut="Ctrl+1"><button className="px-3.5 py-1 text-[13px] font-medium rounded-[10px] text-claude-text shadow-sm transition-colors" style={{ backgroundColor: 'var(--bg-mode-tab-active)', fontFamily: 'Inter, system-ui, -apple-system, sans-serif', letterSpacing: '0.01em' }}>Chat</button></Tooltip>
+              <Tooltip text="Cowork" shortcut="Ctrl+2"><button className="px-3.5 py-1 text-[13px] font-medium rounded-[10px] text-claude-textSecondary hover:text-claude-text transition-colors" style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif', letterSpacing: '0.01em' }}>Cowork</button></Tooltip>
+              <Tooltip text="Code" shortcut="Ctrl+3"><button className="px-3.5 py-1 text-[13px] font-medium rounded-[10px] text-claude-textSecondary hover:text-claude-text transition-colors" style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif', letterSpacing: '0.01em' }}>Code</button></Tooltip>
+            </div>
+          )}
           {isChatMode && (showArtifacts && !documentPanelDoc) && !showSettings && !showUpgrade && (
             <ChatHeader title={currentChatTitle} showArtifacts={showArtifacts} documentPanelDoc={documentPanelDoc} onOpenArtifacts={handleOpenArtifacts} hasArtifacts={artifacts.length > 0} onTitleRename={handleTitleChange} />
           )}
-          <div className="flex-1 flex overflow-hidden relative" ref={contentContainerRef}>
-            <div className="flex-1 flex flex-col h-full min-w-0">
+          <div
+            className="flex-1 flex overflow-hidden relative"
+            ref={contentContainerRef}
+            {...(isMobile ? swipeBack.handlers : {})}
+          >
+            <div className={`flex-1 flex flex-col h-full min-w-0 ${isMobile ? 'pb-16' : ''}`}>
               {isChatMode && (!showArtifacts || documentPanelDoc) && !showSettings && !showUpgrade && location.pathname !== '/chats' && location.pathname !== '/customize' && location.pathname !== '/projects' && location.pathname !== '/artifacts' && (
                 <ChatHeader title={currentChatTitle} showArtifacts={showArtifacts} documentPanelDoc={documentPanelDoc} onOpenArtifacts={handleOpenArtifacts} hasArtifacts={artifacts.length > 0} onTitleRename={handleTitleChange} />
               )}
@@ -541,6 +592,13 @@ const Layout = () => {
           </div>
         </div>
       </div>
+      {/* Mobile Bottom Navigation */}
+      {isMobile && (
+        <MobileNav
+          onNewChat={handleNewChat}
+          onOpenSettings={() => { setShowSettings(true); setShowUpgrade(false); }}
+        />
+      )}
       {activeAnnouncement && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 px-4">
           <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-[#1F1F1F] shadow-2xl border border-black/5 dark:border-white/10">
