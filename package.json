@@ -32,13 +32,13 @@
     "react-dom": "^19.2.4",
     "react-is": "^19.2.5",
     "react-markdown": "9.0.1",
-    "react-router-dom": "6.22.3",
+    "react-router-dom": "6.30.3",
     "react-syntax-highlighter": "^16.1.0",
     "recharts": "^3.7.0",
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
-    "uuid": "^13.0.0"
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
