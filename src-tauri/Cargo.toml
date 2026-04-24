@@ -4,6 +4,7 @@ version = "1.6.12"
 description = "Claude Desktop - AI assistant with native capabilities (Tauri Edition)"
 authors = ["you"]
 edition = "2021"
+license = "Apache-2.0"
 
 [lib]
 name = "claude_desktop_tauri_lib"

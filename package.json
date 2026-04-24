@@ -2,6 +2,7 @@
   "name": "claude-desktop-tauri",
   "private": true,
   "version": "1.6.12",
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
