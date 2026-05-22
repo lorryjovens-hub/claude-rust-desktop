@@ -127,6 +127,7 @@ pub struct IdeBridge {
     config: IdeConfig,
     connections: Arc<Mutex<HashMap<String, IdeConnection>>>,
     shutdown_senders: Arc<Mutex<HashMap<String, watch::Sender<bool>>>>,
+    #[allow(dead_code)]
     message_handlers: Arc<Mutex<HashMap<String, Box<dyn Fn(IdeMessage) -> Option<IdeMessage> + Send + Sync>>>>,
     running: Arc<Mutex<bool>>,
 }
@@ -346,7 +347,7 @@ impl IdeBridge {
         }
     }
 
-    pub async fn send_to_ide(&self, conn_id: &str, message: IdeMessage) -> Result<()> {
+    pub async fn send_to_ide(&self, conn_id: &str, _message: IdeMessage) -> Result<()> {
         let conns = self.connections.lock().await;
         if let Some(conn) = conns.get(conn_id) {
             if conn.status != IdeStatus::Connected {

@@ -1,7 +1,59 @@
-const API_BASE = 'http://127.0.0.1:30080/api';
+const DEFAULT_BRIDGE_PORT = 30080;
+let detectedBridgePort: number | null = null;
+
+async function detectBridgePort(): Promise<number> {
+  if (detectedBridgePort) return detectedBridgePort;
+  console.log('[API] Starting Bridge port detection...');
+  for (let port = DEFAULT_BRIDGE_PORT; port < DEFAULT_BRIDGE_PORT + 10; port++) {
+    console.log(`[API] Trying port ${port}...`);
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/api/system-status`, { signal: AbortSignal.timeout(1500) });
+      if (res.ok) {
+        detectedBridgePort = port;
+        console.log(`[API] Bridge found on port ${port}`);
+        console.log(`[API] Bridge detection complete. Using port ${port}`);
+        return port;
+      }
+    } catch {
+      console.log(`[API] Port ${port} not available`);
+    }
+  }
+  console.log(`[API] Bridge detection complete. Using default port ${DEFAULT_BRIDGE_PORT}`);
+  return DEFAULT_BRIDGE_PORT;
+}
+
+function getApiBase(): string {
+  if (detectedBridgePort && detectedBridgePort !== DEFAULT_BRIDGE_PORT) {
+    return `http://127.0.0.1:${detectedBridgePort}/api`;
+  }
+  return `http://127.0.0.1:${DEFAULT_BRIDGE_PORT}/api`;
+}
+
+let API_BASE = `http://127.0.0.1:${DEFAULT_BRIDGE_PORT}/api`;
 const GATEWAY_BASE = 'http://127.0.0.1:30090';
 const CHENGDU_API = 'http://127.0.0.1:30090/api';
 const isTauriApp = typeof window !== 'undefined' && !!(window as any).__TAURI_INTERNALS__;
+
+if (isTauriApp) {
+  detectBridgePort().then(port => {
+    API_BASE = `http://127.0.0.1:${port}/api`;
+    detectedBridgePort = port;
+  });
+}
+
+let nativeEngineInitialized = false;
+
+async function ensureNativeEngine() {
+  if (isTauriApp && !nativeEngineInitialized) {
+    try {
+      const { nativeEngineAPI } = await import('./utils/tauriAPI');
+      await nativeEngineAPI.init();
+      nativeEngineInitialized = true;
+    } catch (e) {
+      console.warn('[API] Failed to initialize native engine:', e);
+    }
+  }
+}
 
 // 获取存储的 token
 function getToken() {
@@ -490,6 +542,20 @@ export async function createProjectConversation(projectId: string, title?: strin
 
 // 对话相关
 export async function getConversations() {
+  if (isTauriApp) {
+    await ensureNativeEngine();
+    const { nativeEngineAPI } = await import('./utils/tauriAPI');
+    const convs = await nativeEngineAPI.listConversations();
+    return convs.map((c: any) => ({
+      id: c.id,
+      title: c.title,
+      model: c.model,
+      workspace_path: c.workspace_path,
+      created_at: c.created_at,
+      updated_at: c.updated_at,
+      messages: [],
+    }));
+  }
   const res = await request('/conversations');
   const data = await res.json();
   return Array.isArray(data) ? data : (Array.isArray(data?.conversations) ? data.conversations : []);
@@ -506,6 +572,15 @@ export async function getArtifactContent(filePath: string) {
 }
 
 export async function createConversation(title?: string, model?: string, extras?: { research_mode?: boolean }) {
+  if (isTauriApp) {
+    await ensureNativeEngine();
+    const { nativeEngineAPI } = await import('./utils/tauriAPI');
+    return nativeEngineAPI.createConversation({
+      model: model || 'claude-sonnet-4-6',
+      title,
+      research_mode: extras?.research_mode,
+    });
+  }
   const body: any = { model };
   if (title !== undefined) {
     body.title = title;
@@ -521,7 +596,79 @@ export async function createConversation(title?: string, model?: string, extras?
 }
 
 export async function getConversation(id: string) {
+  if (isTauriApp) {
+    await ensureNativeEngine();
+    const { nativeEngineAPI } = await import('./utils/tauriAPI');
+    const convs = await nativeEngineAPI.listConversations();
+    const found = convs.find((c: any) => c.id === id);
+    if (found) {
+      const messages = await nativeEngineAPI.getMessages(id);
+      return {
+        id: found.id,
+        title: found.title,
+        model: found.model,
+        workspace_path: found.workspace_path,
+        created_at: found.created_at,
+        updated_at: found.updated_at,
+        messages: messages.map((m: any) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          created_at: m.created_at,
+          toolCalls: m.tool_calls,
+        })),
+      };
+    }
+    throw new Error('Conversation not found');
+  }
   const res = await request(`/conversations/${id}`);
+  return res.json();
+}
+
+export async function deleteConversation(id: string) {
+  if (isTauriApp) {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('conversationDeleting', { detail: { id } }));
+    }
+    await ensureNativeEngine();
+    const { nativeEngineAPI } = await import('./utils/tauriAPI');
+    await nativeEngineAPI.deleteConversation(id);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('conversationDeleted', { detail: { id } }));
+    }
+    return { success: true };
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('conversationDeleting', { detail: { id } }));
+  }
+
+  try {
+    await request(`/conversations/${id}/stop-generation`, { method: 'POST' });
+  } catch { }
+
+  try {
+    const res = await request(`/conversations/${id}`, { method: 'DELETE' });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('conversationDeleted', { detail: { id } }));
+    }
+    return res.json();
+  } catch (err) {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('conversationDeleteFailed', { detail: { id } }));
+    }
+    throw err;
+  }
+}
+
+export async function updateConversation(id: string, data: any) {
+  if (isTauriApp) {
+    return { ...data, id };
+  }
+  const res = await request(`/conversations/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
   return res.json();
 }
 
@@ -589,39 +736,6 @@ export async function exportConversation(id: string): Promise<void> {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-export async function deleteConversation(id: string) {
-  // 先广播删除开始，通知前端中止该会话的流式输出，避免“串流到别的会话”
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('conversationDeleting', { detail: { id } }));
-  }
-
-  // 最佳努力：先请求后端停止生成（即使失败也不阻塞删除）
-  try {
-    await request(`/conversations/${id}/stop-generation`, { method: 'POST' });
-  } catch { }
-
-  try {
-    const res = await request(`/conversations/${id}`, { method: 'DELETE' });
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('conversationDeleted', { detail: { id } }));
-    }
-    return res.json();
-  } catch (err) {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('conversationDeleteFailed', { detail: { id } }));
-    }
-    throw err;
-  }
-}
-
-export async function updateConversation(id: string, data: any) {
-  const res = await request(`/conversations/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(data),
-  });
-  return res.json();
 }
 
 
@@ -705,15 +819,27 @@ export function warmEngine(conversationId: string): void {
     const wf = p.work_function; const pp = p.personal_preferences;
     userProfile = (wf || pp) ? { work_function: wf, personal_preferences: pp } : undefined;
   } catch { userProfile = undefined; }
-  // Fire-and-forget — don't block UI
+
+  let permissionMode: string | undefined;
+  try {
+    // Try window.__chatStore first (if available)
+    if (typeof window !== 'undefined' && (window as any).__chatStore) {
+      permissionMode = (window as any).__chatStore.getState().permissionMode;
+    } else {
+      // Fallback to localStorage persistence
+      permissionMode = localStorage.getItem('permission_mode') || undefined;
+    }
+  } catch {}
+
   request(`/conversations/${conversationId}/warm`, {
     method: 'POST',
     body: JSON.stringify({
       ...resolveEnvCreds(userMode),
       user_mode: userMode,
       user_profile: userProfile,
+      permission_mode: permissionMode,
     }),
-  }).catch(() => {}); // ignore errors
+  }).catch(() => {});
 }
 
 // ===== Provider Management =====
@@ -746,17 +872,21 @@ export async function getProviders(): Promise<Provider[]> {
   const data = await res.json();
   return Array.isArray(data) ? data : (Array.isArray(data?.providers) ? data.providers : []);
 }
+
 export async function createProvider(p: Partial<Provider>): Promise<Provider> {
   const res = await fetch(`${API_BASE}/providers`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) });
   return res.json();
 }
+
 export async function updateProvider(id: string, p: Partial<Provider>): Promise<Provider> {
   const res = await fetch(`${API_BASE}/providers/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) });
   return res.json();
 }
+
 export async function deleteProvider(id: string): Promise<void> {
   await fetch(`${API_BASE}/providers/${id}`, { method: 'DELETE' });
 }
+
 export async function getProviderModels(): Promise<Array<{ id: string; name: string; providerId: string; providerName: string }>> {
   const res = await fetch(`${API_BASE}/providers/models`);
   return res.json();
@@ -797,8 +927,8 @@ export function reconnectStream(
         buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const data = line.slice(6);
+          if (!line.startsWith('data:')) continue;
+          const data = line.startsWith('data: ') ? line.slice(6) : line.slice(5);
           if (data.trim() === '[DONE]') { onDone(fullText); return; }
 
           try {
@@ -904,11 +1034,14 @@ export interface UploadResult {
   size: number;
 }
 
-export function uploadFile(
+export async function uploadFile(
   file: File,
   onProgress?: (percent: number) => void,
   conversationId?: string
 ): Promise<UploadResult> {
+  const port = await detectBridgePort();
+  const uploadUrl = `http://127.0.0.1:${port}/api/upload`;
+  
   return new Promise((resolve, reject) => {
     const token = getToken();
     const xhr = new XMLHttpRequest();
@@ -954,10 +1087,13 @@ export function uploadFile(
       reject(new Error(`${detail} (HTTP ${xhr.status})`));
     });
 
-    xhr.addEventListener('error', () => reject(new Error('网络错误')));
+    xhr.addEventListener('error', (err) => {
+      console.error('[API] Upload network error:', err);
+      reject(new Error(`网络错误，无法连接到 ${uploadUrl}`));
+    });
     xhr.addEventListener('abort', () => reject(new Error('上传已取消')));
 
-    xhr.open('POST', `${API_BASE}/upload`);
+    xhr.open('POST', uploadUrl);
     if (token) {
       xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     }
@@ -1084,7 +1220,431 @@ export async function materializeGithub(
   return res.json();
 }
 
-// 流式对话（核心）
+// 检查模型是否需要使用前端代理（当 Provider 使用 OpenAI 格式时）
+async function checkUseProxyForModel(model: string): Promise<boolean> {
+  try {
+    const providers = await getProviders();
+    for (const p of providers) {
+      if (!p.enabled) continue;
+      const hasModel = p.models?.some((m: any) => m.id === model && m.enabled !== false);
+      if (hasModel && p.format === 'openai') {
+        console.log(`[API] Using frontend proxy for model "${model}" (provider: ${p.name}, format: openai)`);
+        return true;
+      }
+    }
+  } catch (e) {
+    console.warn('[API] Failed to check providers for proxy:', e);
+  }
+  return false;
+}
+
+// 通过前端代理发送消息（支持 OpenAI 格式的 Provider）
+async function sendMessageViaProxy(
+  conversationId: string,
+  messages: any[],
+  model: string,
+  onDelta: (delta: string, full: string) => void,
+  onDone: (full: string) => void,
+  onError: (err: string) => void,
+  onThinking?: (thinking: string, full: string) => void,
+  onSystem?: (event: string, message: string, data: any) => void,
+  onToolUse?: (event: { type: 'start' | 'input' | 'done'; tool_use_id: string; tool_name?: string; tool_input?: any; content?: string; is_error?: boolean; textBefore?: string }) => void,
+): Promise<() => void> {
+  const { apiProxy, resolveProviderForModel } = await import('./utils/apiProxy');
+  const providers = await getProviders();
+  
+  // 转换为代理格式
+  const proxyProviders = providers.map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    base_url: p.baseUrl,
+    api_key: p.apiKey || '',
+    api_format: p.format === 'openai' ? 'openai' as const : 'anthropic' as const,
+    enabled: p.enabled,
+    models: (p.models || []).map((m: any) => ({
+      id: m.id,
+      name: m.name,
+      enabled: m.enabled,
+    })),
+  }));
+
+  apiProxy.setProviders(proxyProviders);
+  
+  const anthropicMessages = messages.map((msg: any) => {
+    if (msg.role === 'user') {
+      return { role: 'user', content: msg.content };
+    } else if (msg.role === 'assistant') {
+      return { role: 'assistant', content: msg.content };
+    }
+    return msg;
+  });
+
+  const request = {
+    model,
+    messages: anthropicMessages,
+    max_tokens: 8192,
+    stream: true,
+  };
+
+  let fullText = '';
+  let thinkingText = '';
+  let currentToolUseId: string | null = null;
+  let currentToolName: string | undefined = undefined;
+
+  const streamHandlers = {
+    onDelta: (delta: string, full: string) => {
+      fullText = full;
+      onDelta(delta, fullText);
+    },
+    onThinking: (delta: string, full: string) => {
+      thinkingText = full;
+      onThinking?.(delta, thinkingText);
+    },
+    onToolUse: (event: { type: 'start' | 'done'; tool_use_id: string; tool_name?: string; tool_input?: any; output?: string; is_error?: boolean }) => {
+      if (event.type === 'start') {
+        currentToolUseId = event.tool_use_id;
+        currentToolName = event.tool_name;
+        onToolUse?.({ type: 'start', tool_use_id: event.tool_use_id, tool_name: event.tool_name, tool_input: event.tool_input, content: '', is_error: false });
+      } else if (event.type === 'done') {
+        onToolUse?.({ type: 'done', tool_use_id: event.tool_use_id, tool_name: currentToolName, tool_input: {}, content: event.output, is_error: event.is_error || false });
+        currentToolUseId = null;
+        currentToolName = undefined;
+      }
+    },
+    onSystem: (event: string, data: any) => {
+      onSystem?.(event, '', data);
+    },
+    onDone: (full: string) => {
+      fullText = full;
+      onDone(fullText);
+    },
+    onError: (err: string) => {
+      onError(err);
+    },
+  };
+
+  try {
+    const stream = await apiProxy.chatStream(request);
+    parseProxyStream(stream, streamHandlers);
+  } catch (e: any) {
+    onError(e.message || 'Failed to send message via proxy');
+  }
+
+  return () => {
+    // 清理函数
+  };
+}
+
+// 解析代理返回的 SSE 流
+async function parseProxyStream(stream: ReadableStream, handlers: {
+  onDelta: (delta: string, full: string) => void;
+  onThinking?: (delta: string, full: string) => void;
+  onToolUse?: (event: { type: 'start' | 'done'; tool_use_id: string; tool_name?: string; tool_input?: any; output?: string; is_error?: boolean }) => void;
+  onSystem?: (event: string, data: any) => void;
+  onDone: (full: string) => void;
+  onError: (err: string) => void;
+}): Promise<void> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let fullText = '';
+  let thinkingText = '';
+  let currentToolUseId: string | null = null;
+  let currentToolName: string | undefined = undefined;
+
+  const processLine = (line: string) => {
+    if (!line.startsWith('data:')) return;
+    const data = line.startsWith('data: ') ? line.slice(6) : line.slice(5);
+    if (data === '[DONE]') {
+      handlers.onDone(fullText);
+      return;
+    }
+
+    try {
+      const event = JSON.parse(data);
+      const eventType = event.type;
+
+      switch (eventType) {
+        case 'message_start':
+          handlers.onSystem?.('message_start', { model: event.message?.model });
+          break;
+
+        case 'content_block_start':
+          if (event.content_block?.type === 'tool_use') {
+            currentToolUseId = event.content_block.id;
+            currentToolName = event.content_block.name || undefined;
+            handlers.onToolUse?.({
+              type: 'start',
+              tool_use_id: currentToolUseId || '',
+              tool_name: currentToolName,
+              tool_input: {},
+            });
+          }
+          break;
+
+        case 'content_block_delta':
+          if (event.delta?.type === 'text_delta' && event.delta.text) {
+            fullText += event.delta.text;
+            handlers.onDelta(event.delta.text, fullText);
+          } else if (event.delta?.type === 'thinking_delta' && event.delta.thinking) {
+            thinkingText += event.delta.thinking;
+            handlers.onThinking?.(event.delta.thinking, thinkingText);
+          }
+          break;
+
+        case 'content_block_stop':
+          break;
+
+        case 'message_delta':
+          if (event.delta?.stop_reason) {
+            handlers.onSystem?.('message_delta', { stop_reason: event.delta.stop_reason });
+          }
+          break;
+
+        case 'message_stop':
+          handlers.onDone(fullText);
+          break;
+
+        case 'error':
+          handlers.onError(event.error || 'Unknown error');
+          break;
+      }
+    } catch (e) {
+      // Skip malformed JSON
+    }
+  };
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        if (buffer) {
+          for (const line of buffer.split('\n')) {
+            processLine(line);
+          }
+        }
+        if (!fullText && !thinkingText) {
+          handlers.onDone('');
+        }
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        processLine(line);
+      }
+    }
+  } catch (e: any) {
+    handlers.onError(`Stream error: ${e.message}`);
+  }
+}
+
+// 流式对话（核心 - Tauri 版本，直接使用 bridge-server HTTP API）
+export async function sendMessageNative(
+  conversationId: string,
+  messages: any[],
+  model: string,
+  onDelta: (delta: string, full: string) => void,
+  onDone: (full: string) => void,
+  onError: (err: string) => void,
+  onThinking?: (thinking: string, full: string) => void,
+  onSystem?: (event: string, message: string, data: any) => void,
+  onToolUse?: (event: { type: 'start' | 'input' | 'done'; tool_use_id: string; tool_name?: string; tool_input?: any; content?: string; is_error?: boolean; textBefore?: string }) => void,
+): Promise<() => void> {
+  const token = getToken();
+  let fullText = '';
+  let thinkingText = '';
+  let deltaCount = 0;
+
+  console.log(`[API] Sending message (native): model=${model}, messages=${messages.length}, stream=true`);
+  console.log(`[API] Request URL: ${API_BASE}/chat`);
+  console.log(`[API] Establishing SSE connection to ${API_BASE}/chat`);
+
+  // Read permissionMode from localStorage (persisted by useChatStore.setPermissionMode)
+  let permissionMode: string | undefined;
+  try {
+    permissionMode = localStorage.getItem('permission_mode') || undefined;
+  } catch {}
+
+  try {
+    await detectBridgePort();
+    const res = await fetch(`${API_BASE}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        conversation_id: conversationId,
+        messages,
+        model,
+        ...resolveEnvCreds(getUserModeForConversation(conversationId)),
+        user_mode: getUserModeForConversation(conversationId),
+        permission_mode: permissionMode,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: '请求失败' }));
+      onError(err.error || '请求失败');
+      return () => {};
+    }
+
+    if (!res.body) return () => {};
+
+    const reader = res.body.getReader();
+    console.log(`[API] SSE connection established, reading stream...`);
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let pendingTextDelta = '';
+    let pendingThinkingDelta = '';
+    let flushScheduled = false;
+
+    const flushPending = () => {
+      flushScheduled = false;
+      if (pendingThinkingDelta && onThinking) {
+        const delta = pendingThinkingDelta;
+        pendingThinkingDelta = '';
+        onThinking(delta, thinkingText);
+      }
+      if (pendingTextDelta) {
+        const delta = pendingTextDelta;
+        pendingTextDelta = '';
+        fullText += delta;
+        onDelta(delta, fullText);
+      }
+    };
+
+    const scheduleFlush = () => {
+      if (!flushScheduled) {
+        flushScheduled = true;
+        setTimeout(flushPending, 0);
+      }
+    };
+
+    const processLine = (line: string) => {
+      if (!line.startsWith('event:')) {
+        if (line.startsWith('data:')) {
+          const data = line.startsWith('data: ') ? line.slice(6) : line.slice(5);
+          if (data === '[DONE]') return;
+          try {
+            const event = JSON.parse(data);
+            if (event.type === 'text' && event.text) {
+              deltaCount++;
+              if (deltaCount % 50 === 0) {
+                console.log(`[API] Stream progress: ${deltaCount} deltas received, ${fullText.length} chars`);
+              }
+              pendingTextDelta += event.text;
+              scheduleFlush();
+            } else if (event.type === 'thinking' && event.thinking) {
+              thinkingText += event.thinking;
+              pendingThinkingDelta += event.thinking;
+              scheduleFlush();
+            } else if (event.type === 'content_block_start') {
+              if (event.content_block?.type === 'tool_use') {
+                onToolUse?.({
+                  type: 'start',
+                  tool_use_id: event.content_block.id || '',
+                  tool_name: event.content_block.name || '',
+                  tool_input: event.content_block.input || {},
+                  content: '',
+                  is_error: false,
+                });
+              }
+            } else if (event.type === 'content_block_delta') {
+              if (event.delta?.type === 'tool_use_delta') {
+                // Tool input streaming
+              } else if (event.delta?.type === 'text_delta' && event.delta.text) {
+                pendingTextDelta += event.delta.text;
+                scheduleFlush();
+              }
+            } else if (event.type === 'content_block_stop') {
+            } else if (event.type === 'tool_use_start') {
+              onToolUse?.({
+                type: 'start',
+                tool_use_id: event.tool_use_id || '',
+                tool_name: event.tool_name || '',
+                tool_input: event.tool_input || {},
+                content: '',
+                is_error: false,
+              });
+            } else if (event.type === 'tool_use_done') {
+              onToolUse?.({
+                type: 'done',
+                tool_use_id: event.tool_use_id || '',
+                tool_name: event.tool_name || 'unknown',
+                tool_input: event.tool_input || {},
+                content: event.output || event.content || '',
+                is_error: event.is_error === true,
+              });
+            } else if (event.type === 'tool_arg_delta') {
+            } else if (event.type === 'message_start') {
+              onSystem?.('message_start', '', { model: event.message?.model });
+            } else if (event.type === 'message_delta') {
+              if (event.delta?.stop_reason) {
+                onSystem?.('message_delta', '', { stop_reason: event.delta.stop_reason });
+              }
+            } else if (event.type === 'message_stop') {
+              flushPending();
+              console.log(`[API] Stream complete: ${deltaCount} deltas, ${fullText.length} chars total`);
+              console.log(`[API] SSE connection closed`);
+              onDone(fullText);
+            } else if (event.type === 'error') {
+              console.log(`[API] SSE connection closed`);
+              onError(event.error || 'Unknown error');
+            }
+          } catch (e) {
+            // Skip malformed JSON
+          }
+        }
+      }
+    };
+
+    const readChunk = async () => {
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            if (buffer) {
+              for (const line of buffer.split('\n')) {
+                processLine(line);
+              }
+            }
+            flushPending();
+            if (!fullText && !thinkingText) {
+              onDone('');
+            }
+            console.log(`[API] SSE connection closed`);
+            break;
+          }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            processLine(line);
+          }
+        }
+      } catch (e: any) {
+        console.log(`[API] SSE connection closed`);
+        onError(`Stream error: ${e.message}`);
+      }
+    };
+
+    readChunk();
+  } catch (e: any) {
+    console.log(`[API] SSE connection closed`);
+    onError(e.message || 'Failed to send message');
+  }
+
+  return () => {
+    // 清理函数
+  };
+}
+
+// 流式对话（核心 - HTTP 版本）
 export async function sendMessage(
   conversationId: string,
   message: string,
@@ -1099,11 +1659,27 @@ export async function sendMessage(
   onDocumentDraft?: (draft: { draft_id: string; title?: string; format?: string; preview?: string; preview_available?: boolean; done?: boolean; document?: any }) => void,
   onCodeExecution?: (data: { type: string; executionId: string; code?: string; language?: string; files?: Array<{ id: string; name: string }>; stdout?: string; stderr?: string; images?: string[]; error?: string | null }) => void,
   onToolUse?: (event: { type: 'start' | 'input' | 'done'; tool_use_id: string; tool_name?: string; tool_input?: any; content?: string; is_error?: boolean; textBefore?: string }) => void,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  model?: string,
+  messages?: any[],
 ) {
   const token = getToken();
   let fullText = '';
+  let deltaCount = 0;
+  console.log(`[API] Sending message: model=${model}, messages=${messages?.length || 0}, stream=true`);
+  console.log(`[API] Request URL: ${API_BASE}/chat`);
+  console.log(`[API] Establishing SSE connection to ${API_BASE}/chat`);
   try {
+    if (isTauriApp) {
+      await detectBridgePort();
+    }
+    // Read permissionMode from store (if available)
+    let permissionMode: string | undefined;
+    try {
+      if (typeof window !== 'undefined' && (window as any).__chatStore) {
+        permissionMode = (window as any).__chatStore.getState().permissionMode;
+      }
+    } catch {}
     const res = await fetch(`${API_BASE}/chat`, {
       method: 'POST',
       headers: {
@@ -1113,9 +1689,12 @@ export async function sendMessage(
       body: JSON.stringify({
         conversation_id: conversationId,
         message,
+        model: model || undefined,
+        messages: messages && messages.length > 0 ? messages : undefined,
         attachments: attachments || undefined,
         ...resolveEnvCreds(getUserModeForConversation(conversationId)),
         user_mode: getUserModeForConversation(conversationId),
+        permission_mode: permissionMode,
         user_profile: (() => {
           try {
             const p = JSON.parse(localStorage.getItem('user_profile') || localStorage.getItem('user') || '{}');
@@ -1137,6 +1716,7 @@ export async function sendMessage(
     if (!res.body) return;
 
     const reader = res.body.getReader();
+    console.log(`[API] SSE connection established, reading stream...`);
     const decoder = new TextDecoder();
     let buffer = '';
     let thinkingText = '';
@@ -1294,11 +1874,13 @@ export async function sendMessage(
       buffer = lines.pop() || ''; // 保留不完整的最后一行
 
       for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const data = line.slice(6);
+        if (!line.startsWith('data:')) continue;
+        const data = line.startsWith('data: ') ? line.slice(6) : line.slice(5);
         if (data.trim() === '[DONE]') {
           processInlineArtifactText('', true);
           flushPending();
+          console.log(`[API] Stream complete: ${deltaCount} deltas, ${fullText.length} chars total`);
+          console.log(`[API] SSE connection closed`);
           onDone(fullText);
           return;
         }
@@ -1379,6 +1961,10 @@ export async function sendMessage(
           // 处理 thinking 内容
           if (parsed.type === 'content_block_delta' && parsed.delta) {
             if (parsed.delta.type === 'text_delta' && parsed.delta.text) {
+              deltaCount++;
+              if (deltaCount % 50 === 0) {
+                console.log(`[API] Stream progress: ${deltaCount} deltas received, ${fullText.length} chars`);
+              }
               const textChunk = parsed.delta.text;
               // 处理中转 API 将 <thinking> 标签嵌入 text 的情况
               if (textChunk.includes('<thinking>') || textChunk.includes('</thinking>')) {
@@ -1473,7 +2059,10 @@ export async function sendMessage(
             onToolUse({ type: 'input', tool_use_id: parsed.tool_use_id, tool_input: parsed.tool_input });
           }
           if (parsed.type === 'tool_use_done' && onToolUse) {
-            onToolUse({ type: 'done', tool_use_id: parsed.tool_use_id, content: parsed.content, is_error: parsed.is_error });
+            onToolUse({ type: 'done', tool_use_id: parsed.tool_use_id, content: parsed.content || parsed.output, is_error: parsed.is_error });
+          }
+          if (parsed.type === 'tool_arg_delta') {
+            // Tool argument streaming delta — can be ignored or logged
           }
 
           // Research mode events — forward as system events for MainContent to handle
@@ -1495,13 +2084,13 @@ export async function sendMessage(
 
           if (parsed.type === 'message_stop') {
             processInlineArtifactText('', true);
-            // 如果有文本内容才结束，否则可能是服务端工具中间的 message_stop
             if (fullText) {
               flushPending();
+              console.log(`[API] Stream complete: ${deltaCount} deltas, ${fullText.length} chars total`);
+              console.log(`[API] SSE connection closed`);
               onDone(fullText);
               return;
             }
-            // 没有文本内容时继续等待后续事件
             continue;
           }
 
@@ -1509,6 +2098,7 @@ export async function sendMessage(
             const detail = parsed.detail ? `\n${parsed.detail}` : '';
             processInlineArtifactText('', true);
             flushPending();
+            console.log(`[API] SSE connection closed`);
             onError((parsed.error || '未知错误') + detail);
             return;
           }
@@ -1521,19 +2111,19 @@ export async function sendMessage(
     processInlineArtifactText('', true);
     if (fullText) {
       flushPending();
+      console.log(`[API] SSE connection closed`);
       onDone(fullText);
     } else {
-      // 无文本回复（如纯工具事件），也要触发完成回调
       flushPending();
+      console.log(`[API] SSE connection closed`);
       onDone('');
     }
   } catch (err: any) {
-    // 用户主动中断不算错误
     if (err.name === 'AbortError') {
-      // 主动中断时也先把已积累的内容刷到界面
       onDone(fullText);
       return;
     }
+    console.log(`[API] SSE connection closed`);
     onError(err.message || 'Network error');
   }
 }
@@ -1666,4 +2256,163 @@ export async function getAnalyticsEventCounts(days = 30) {
 export async function getAnalyticsRecentEvents(limit = 50) {
   const res = await request(`/analytics/recent-events?limit=${limit}`);
   return res.json();
+}
+
+export async function multiagentResearch(
+  query: string,
+  model: string,
+  onEvent: (event: any) => void
+): Promise<void> {
+  await detectBridgePort();
+  const res = await fetch(`${API_BASE}/multiagent/research`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, model_id: model, user_id: 'default' })
+  });
+
+  if (!res.ok || !res.body) {
+    throw new Error('Multiagent research request failed');
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (line.startsWith('data:')) {
+        const data = line.slice(5).trim();
+        if (data === '[DONE]') return;
+        try {
+          const event = JSON.parse(data);
+          onEvent(event);
+        } catch {}
+      } else if (line.startsWith('event:')) {
+        // SSE event type line, consumed with data line
+      }
+    }
+  }
+}
+
+// ===== Terminal / PTY =====
+export interface TerminalSession {
+  id: string;
+  shell: string;
+  cwd: string;
+  created_at: string;
+}
+
+export async function createTerminal(cwd?: string, shell?: string): Promise<{ terminal_id: string }> {
+  const body: Record<string, string> = {};
+  if (cwd) body.cwd = cwd;
+  if (shell) body.shell = shell;
+  const res = await fetch(`${API_BASE}/terminals`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to create terminal' }));
+    throw new Error(err.error || 'Failed to create terminal');
+  }
+  return res.json();
+}
+
+export async function writeTerminal(terminalId: string, data: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/terminals/${encodeURIComponent(terminalId)}/write`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ data }),
+  });
+  if (!res.ok) throw new Error('Failed to write to terminal');
+}
+
+export async function resizeTerminal(terminalId: string, cols: number, rows: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/terminals/${encodeURIComponent(terminalId)}/resize`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cols, rows }),
+  });
+  if (!res.ok) throw new Error('Failed to resize terminal');
+}
+
+export async function closeTerminal(terminalId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/terminals/${encodeURIComponent(terminalId)}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to close terminal');
+}
+
+export async function listTerminals(): Promise<TerminalSession[]> {
+  const res = await fetch(`${API_BASE}/terminals`);
+  if (!res.ok) throw new Error('Failed to list terminals');
+  return res.json();
+}
+
+export function streamTerminalOutput(
+  terminalId: string,
+  onData: (data: string) => void,
+  onExit: (code: number | null) => void,
+  onError: (err: string) => void,
+  signal?: AbortSignal
+): () => void {
+  let closed = false;
+
+  fetch(`${API_BASE}/terminals/${encodeURIComponent(terminalId)}/stream`, { signal })
+    .then(async (res) => {
+      if (!res.ok || !res.body) {
+        onError('Failed to open terminal stream');
+        return;
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('event:exit')) continue;
+          if (line.startsWith('data:')) {
+            const data = line.startsWith('data: ') ? line.slice(6) : line.slice(5);
+            if (data === '[DONE]' || data === '[CLOSED]') {
+              closed = true;
+              onExit(null);
+              return;
+            }
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.type === 'data' && parsed.data) {
+                onData(parsed.data);
+              } else if (parsed.type === 'exit') {
+                onExit(parsed.code ?? null);
+                closed = true;
+                return;
+              }
+            } catch {
+              onData(line + '\n');
+            }
+          }
+        }
+      }
+      if (!closed) onExit(null);
+    })
+    .catch((err) => {
+      if (err.name !== 'AbortError') onError(err.message || 'Terminal stream error');
+    });
+
+  return () => {
+    closed = true;
+  };
 }

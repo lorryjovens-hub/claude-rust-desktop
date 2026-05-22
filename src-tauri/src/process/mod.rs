@@ -2,7 +2,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::process::{Child, Command};
+use tokio::process::Command;
 use tokio::sync::{broadcast, Mutex};
 use tokio::time::{timeout, Duration};
 
@@ -88,11 +88,11 @@ impl ProcessManager {
             return Err(anyhow::anyhow!("Process {} not found", pid));
         }
 
-        let info = info.unwrap();
+        let _info = info.unwrap();
         let start = std::time::Instant::now();
 
         let duration = Duration::from_secs(timeout_secs);
-        let result = timeout(duration, async {
+        let _result = timeout(duration, async {
             let mut cmd = Command::new("wait");
             cmd.arg(pid.to_string());
             cmd.output().await

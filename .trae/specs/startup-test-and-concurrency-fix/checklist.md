@@ -1,0 +1,23 @@
+- [ ] useStreamingStore abort() 正确清空 streamingIds
+- [ ] streamingState.ts 双重状态源已删除
+- [ ] useAuthStore 仅通过 subscribe 持久化，无双重写入
+- [ ] useToolStore resetTool 使用工厂函数创建新实例
+- [ ] useChatStore 流式 delta 使用 requestAnimationFrame 节流
+- [ ] db/mod.rs with_conn 返回 Result，Mutex lock 不 panic
+- [ ] 所有 async 函数中的 SQLite 操作通过 spawn_blocking 执行
+- [ ] 复合写操作使用事务包装
+- [ ] migration.rs 失败时不写 .migrated 标记
+- [ ] migration.rs 使用事务保护
+- [ ] migration.rs content 数组类型正确序列化
+- [ ] tool_loop.rs 每次 iteration 清理 streaming_tool_args
+- [ ] tool_loop.rs stream 错误时显式 drop
+- [ ] tool_loop.rs 检查 event_tx.is_closed() 提前退出
+- [ ] multiagent/mod.rs semaphore.acquire() 错误处理
+- [ ] multiagent/mod.rs join_all 处理 JoinError
+- [ ] multiagent/mod.rs 删除未使用的 event_rx
+- [ ] Bridge 数据库初始化日志
+- [ ] 前端 SSE 连接日志
+- [ ] cargo check 无错误
+- [ ] tsc --noEmit 无错误
+- [ ] 应用正常启动
+- [ ] 流式对话逐字输出正常

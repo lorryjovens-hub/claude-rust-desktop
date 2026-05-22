@@ -1,0 +1,16 @@
+- [x] ResearchOrchestrator 通过 Bridge API 正确启动研究任务，返回 research_id
+- [x] 研究子智能体并行执行，事件通过 SSE 推送到前端
+- [x] 研究任务可以正确停止和查询状态
+- [x] TaskExecutor 使用 ProviderManager 解析模型，不再依赖环境变量
+- [x] TaskExecutor 在 BridgeServer 中正确初始化，持久实例可用
+- [x] 任务创建、状态查询、取消功能正常工作
+- [x] Computer Use 鼠标操作使用 enigo crate 在真实 OS 上执行
+- [x] Computer Use 键盘输入使用 enigo crate 在真实 OS 上执行
+- [x] Computer Use 截图使用 PowerShell System.Drawing 捕获真实屏幕
+- [x] computer_use 工具注册在工具列表中，LLM 可以自主调用
+- [x] Git 工具（status/diff/log/commit/add）可供 LLM 调用
+- [x] AskUserQuestion 工具暂停工具循环，等待用户输入后恢复
+- [x] 前端 sendMessage 正确调用 Bridge API，SSE 流式回复正确显示
+- [x] 研究模式 UI 连接到 Bridge API，可以启动/停止研究
+- [x] cargo check 编译通过，无错误
+- [x] 应用启动后对话功能正常工作

@@ -1,0 +1,17 @@
+- [x] 中文翻译文件 (zh.json) 已创建并包含所有需要的翻译 key
+- [x] 英文翻译文件 (en.json) 已创建并包含所有需要的翻译 key
+- [x] useI18n hook 已创建，支持 t() 函数、language 状态、setLanguage 方法
+- [x] useUIStore 已添加 language 状态和 setLanguage 方法
+- [x] App 入口已初始化语言设置（检测系统语言 + localStorage）
+- [x] Sidebar 组件已使用 useI18n 替换所有硬编码文本
+- [x] SettingsPage 组件已使用 useI18n 替换所有硬编码文本
+- [x] SettingsPage 已添加语言切换选项
+- [x] Header 组件已使用 useI18n 替换所有硬编码文本
+- [x] ChatInput 组件已使用 useI18n 替换所有硬编码文本
+- [x] MessageBubble 组件已使用 useI18n 替换所有硬编码文本
+- [x] SearchModal 组件已使用 useI18n 替换所有硬编码文本
+- [x] 其他页面组件已汉化
+- [x] 中英文切换功能正常工作
+- [x] 语言设置持久化到 localStorage 并正确恢复
+- [x] 项目编译无错误
+- [x] 开发服务器正常运行

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Check, X, Loader2, GripVertical } from 'lucide-react';
+import { useI18n } from '../hooks/useI18n';
 
 interface ChatModel {
   id: string;
@@ -10,6 +11,7 @@ interface ChatModel {
 }
 
 const ModelsPage = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [models, setModels] = useState<ChatModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +61,7 @@ const ModelsPage = () => {
   };
 
   const handleDeleteModel = (id: string) => {
-    if (!confirm('确定删除此模型？')) return;
+    if (!confirm(t('customize.confirmDeleteModel'))) return;
     const updated = models.filter(m => m.id !== id);
     saveModels(updated);
   };
@@ -95,7 +97,7 @@ const ModelsPage = () => {
           className="flex items-center gap-1.5 text-claude-textSecondary hover:text-claude-text transition-colors mb-6"
         >
           <ArrowLeft size={16} />
-          <span className="text-[14px]">Back</span>
+          <span className="text-[14px]">{t('common.back')}</span>
         </button>
 
         {/* Header */}
@@ -105,7 +107,7 @@ const ModelsPage = () => {
               className="font-[Spectral] text-[32px] text-claude-text"
               style={{ fontWeight: 500, WebkitTextStroke: '0.5px currentColor' }}
             >
-              Models
+              {t('models.title')}
             </h1>
             <p className="text-[14px] text-claude-textSecondary mt-1">
               管理你的可用模型，拖拽调整顺序
@@ -117,38 +119,38 @@ const ModelsPage = () => {
             style={{ fontSize: '14px' }}
           >
             <Plus size={16} />
-            Add model
+            {t('customize.addModel')}
           </button>
         </div>
 
         {/* Add Model Form */}
         {showAddForm && (
           <div className="mb-8 p-5 bg-claude-input border border-claude-border rounded-xl">
-            <h3 className="text-[15px] font-semibold text-claude-text mb-4">添加新模型</h3>
+            <h3 className="text-[15px] font-semibold text-claude-text mb-4">{t('customize.addNewModel')}</h3>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-[13px] text-claude-textSecondary mb-1.5">模型 ID</label>
+                <label className="block text-[13px] text-claude-textSecondary mb-1.5">{t('customize.modelId')}</label>
                 <input
                   type="text"
                   value={newModel.id}
                   onChange={(e) => setNewModel({ ...newModel, id: e.target.value })}
-                  placeholder="e.g. claude-sonnet-4-6"
+                  placeholder={t('customize.modelIdPlaceholder')}
                   className="w-full px-3 py-2 bg-transparent border border-claude-border rounded-lg text-[14px] text-claude-text focus:outline-none focus:border-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-[13px] text-claude-textSecondary mb-1.5">显示名称</label>
+                <label className="block text-[13px] text-claude-textSecondary mb-1.5">{t('customize.displayName')}</label>
                 <input
                   type="text"
                   value={newModel.name}
                   onChange={(e) => setNewModel({ ...newModel, name: e.target.value })}
-                  placeholder="e.g. Sonnet 4.6"
+                  placeholder={t('customize.displayNamePlaceholder')}
                   className="w-full px-3 py-2 bg-transparent border border-claude-border rounded-lg text-[14px] text-claude-text focus:outline-none focus:border-blue-500"
                 />
               </div>
             </div>
             <div className="mb-4">
-              <label className="block text-[13px] text-claude-textSecondary mb-1.5">档位</label>
+              <label className="block text-[13px] text-claude-textSecondary mb-1.5">{t('customize.tier')}</label>
               <div className="flex gap-2">
                 {TIER_OPTIONS.map(opt => (
                   <button
@@ -170,7 +172,7 @@ const ModelsPage = () => {
                 onClick={() => { setShowAddForm(false); setNewModel({ id: '', name: '', tier: 'sonnet', enabled: 1 }); }}
                 className="px-4 py-2 text-[14px] font-medium text-claude-text hover:bg-claude-hover rounded-lg transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleAddModel}
@@ -178,7 +180,7 @@ const ModelsPage = () => {
                 className="px-4 py-2 text-[14px] font-medium text-white bg-[#333333] hover:bg-[#1a1a1a] dark:bg-[#FFFFFF] dark:text-black dark:hover:bg-[#e5e5e5] rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {saving && <Loader2 size={14} className="animate-spin" />}
-                Add
+                {t('customize.addModel')}
               </button>
             </div>
           </div>
@@ -194,8 +196,8 @@ const ModelsPage = () => {
             <div className="w-16 h-16 rounded-2xl bg-claude-hover flex items-center justify-center mb-4">
               <Plus size={24} className="opacity-40" />
             </div>
-            <p className="text-[15px] font-medium text-claude-text mb-1">还没有配置模型</p>
-            <p className="text-[13px]">点击 "Add model" 添加第一个模型</p>
+            <p className="text-[15px] font-medium text-claude-text mb-1">{t('customize.noModelsConfigured')}</p>
+            <p className="text-[13px]">{t('customize.addFirstModel')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -247,14 +249,14 @@ const ModelsPage = () => {
                         ? 'text-green-500 hover:bg-green-500/10'
                         : 'text-claude-textSecondary hover:bg-claude-hover'
                     }`}
-                    title={model.enabled ? 'Disable' : 'Enable'}
+                    title={model.enabled ? t('customize.disable') : t('customize.enable')}
                   >
                     {model.enabled ? <Check size={16} /> : <X size={16} />}
                   </button>
                   <button
                     onClick={() => handleDeleteModel(model.id)}
                     className="w-8 h-8 rounded-lg flex items-center justify-center text-claude-textSecondary hover:text-[#B9382C] hover:bg-[#B9382C]/10 transition-colors"
-                    title="Delete"
+                    title={t('common.delete')}
                   >
                     <Trash2 size={16} />
                   </button>

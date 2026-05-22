@@ -47,6 +47,14 @@ pub struct ProviderConfig {
     pub enabled: bool,
     pub is_default: bool,
     pub settings: HashMap<String, serde_json::Value>,
+    #[serde(default)]
+    pub supports_web_search: bool,
+    #[serde(default)]
+    pub web_search_strategy: Option<String>,
+    #[serde(default)]
+    pub web_search_tested_at: Option<u64>,
+    #[serde(default)]
+    pub web_search_test_reason: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -162,8 +170,8 @@ impl Default for AppConfig {
             behavior: BehaviorConfig {
                 auto_save: true,
                 auto_save_interval: 30,
-                max_conversation_history: 100,
-                max_context_messages: 50,
+                max_conversation_history: 500,
+                max_context_messages: 200,
                 confirm_before_delete: true,
                 show_system_prompt: false,
                 enable_markdown_preview: true,
@@ -238,6 +246,50 @@ impl AppConfig {
                 enabled: true,
                 is_default: true,
                 settings: HashMap::new(),
+                supports_web_search: false,
+                web_search_strategy: None,
+                web_search_tested_at: None,
+                web_search_test_reason: None,
+            },
+            ProviderConfig {
+                id: "deepseek".to_string(),
+                name: "DeepSeek".to_string(),
+                provider_type: "openai".to_string(),
+                api_key: None,
+                base_url: "https://api.deepseek.com/v1".to_string(),
+                models: vec![
+                    ModelConfig {
+                        id: "deepseek-v4-pro".to_string(),
+                        name: "DeepSeek V4 Pro".to_string(),
+                        enabled: false,
+                        max_tokens: Some(32768),
+                        supports_vision: false,
+                        supports_tools: true,
+                        supports_streaming: true,
+                        context_window: Some(1000000),
+                        cost_per_1k_input: Some(0.0002),
+                        cost_per_1k_output: Some(0.0008),
+                    },
+                    ModelConfig {
+                        id: "deepseek-chat".to_string(),
+                        name: "DeepSeek Chat".to_string(),
+                        enabled: false,
+                        max_tokens: Some(8192),
+                        supports_vision: false,
+                        supports_tools: true,
+                        supports_streaming: true,
+                        context_window: Some(64000),
+                        cost_per_1k_input: Some(0.00014),
+                        cost_per_1k_output: Some(0.00028),
+                    },
+                ],
+                enabled: false,
+                is_default: false,
+                settings: HashMap::new(),
+                supports_web_search: false,
+                web_search_strategy: None,
+                web_search_tested_at: None,
+                web_search_test_reason: None,
             },
             ProviderConfig {
                 id: "openai".to_string(),
@@ -274,6 +326,10 @@ impl AppConfig {
                 enabled: false,
                 is_default: false,
                 settings: HashMap::new(),
+                supports_web_search: false,
+                web_search_strategy: None,
+                web_search_tested_at: None,
+                web_search_test_reason: None,
             },
         ]
     }
@@ -287,10 +343,14 @@ pub struct ConfigManager {
 impl ConfigManager {
     pub fn new(config_dir: PathBuf) -> Self {
         let config_path = config_dir.join("config.json");
-        Self {
+        let mut mgr = Self {
             config_path,
             config: AppConfig::default(),
+        };
+        if let Err(e) = mgr.load() {
+            eprintln!("[ConfigManager] Failed to load config: {}", e);
         }
+        mgr
     }
 
     pub fn load(&mut self) -> Result<()> {
@@ -329,6 +389,10 @@ impl ConfigManager {
 
     pub fn get_provider(&self, id: &str) -> Option<&ProviderConfig> {
         self.config.providers.iter().find(|p| p.id == id)
+    }
+
+    pub fn get_default_provider(&self) -> Option<&ProviderConfig> {
+        self.config.providers.iter().find(|p| p.is_default)
     }
 
     pub fn get_provider_mut(&mut self, id: &str) -> Option<&mut ProviderConfig> {
@@ -461,13 +525,20 @@ impl ConversationStore {
         Ok(())
     }
 
-    pub fn save_conversation(&self, id: &str, messages: &[serde_json::Value]) -> Result<()> {
+    pub fn get_store_path(&self) -> &PathBuf {
+        &self.store_path
+    }
+
+    pub fn save_conversation(&self, id: &str, messages: &[serde_json::Value], model: Option<&str>) -> Result<()> {
         let path = self.store_path.join(format!("{}.json", id));
-        let data = serde_json::json!({
+        let mut data = serde_json::json!({
             "id": id,
             "messages": messages,
             "saved_at": chrono::Utc::now().to_rfc3339(),
         });
+        if let Some(m) = model {
+            data["model"] = serde_json::Value::String(m.to_string());
+        }
         fs::write(path, serde_json::to_string_pretty(&data)?)?;
         Ok(())
     }
@@ -527,6 +598,25 @@ impl ConversationStore {
         Ok(conversations)
     }
 
+    pub fn get_conversation_meta(&self, id: &str) -> Option<serde_json::Value> {
+        let path = self.store_path.join(format!("{}.json", id));
+        if !path.exists() {
+            return None;
+        }
+        if let Ok(content) = fs::read_to_string(&path) {
+            if let Ok(data) = serde_json::from_str::<serde_json::Value>(&content) {
+                return Some(serde_json::json!({
+                    "id": data.get("id").and_then(|v| v.as_str()).unwrap_or(""),
+                    "title": data.get("title").and_then(|v| v.as_str()).unwrap_or(""),
+                    "model": data.get("model").and_then(|v| v.as_str()).unwrap_or("claude-sonnet-4-20250514"),
+                    "user_mode": data.get("user_mode").and_then(|v| v.as_str()).unwrap_or("clawparrot"),
+                    "research_mode": data.get("research_mode").and_then(|v| v.as_bool()).unwrap_or(false),
+                }));
+            }
+        }
+        None
+    }
+
     pub fn delete_conversation(&self, id: &str) -> Result<()> {
         let path = self.store_path.join(format!("{}.json", id));
         if path.exists() {
@@ -540,7 +630,7 @@ impl ConversationStore {
         let idx = messages.iter().position(|m| m.get("id").and_then(|v| v.as_str()) == Some(message_id));
         if let Some(i) = idx {
             messages.truncate(i);
-            self.save_conversation(id, &messages)?;
+            self.save_conversation(id, &messages, None)?;
         }
         Ok(messages)
     }
@@ -552,7 +642,7 @@ impl ConversationStore {
         } else {
             messages.truncate(messages.len() - count);
         }
-        self.save_conversation(id, &messages)?;
+        self.save_conversation(id, &messages, None)?;
         Ok(messages)
     }
 

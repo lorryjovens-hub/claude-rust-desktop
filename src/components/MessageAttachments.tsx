@@ -46,8 +46,9 @@ function formatFileSize(bytes?: number): string {
 async function openFileInFolder(fileId: string) {
   if (!isTauri) return false;
   try {
-    // Ask bridge server for the local path
-    const res = await fetch(`http://127.0.0.1:30080/api/uploads/${encodeURIComponent(fileId)}/path`);
+    const url = getAttachmentUrl(fileId);
+    const basePath = url.replace(/\/uploads\/.*$/, '');
+    const res = await fetch(`${basePath}/uploads/${encodeURIComponent(fileId)}/path`);
     if (!res.ok) return false;
     const data = await res.json();
     if (data.localPath) {
@@ -98,14 +99,9 @@ const AttachmentCard: React.FC<{ attachment: Attachment; onClick: () => void }> 
 
   useEffect(() => {
     if (isImage) {
-      if (isTauri) {
-        // In Electron, use bridge server to serve raw file
-        setThumbnailUrl(`http://127.0.0.1:30080/api/uploads/${encodeURIComponent(attachment.id)}/raw`);
-      } else {
-        const url = getAttachmentUrl(attachment.id);
-        const token = localStorage.getItem('auth_token');
-        setThumbnailUrl(`${url}${url.includes('?') ? '&' : '?'}token=${token}`);
-      }
+      const url = getAttachmentUrl(attachment.id);
+      const token = localStorage.getItem('auth_token');
+      setThumbnailUrl(`${url}${url.includes('?') ? '&' : '?'}token=${token}`);
       setLoading(false);
       return;
     }
@@ -183,7 +179,7 @@ const MessageAttachments: React.FC<MessageAttachmentsProps> = ({ attachments, on
     if (isTauri) {
       const opened = await openFileInFolder(att.id);
       if (opened) return;
-      // If open failed (file not found), fall through to other handlers
+      // If open failed, fall through to other handlers
     }
 
     const url = getAttachmentUrl(att.id);
@@ -191,11 +187,7 @@ const MessageAttachments: React.FC<MessageAttachmentsProps> = ({ attachments, on
 
     // 图片：打开灯箱
     if (att.file_type === 'image' || (att.mime_type?.startsWith('image/') ?? false)) {
-      if (isTauri) {
-        setLightboxUrl(`http://127.0.0.1:30080/api/uploads/${encodeURIComponent(att.id)}/raw`);
-      } else {
-        setLightboxUrl(`${url}${url.includes('?') ? '&' : '?'}token=${token}`);
-      }
+      setLightboxUrl(`${url}${url.includes('?') ? '&' : '?'}token=${token}`);
       return;
     }
 
@@ -205,10 +197,7 @@ const MessageAttachments: React.FC<MessageAttachmentsProps> = ({ attachments, on
 
     if (onOpenDocument && (textExtensions.includes(ext) || (att.mime_type?.startsWith('text/') ?? false))) {
       try {
-        // Fetch content
-        const fetchUrl = isTauri
-          ? `http://127.0.0.1:30080/api/uploads/${encodeURIComponent(att.id)}/raw`
-          : `${url}${url.includes('?') ? '&' : '?'}token=${token}`;
+        const fetchUrl = `${url}${url.includes('?') ? '&' : '?'}token=${token}`;
         const res = await fetch(fetchUrl);
         if (res.ok) {
           const content = await res.text();

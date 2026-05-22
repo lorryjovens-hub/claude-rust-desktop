@@ -75,7 +75,7 @@ export const IconCode = ({ size = 20, className = "" }: { size?: number, classNa
 
 // Models
 export const IconModels = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <rect x="4" y="4" width="16" height="16" rx="2" />
     <rect x="9" y="9" width="6" height="6" />
     <line x1="9" y1="1" x2="9" y2="4" />
@@ -90,12 +90,21 @@ export const IconModels = ({ size = 20, className = "" }: { size?: number, class
 );
 
 export const IconPalette = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <circle cx="13.5" cy="6.5" r="2" />
     <circle cx="17.5" cy="10.5" r="2" />
     <circle cx="8.5" cy="7.5" r="2" />
     <circle cx="6.5" cy="12.5" r="2" />
     <path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c.55 0 1-.45 1-1v-1.5c0-.28.22-.5.5-.5H16c2.76 0 5-2.24 5-5 0-4.96-4.49-9-9-9z" />
+  </svg>
+);
+
+export const IconDirectory = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <rect x="14" y="14" width="7" height="7" rx="1" />
   </svg>
 );
 

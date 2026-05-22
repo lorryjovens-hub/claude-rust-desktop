@@ -25,7 +25,7 @@ const KNOWN_PROVIDERS: Array<{
     },
     {
       match: u => /deepseek\.com/i.test(u), name: 'DeepSeek', format: 'openai', color: '#4D6BFE', letter: 'D',
-      defaultModels: [{ id: 'deepseek-chat', name: 'DeepSeek V3' }, { id: 'deepseek-reasoner', name: 'DeepSeek R1' }]
+      defaultModels: [{ id: 'deepseek-v4-pro', name: 'DeepSeek V4 Pro' }, { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash' }]
     },
     {
       match: u => /bigmodel\.cn/i.test(u), name: 'GLM (Zhipu)', format: 'openai', color: '#3B68FF', letter: 'G',

@@ -1,9 +1,7 @@
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use tokio::io::AsyncBufReadExt;
 use tokio::process::Command as AsyncCommand;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -88,6 +86,7 @@ impl GitIntegration {
         }
     }
 
+    #[allow(dead_code)]
     async fn run_git_async(&self, args: &[&str]) -> Result<String> {
         let mut cmd = AsyncCommand::new("git");
         cmd.args(args).current_dir(&self.working_dir);
@@ -269,7 +268,7 @@ impl GitIntegration {
         for line in output.lines() {
             if line.starts_with("diff --git") {
                 if let Some(file) = current_file.take() {
-                    if let Some(hunk) = current_hunk.take() {
+                    if let Some(_hunk) = current_hunk.take() {
                         current_lines.push(DiffLine {
                             line_type: "header".to_string(),
                             content: String::new(),

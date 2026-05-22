@@ -139,6 +139,30 @@ impl SlashCommandRegistry {
                 category: "general".to_string(),
                 handler: "worktree".to_string(),
             },
+            SlashCommand {
+                name: "/openspace".to_string(),
+                description: "Analyze requirements and generate specs".to_string(),
+                category: "orchestration".to_string(),
+                handler: "openspace".to_string(),
+            },
+            SlashCommand {
+                name: "/superpowers".to_string(),
+                description: "Validate plans with engineering rules".to_string(),
+                category: "orchestration".to_string(),
+                handler: "superpowers".to_string(),
+            },
+            SlashCommand {
+                name: "/gstack".to_string(),
+                description: "Generate and manage work plans".to_string(),
+                category: "orchestration".to_string(),
+                handler: "gstack".to_string(),
+            },
+            SlashCommand {
+                name: "/workflow".to_string(),
+                description: "Execute multi-agent workflow".to_string(),
+                category: "orchestration".to_string(),
+                handler: "workflow".to_string(),
+            },
         ];
 
         for cmd in defaults {

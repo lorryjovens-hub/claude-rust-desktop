@@ -6,8 +6,10 @@ import { getProjects, createProject, getProject, updateProject, deleteProject, u
 import ModelSelector, { SelectableModel } from './ModelSelector';
 import { IconPlus } from './Icons';
 import startProjectsImg from '../assets/icons/start-projects.png';
+import { useI18n } from '../hooks/useI18n';
 
 const ProjectsPage = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -39,7 +41,6 @@ const ProjectsPage = () => {
   const plusMenuRef = useRef<HTMLDivElement>(null);
   const plusBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Model selector state — load from self-hosted config or use defaults
   const isSelfHostedMode = localStorage.getItem('user_mode') === 'selfhosted';
   const selectorModels = useMemo<SelectableModel[]>(() => {
     if (isSelfHostedMode) {
@@ -96,7 +97,6 @@ const ProjectsPage = () => {
 
   useEffect(() => { loadProjects(); }, [loadProjects]);
 
-  // Load skills when plus menu opens
   useEffect(() => {
     if (!showPlusMenu) { setShowSkillsSubmenu(false); return; }
     getSkills().then((data: any) => {
@@ -105,7 +105,6 @@ const ProjectsPage = () => {
     }).catch(() => {});
   }, [showPlusMenu]);
 
-  // Close plus menu on outside click
   useEffect(() => {
     if (!showPlusMenu) return;
     const handleClick = (e: MouseEvent) => {
@@ -140,7 +139,7 @@ const ProjectsPage = () => {
 
   const handleDelete = async () => {
     if (!currentProject) return;
-    if (!window.confirm(`确定要删除项目「${currentProject.name}」吗？所有关联的文件和对话也会被删除。`)) return;
+    if (!window.confirm(t('customize.confirmDeleteProjectMsg', { name: currentProject.name }))) return;
     try {
       await deleteProject(currentProject.id);
       setCurrentProject(null);
@@ -214,7 +213,7 @@ const ProjectsPage = () => {
     try {
       await deleteConversation(convId);
       loadProject(currentProject.id);
-      loadProjects(); // refresh chat_count
+      loadProjects();
     } catch (_) { }
   };
 
@@ -233,12 +232,10 @@ const ProjectsPage = () => {
     );
     return [...filtered].sort((a, b) => {
       if (sortBy === 'created') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      // 'activity' and 'edited' both sort by updated_at
       return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
     });
   }, [projects, searchQuery, sortBy]);
 
-  // ═══ Project Detail View ═══
   if (currentProject) {
     return (
       <div className="flex-1 h-full bg-claude-bg overflow-y-auto">
@@ -249,7 +246,7 @@ const ProjectsPage = () => {
               className="flex items-center gap-1.5 text-[14px] text-claude-textSecondary hover:text-claude-text transition-colors font-medium -ml-1"
             >
               <ArrowLeft size={16} />
-              All projects
+              {t('customize.allProjects')}
             </button>
           </div>
 
@@ -284,13 +281,11 @@ const ProjectsPage = () => {
           </div>
 
           <div className="space-y-4">
-            {/* Chat Input Container — matches MainContent new chat input */}
             <div
               className="bg-claude-input border border-claude-border dark:border-[#3a3a38] shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:border-[#CCC] dark:hover:border-[#5a5a58] focus-within:shadow-[0_2px_8px_rgba(0,0,0,0.08)] focus-within:border-[#CCC] dark:focus-within:border-[#5a5a58] transition-all duration-200 flex flex-col max-h-[60vh] font-sans rounded-2xl"
             >
               <div className="flex-1 overflow-y-auto min-h-0">
                 <div className="relative">
-                  {/* Skill overlay */}
                   {message.match(/^\/[a-zA-Z0-9_-]+/) && (
                     <div className="pl-5 pr-4 pt-5 pb-1 text-[16px] font-sans font-[350]" style={{ minHeight: '48px', position: 'absolute', top: 0, left: 0, right: 0, pointerEvents: 'none', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }} aria-hidden>
                       {(() => { const m = message.match(/^(\/[a-zA-Z0-9_-]+)([\s\S]*)$/); return m ? <><span className="text-[#4B9EFA]">{m[1]}</span><span className="text-claude-text">{m[2]}</span></> : null; })()}
@@ -300,7 +295,7 @@ const ProjectsPage = () => {
                     ref={textareaRef}
                     className={`w-full pl-5 pr-4 pt-5 pb-1 placeholder:text-claude-textSecondary text-[16px] outline-none resize-none overflow-hidden bg-transparent font-sans font-[350] ${message.match(/^\/[a-zA-Z0-9_-]+/) ? 'text-transparent caret-claude-text' : 'text-claude-text'}`}
                     style={{ minHeight: '48px', borderRadius: '16px 16px 0 0' }}
-                    placeholder={selectedSkill ? `Describe what you want ${selectedSkill.name} to do...` : "How can I help you today?"}
+                    placeholder={selectedSkill ? t('customize.describeSkillAction', { name: selectedSkill.name }) : t('customize.howCanIHelp')}
                     value={message}
                     onChange={(e) => {
                       setMessage(e.target.value);
@@ -340,11 +335,11 @@ const ProjectsPage = () => {
                     <div ref={plusMenuRef} className="absolute bottom-full left-0 mb-2 w-[220px] bg-claude-input border border-claude-border rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.12)] py-1.5 z-50">
                       <button onClick={() => { setShowPlusMenu(false); fileInputRef.current?.click(); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-claude-text hover:bg-claude-hover transition-colors">
                         <Paperclip size={16} className="text-claude-textSecondary" />
-                        Add files or photos
+                        {t('customize.addFiles')}
                       </button>
                       <div className="relative">
                         <button onMouseEnter={() => setShowSkillsSubmenu(true)} onClick={() => setShowSkillsSubmenu(p => !p)} className="w-full flex items-center justify-between px-4 py-2.5 text-[13px] text-claude-text hover:bg-claude-hover transition-colors">
-                          <div className="flex items-center gap-3"><FileText size={16} className="text-claude-textSecondary" />Skills</div>
+                          <div className="flex items-center gap-3"><FileText size={16} className="text-claude-textSecondary" />{t('customize.skills')}</div>
                           <ChevronDown size={14} className="text-claude-textSecondary -rotate-90" />
                         </button>
                         {showSkillsSubmenu && (
@@ -357,9 +352,9 @@ const ProjectsPage = () => {
                                 setMessage(prev => prev ? `/${slug} ${prev}` : `/${slug} `);
                                 textareaRef.current?.focus();
                               }} className="w-full text-left px-4 py-2 text-[13px] text-claude-text hover:bg-claude-hover transition-colors truncate">{skill.name}</button>
-                            )) : <div className="px-4 py-2 text-[12px] text-claude-textSecondary italic">No skills enabled</div>}
+                            )) : <div className="px-4 py-2 text-[12px] text-claude-textSecondary italic">{t('customize.noSkillsEnabled')}</div>}
                             <div className="border-t border-claude-border mt-1 pt-1">
-                              <button onClick={() => { setShowPlusMenu(false); window.location.hash = '#/customize'; }} className="w-full flex items-center gap-3 px-4 py-2 text-[13px] text-claude-textSecondary hover:bg-claude-hover transition-colors"><FileText size={14} />Manage skills</button>
+                              <button onClick={() => { setShowPlusMenu(false); window.location.hash = '#/customize'; }} className="w-full flex items-center gap-3 px-4 py-2 text-[13px] text-claude-textSecondary hover:bg-claude-hover transition-colors"><FileText size={14} />{t('customize.manageSkills')}</button>
                             </div>
                           </div>
                         )}
@@ -385,11 +380,10 @@ const ProjectsPage = () => {
               </div>
             </div>
 
-            {/* Conversation List / Banner */}
             {currentProject.conversations && currentProject.conversations.length > 0 ? (
               <div className="border border-claude-border rounded-[16px] overflow-hidden bg-transparent mt-2">
                 <div className="px-5 py-3 text-[13px] font-medium text-claude-textSecondary border-b border-claude-border">
-                  {currentProject.conversations.length} conversation{currentProject.conversations.length > 1 ? 's' : ''}
+                  {currentProject.conversations.length} {currentProject.conversations.length > 1 ? t('sidebar.chats') : t('sidebar.chats')}
                 </div>
                 {currentProject.conversations.map((conv: any) => (
                   <div
@@ -405,7 +399,7 @@ const ProjectsPage = () => {
                     <button
                       onClick={(e) => handleDeleteConversation(conv.id, e)}
                       className="p-1 text-claude-textSecondary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                      title="Delete conversation"
+                      title={t('common.delete')}
                     >
                       <Trash size={14} />
                     </button>
@@ -415,26 +409,24 @@ const ProjectsPage = () => {
             ) : (
               <div className="w-full border border-claude-border rounded-[16px] px-6 py-10 flex items-center justify-center bg-transparent mt-2">
                 <span className="text-[14.5px] text-[#A1A1AA]">
-                  Start a chat to keep conversations organized and re-use project knowledge.
+                  {t('customize.startChatDesc')}
                 </span>
               </div>
             )}
 
-            {/* Instructions and Files */}
             <div className="w-full border border-claude-border rounded-[16px] overflow-hidden bg-transparent mt-2">
-              {/* Instructions Header */}
               <div
                 className="p-5 border-b border-claude-border hover:bg-black/[0.015] dark:hover:bg-white/[0.015] transition-colors cursor-pointer group"
                 onClick={() => { if (!editingInstructions) setEditingInstructions(true); }}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-claude-text mb-0.5" style={{ fontSize: '15.5px' }}>Instructions</h3>
+                    <h3 className="font-semibold text-claude-text mb-0.5" style={{ fontSize: '15.5px' }}>{t('customize.instructions')}</h3>
                     {!editingInstructions && (
                       <p className="text-[13px] text-[#A1A1AA]">
                         {currentProject.instructions
                           ? currentProject.instructions.slice(0, 200) + (currentProject.instructions.length > 200 ? '...' : '')
-                          : "Add instructions to tailor Claude's responses"}
+                          : t('customize.addInstructions')}
                       </p>
                     )}
                   </div>
@@ -453,16 +445,14 @@ const ProjectsPage = () => {
                       className="w-full max-w-[800px] bg-white dark:bg-[#2A2928] border border-claude-border rounded-[20px] shadow-2xl p-7"
                       onClick={e => e.stopPropagation()}
                     >
-                      <h2 className="text-[20px] font-bold text-claude-text mb-2">Set project instructions</h2>
-                      <p className="text-[14px] text-[#A1A1AA] mb-5">
-                        Provide Claude with relevant instructions and information for chats within {currentProject.name}. This will work alongside <span className="underline decoration-[#555] underline-offset-2 cursor-pointer hover:text-claude-text">user preferences</span> and the selected style in a chat.
-                      </p>
+                      <h2 className="text-[20px] font-bold text-claude-text mb-2">{t('customize.setInstructionsTitle')}</h2>
+                      <p className="text-[14px] text-[#A1A1AA] mb-5" dangerouslySetInnerHTML={{ __html: t('customize.setInstructionsDesc', { name: currentProject.name }) }} />
 
                       <textarea
                         autoFocus
                         value={instructionsText}
                         onChange={e => setInstructionsText(e.target.value)}
-                        placeholder="Break down large tasks and ask clarifying questions when needed."
+                        placeholder={t('customize.instructionsPlaceholder')}
                         className="w-full h-[400px] px-4 py-3 bg-claude-bg dark:bg-[#202020] border border-claude-border rounded-[12px] text-[15px] text-claude-text resize-none outline-none focus:border-[#3A7ADA] focus:ring-1 focus:ring-[#3A7ADA] transition-colors"
                       />
 
@@ -471,13 +461,13 @@ const ProjectsPage = () => {
                           onClick={() => { setEditingInstructions(false); setInstructionsText(currentProject.instructions || ''); }}
                           className="px-4 py-2 text-[14px] font-medium text-claude-text hover:bg-white/5 border border-transparent hover:border-claude-border rounded-xl transition-all"
                         >
-                          Cancel
+                          {t('customize.cancelBtn')}
                         </button>
                         <button
                           onClick={handleSaveInstructions}
                           className="px-4 py-2 text-[14px] font-medium bg-[#E6E6E6] text-[#222] rounded-xl hover:opacity-90 transition-opacity"
                         >
-                          Save instructions
+                          {t('customize.saveInstructionsBtn')}
                         </button>
                       </div>
                     </div>
@@ -485,11 +475,10 @@ const ProjectsPage = () => {
                 )}
               </div>
 
-              {/* Files */}
               <div className="p-5 pb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-claude-text" style={{ fontSize: '15.5px' }}>
-                    Files {currentProject.files?.length > 0 && <span className="text-claude-textSecondary text-[13px] ml-1">({currentProject.files.length})</span>}
+                    {t('customize.files')} {currentProject.files?.length > 0 && <span className="text-claude-textSecondary text-[13px] ml-1">({currentProject.files.length})</span>}
                   </h3>
                   <button
                     onClick={() => fileInputRef.current?.click()}
@@ -507,7 +496,7 @@ const ProjectsPage = () => {
                 </div>
 
                 {uploading && (
-                  <div className="text-[13px] text-claude-textSecondary animate-pulse mb-3">Uploading...</div>
+                  <div className="text-[13px] text-claude-textSecondary animate-pulse mb-3">{t('customize.uploading')}</div>
                 )}
 
                 {currentProject.files && currentProject.files.length > 0 ? (
@@ -557,7 +546,7 @@ const ProjectsPage = () => {
                       </div>
                     </div>
                     <span className="text-[13px] text-[#A1A1AA] text-center max-w-[200px] leading-relaxed">
-                      Add PDFs, documents, or other text to reference in this project.
+                      {t('customize.addFilesDesc')}
                     </span>
                   </div>
                 )}
@@ -569,31 +558,30 @@ const ProjectsPage = () => {
     );
   }
 
-  // ═══ Create View ═══
   if (isCreating) {
     return (
       <div className="flex-1 h-full bg-claude-bg overflow-y-auto">
         <div className="max-w-[560px] mx-auto px-8 pt-12 pb-8">
           <h1 className="font-[Spectral] text-[32px] text-claude-text mb-6" style={{ fontWeight: 600 }}>
-            Create a personal project
+            {t('customize.createProjectTitle')}
           </h1>
 
           <div className="bg-[#EFEEE7] dark:bg-[#2A2928] rounded-2xl p-6 mb-6 border border-transparent dark:border-white/5">
-            <h3 className="font-semibold text-claude-text text-[15.5px] mb-2 text-[#403A35] dark:text-[#E3E0D8]">How to use projects</h3>
+            <h3 className="font-semibold text-claude-text text-[15.5px] mb-2 text-[#403A35] dark:text-[#E3E0D8]">{t('customize.howToUseProjects')}</h3>
             <p className="text-[14.5px] leading-relaxed text-[#564E48] dark:text-[#A8A096] mb-3">
-              Projects help organize your work and leverage knowledge across multiple conversations. Upload docs, code, and files to create themed collections that Claude can reference again and again.
+              {t('customize.projectsHelp1')}
             </p>
             <p className="text-[14.5px] leading-relaxed text-[#564E48] dark:text-[#A8A096]">
-              Start by creating a memorable title and description to organize your project. You can always edit it later.
+              {t('customize.projectsHelp2')}
             </p>
           </div>
 
           <div className="space-y-5">
             <div>
-              <label className="block text-[15px] font-medium text-claude-textSecondary mb-2">What are you working on?</label>
+              <label className="block text-[15px] font-medium text-claude-textSecondary mb-2">{t('customize.projectNameLabel')}</label>
               <input
                 type="text"
-                placeholder="Name your project"
+                placeholder={t('customize.projectNamePlaceholder')}
                 value={projectName}
                 onChange={e => setProjectName(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && projectName.trim()) handleCreate(); }}
@@ -601,9 +589,9 @@ const ProjectsPage = () => {
               />
             </div>
             <div>
-              <label className="block text-[15px] font-medium text-claude-textSecondary mb-2">What are you trying to achieve?</label>
+              <label className="block text-[15px] font-medium text-claude-textSecondary mb-2">{t('customize.projectGoalLabel')}</label>
               <textarea
-                placeholder="Describe your project, goals, subject, etc..."
+                placeholder={t('customize.projectGoalPlaceholder')}
                 rows={3}
                 value={projectDescription}
                 onChange={e => setProjectDescription(e.target.value)}
@@ -617,14 +605,14 @@ const ProjectsPage = () => {
               onClick={() => { setIsCreating(false); setProjectName(''); setProjectDescription(''); }}
               className="px-5 py-2.5 text-[15px] font-medium text-claude-text bg-white dark:bg-claude-bg border border-gray-300 dark:border-claude-border hover:bg-gray-50 dark:hover:bg-claude-hover rounded-xl transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               onClick={handleCreate}
               disabled={!projectName.trim()}
               className="px-5 py-2.5 text-[15px] font-medium text-claude-bg bg-black dark:bg-white dark:text-black hover:opacity-90 rounded-xl transition-opacity disabled:opacity-40"
             >
-              Create project
+              {t('customize.createProjectBtn')}
             </button>
           </div>
         </div>
@@ -632,19 +620,18 @@ const ProjectsPage = () => {
     );
   }
 
-  // ═══ Projects List View ═══
   return (
     <div className="flex-1 h-full bg-claude-bg overflow-y-auto">
       <div className="max-w-[800px] mx-auto px-8 py-12">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="font-[Spectral] text-[32px] text-claude-text" style={{ fontWeight: 500 }}>Projects</h1>
+          <h1 className="font-[Spectral] text-[32px] text-claude-text" style={{ fontWeight: 500 }}>{t('projects.title')}</h1>
           <button
             onClick={() => setIsCreating(true)}
             className="flex items-center gap-2 px-3.5 py-1.5 bg-claude-text text-claude-bg hover:opacity-90 rounded-lg transition-opacity font-medium"
             style={{ fontSize: '14px' }}
           >
             <Plus size={16} strokeWidth={2.5} />
-            New project
+            {t('customize.newProject')}
           </button>
         </div>
 
@@ -656,7 +643,7 @@ const ProjectsPage = () => {
               </div>
               <input
                 type="text"
-                placeholder="Search projects..."
+                placeholder={t('customize.searchProjects')}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-white dark:bg-claude-input border border-gray-200 dark:border-claude-border rounded-xl text-claude-text placeholder-claude-textSecondary focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-[15px]"
@@ -665,12 +652,12 @@ const ProjectsPage = () => {
 
             <div className="flex justify-end mb-6">
               <div className="flex items-center gap-3 text-[14.5px] text-[#A1A1AA] relative">
-                <span>Sort by</span>
+                <span>{t('customize.sortBy')}</span>
                 <button
                   onClick={() => setSortMenuOpen(!sortMenuOpen)}
                   className={`flex items-center gap-2 text-claude-text border border-[#3A3A3A] hover:border-[#4A4A4A] dark:border-claude-border dark:hover:bg-claude-hover rounded-[10px] px-3.5 py-1.5 transition-colors ${sortMenuOpen ? 'bg-claude-hover' : ''}`}
                 >
-                  {sortBy === 'activity' ? 'Activity' : sortBy === 'edited' ? 'Last edited' : 'Date created'}
+                  {sortBy === 'activity' ? t('customize.recentActivity') : sortBy === 'edited' ? t('customize.lastEdited') : t('customize.dateCreated')}
                   <ChevronDown size={14} className="text-claude-textSecondary" />
                 </button>
                 {sortMenuOpen && (
@@ -678,9 +665,9 @@ const ProjectsPage = () => {
                     <div className="fixed inset-0 z-40" onClick={() => setSortMenuOpen(false)} />
                     <div className="absolute top-full right-0 mt-1.5 w-[200px] bg-white dark:bg-[#2A2928] border border-gray-200 dark:border-claude-border rounded-[14px] shadow-lg py-1.5 z-50">
                       {[
-                        { id: 'activity', label: 'Recent activity' },
-                        { id: 'edited', label: 'Last edited' },
-                        { id: 'created', label: 'Date created' },
+                        { id: 'activity', label: t('customize.recentActivity') },
+                        { id: 'edited', label: t('customize.lastEdited') },
+                        { id: 'created', label: t('customize.dateCreated') },
                       ].map(opt => (
                         <button
                           key={opt.id}
@@ -703,7 +690,7 @@ const ProjectsPage = () => {
         )}
 
         {loading ? (
-          <div className="text-center text-claude-textSecondary text-[14px] mt-12">Loading...</div>
+          <div className="text-center text-claude-textSecondary text-[14px] mt-12">{t('customize.loadingProjects')}</div>
         ) : filteredProjects.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredProjects.map(p => (
@@ -730,20 +717,20 @@ const ProjectsPage = () => {
                         <div className="absolute top-full right-0 mt-1 w-[180px] bg-white dark:bg-[#30302E] rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.15)] border border-gray-200 dark:border-[#65645F] py-1.5 z-50">
                           <button className="w-full flex items-center gap-3 px-4 py-2.5 text-[14px] text-claude-text hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-left" onClick={(e) => { e.stopPropagation(); setActiveMenu(null); }}>
                             <Star size={16} className="text-claude-textSecondary" />
-                            Star
+                            {t('customize.star')}
                           </button>
                           <button className="w-full flex items-center gap-3 px-4 py-2.5 text-[14px] text-claude-text hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-left" onClick={(e) => { e.stopPropagation(); setActiveMenu(null); setProjectToEdit(p); setEditDetailsName(p.name); setEditDetailsDesc(p.description || ''); }}>
                             <Pencil size={16} className="text-claude-textSecondary" />
-                            Edit details
+                            {t('customize.editDetails')}
                           </button>
                           <div className="my-1.5 border-t border-claude-border opacity-50" />
                           <button className="w-full flex items-center gap-3 px-4 py-2.5 text-[14px] text-claude-text hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-left" onClick={(e) => { e.stopPropagation(); setActiveMenu(null); }}>
                             <Archive size={16} className="text-claude-textSecondary" />
-                            Archive
+                            {t('customize.archive')}
                           </button>
                           <button className="w-full flex items-center gap-3 px-4 py-2.5 text-[14px] text-[#E05A5A] hover:bg-red-500/10 transition-colors text-left" onClick={(e) => { e.stopPropagation(); setActiveMenu(null); setProjectToDelete(p); }}>
                             <Trash size={16} className="text-[#E05A5A]" />
-                            Delete
+                            {t('common.delete')}
                           </button>
                         </div>
                       </>
@@ -752,13 +739,13 @@ const ProjectsPage = () => {
                 </div>
 
                 <p className="text-[14px] text-claude-textSecondary line-clamp-3 leading-relaxed flex-1">
-                  {p.description || "No description provided."}
+                  {p.description || t('customize.noDescriptionProvided')}
                 </p>
 
                 <div className="mt-4 pt-1 flex items-center gap-4 text-[12px] text-claude-textSecondary/80">
-                  <span>Updated {new Date(p.updated_at).toLocaleDateString()}</span>
-                  {(p.file_count ?? 0) > 0 && <span>• {p.file_count} files</span>}
-                  {(p.chat_count ?? 0) > 0 && <span>• {p.chat_count} chats</span>}
+                  <span>{t('customize.updated')} {new Date(p.updated_at).toLocaleDateString()}</span>
+                  {(p.file_count ?? 0) > 0 && <span>• {p.file_count} {t('customize.files')}</span>}
+                  {(p.chat_count ?? 0) > 0 && <span>• {p.chat_count} {t('sidebar.chats')}</span>}
                 </div>
               </div>
             ))}
@@ -766,16 +753,16 @@ const ProjectsPage = () => {
         ) : (
           <div className="flex flex-col items-center justify-center mt-12">
             <img src={startProjectsImg} alt="Start a project" className="w-[100px] h-auto mb-6 dark:invert opacity-90" />
-            <h2 className="text-[17px] font-medium text-claude-text mb-3">Looking to start a project?</h2>
+            <h2 className="text-[17px] font-medium text-claude-text mb-3">{t('customize.lookingForProject')}</h2>
             <p className="text-[15px] text-claude-textSecondary text-center max-w-[400px] leading-relaxed mb-6">
-              Upload materials, set custom instructions, and organize conversations in one space.
+              {t('customize.lookingForProjectDesc')}
             </p>
             <button
               onClick={() => setIsCreating(true)}
               className="flex items-center gap-2 px-4 py-2 bg-transparent border border-claude-border hover:bg-claude-hover rounded-xl text-claude-text transition-colors text-[14.5px] font-medium"
             >
               <Plus size={18} strokeWidth={2.5} />
-              New project
+              {t('customize.newProject')}
             </button>
           </div>
         )}
@@ -785,9 +772,9 @@ const ProjectsPage = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-claude-input w-[460px] rounded-[16px] flex flex-col shadow-2xl relative border border-claude-border overflow-hidden">
             <div className="px-6 pt-6 pb-4 text-left">
-              <h3 className="text-[19px] font-semibold text-claude-text mb-3">Delete project</h3>
+              <h3 className="text-[19px] font-semibold text-claude-text mb-3">{t('customize.deleteProjectTitle')}</h3>
               <p className="text-[15px] text-claude-textSecondary leading-relaxed pr-4">
-                确定要删除项目「{projectToDelete.name}」吗？所有关联的文件和对话也会被删除。
+                {t('customize.confirmDeleteProjectMsg', { name: projectToDelete.name })}
               </p>
             </div>
             <div className="px-5 pb-5 pt-2 flex justify-end gap-3 mt-4">
@@ -795,13 +782,13 @@ const ProjectsPage = () => {
                 onClick={() => setProjectToDelete(null)}
                 className="px-5 py-2 text-[14.5px] font-medium text-claude-text border border-claude-border hover:bg-claude-hover rounded-[8px] transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={() => handleDeleteProject(projectToDelete)}
                 className="px-5 py-2 text-[14.5px] font-medium text-white bg-[#E05A5A] hover:bg-[#E86B6B] rounded-[8px] transition-colors"
               >
-                Delete
+                {t('common.delete')}
               </button>
             </div>
           </div>
@@ -812,11 +799,11 @@ const ProjectsPage = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-claude-input w-[460px] rounded-[16px] flex flex-col shadow-2xl relative border border-claude-border overflow-hidden">
             <div className="px-6 pt-6 pb-4 text-left">
-              <h3 className="text-[19px] font-semibold text-claude-text mb-5">Edit details</h3>
+              <h3 className="text-[19px] font-semibold text-claude-text mb-5">{t('customize.editDetails')}</h3>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[14px] text-claude-textSecondary mb-2 font-medium">Name</label>
+                  <label className="block text-[14px] text-claude-textSecondary mb-2 font-medium">{t('customize.name')}</label>
                   <input
                     type="text"
                     value={editDetailsName}
@@ -826,7 +813,7 @@ const ProjectsPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-[14px] text-claude-textSecondary mb-2 font-medium">Description</label>
+                  <label className="block text-[14px] text-claude-textSecondary mb-2 font-medium">{t('customize.description')}</label>
                   <textarea
                     value={editDetailsDesc}
                     onChange={(e) => setEditDetailsDesc(e.target.value)}
@@ -842,13 +829,13 @@ const ProjectsPage = () => {
                 onClick={() => setProjectToEdit(null)}
                 className="px-5 py-2.5 text-[14.5px] font-medium text-claude-text border border-claude-border hover:bg-claude-hover rounded-[8px] transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSaveEditDetails}
                 className="px-5 py-2.5 text-[14.5px] font-medium bg-claude-text text-claude-bg hover:opacity-90 rounded-[8px] transition-opacity"
               >
-                Save
+                {t('common.save')}
               </button>
             </div>
           </div>

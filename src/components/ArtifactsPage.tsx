@@ -3,6 +3,7 @@ import { ArrowLeft, Copy, Check, ExternalLink, RefreshCw, Loader2, FileCode, Mes
 import inspirationsData from '../data/inspirations.json';
 import { buildArtifactHtml, loadArtifactCode } from '../utils/artifactRenderer';
 import { getUserArtifacts, getArtifactContent } from '../api';
+import { useI18n } from '../hooks/useI18n';
 
 interface InspirationItem {
   artifact_id: string;
@@ -16,7 +17,6 @@ interface InspirationItem {
   code_file?: string;
 }
 
-/** Renders artifact HTML in an iframe via Blob URL (avoids srcdoc CSP issues in Electron) */
 const ArtifactIframe = React.forwardRef<HTMLIFrameElement, { html: string; title: string }>(
   ({ html, title }, ref) => {
     const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -41,15 +41,6 @@ const ArtifactIframe = React.forwardRef<HTMLIFrameElement, { html: string; title
   }
 );
 
-const CATEGORY_LABELS: Record<string, string> = {
-  all: 'All',
-  learn: 'Learn something',
-  'life-hacks': 'Life hacks',
-  games: 'Play a game',
-  creative: 'Be creative',
-  'touch-grass': 'Touch grass',
-};
-
 const CATEGORY_ORDER = ['all', 'learn', 'life-hacks', 'games', 'creative', 'touch-grass'];
 
 interface ArtifactsPageProps {
@@ -57,6 +48,7 @@ interface ArtifactsPageProps {
 }
 
 const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<'inspiration' | 'your_artifacts'>('inspiration');
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedItem, setSelectedItem] = useState<InspirationItem | null>(null);
@@ -67,7 +59,6 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
   const [userArtifacts, setUserArtifacts] = useState<any[]>([]);
   const [userArtifactsLoading, setUserArtifactsLoading] = useState(false);
 
-  // Load user artifacts when tab switches
   useEffect(() => {
     if (activeTab === 'your_artifacts') {
       setUserArtifactsLoading(true);
@@ -81,7 +72,6 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
     try {
       const data = await getArtifactContent(artifact.file_path);
       if (data?.content && onTryPrompt) {
-        // Store artifact for DocumentPanel and navigate
         sessionStorage.setItem('artifact_remix', JSON.stringify({
           name: artifact.title,
           description: '',
@@ -93,7 +83,6 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
     } catch {}
   };
 
-  // Load artifact code when detail view opens
   useEffect(() => {
     if (!selectedItem?.code_file) {
       setArtifactHtml(null);
@@ -111,11 +100,7 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
 
   const handleRefreshArtifact = () => {
     if (iframeRef.current && artifactHtml) {
-      // Re-create blob URL to refresh
-      const blob = new Blob([artifactHtml], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      iframeRef.current.src = url;
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      iframeRef.current.srcdoc = artifactHtml;
     }
   };
 
@@ -139,7 +124,6 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
   };
 
   const handleCustomize = async (item: InspirationItem) => {
-    // Load the artifact code
     let artifactCode: any = null;
     if (item.code_file) {
       try {
@@ -148,7 +132,6 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
       } catch {}
     }
 
-    // Store artifact data for MainContent to pick up
     sessionStorage.setItem('artifact_remix', JSON.stringify({
       name: item.name,
       description: item.description,
@@ -161,31 +144,27 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
     }
   };
 
-  // Detail view
   if (selectedItem) {
     return (
       <div className="flex-1 h-full bg-claude-bg overflow-y-auto">
         <div className="max-w-[800px] mx-auto px-4 py-6 md:px-8 md:py-10">
-          {/* Back button */}
           <button
             onClick={() => setSelectedItem(null)}
             className="flex items-center gap-1.5 text-claude-textSecondary hover:text-claude-text transition-colors mb-5"
           >
             <ArrowLeft size={16} />
-            <span className="text-[14px]">Back</span>
+            <span className="text-[14px]">{t('customize.back')}</span>
           </button>
 
-          {/* Creator badge */}
           <div className="flex items-center gap-2.5 mb-3">
             <div className="w-7 h-7 rounded-full bg-[#2A2928] dark:bg-[#1a1a19] border border-gray-500/30 dark:border-gray-500/40 flex items-center justify-center flex-shrink-0 p-1">
               <svg viewBox="0 0 1024 1024" className="w-full h-full">
                 <path d="M715.922286 204.8h-140.946286l256.877714 649.728H972.8L715.922286 204.8z m-407.844572 0L51.2 854.528h143.945143l52.955428-135.936h268.909715l51.931428 135.936h143.981715L456.009143 204.8H308.077714z m-13.970285 392.813714l87.954285-227.876571 87.954286 227.876571h-175.908571z" fill="#c5c5c5" />
               </svg>
             </div>
-            <span className="text-[14px] text-claude-text font-medium">Anthropic</span>
+            <span className="text-[14px] text-claude-text font-medium">{t('customize.anthropic')}</span>
           </div>
 
-          {/* Title + description + Customize button row */}
           <div className="flex items-start justify-between gap-6 mb-6">
             <div className="flex-1 min-w-0">
               <h1 className="text-[20px] font-semibold text-claude-text mb-1.5">{selectedItem.name}</h1>
@@ -196,18 +175,16 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
               className="flex items-center gap-2 px-4 py-2 bg-white text-[#1a1a1a] border border-white/80 rounded-xl text-[13px] font-medium hover:bg-gray-100 transition-colors flex-shrink-0 mt-1"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><line x1="20" y1="4" x2="8.12" y2="15.88" /><line x1="14.47" y1="14.48" x2="20" y2="20" /><line x1="8.12" y1="8.12" x2="12" y2="12" /></svg>
-              Customize
+              {t('customize.customize')}
             </button>
           </div>
 
-          {/* Large preview area */}
           <div className="w-full rounded-xl overflow-hidden border border-white/[0.08] mb-8 flex flex-col">
-            {/* Dark top toolbar */}
             <div className="w-full h-8 bg-[#1a1a19] dark:bg-[#111110] flex items-center justify-end px-2.5 gap-1 flex-shrink-0">
               <button
                 onClick={handleRefreshArtifact}
                 className="w-6 h-6 rounded flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
-                title="Refresh"
+                title={t('customize.refresh')}
               >
                 <RefreshCw size={13} />
               </button>
@@ -220,12 +197,11 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
                   }
                 }}
                 className="w-6 h-6 rounded flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
-                title="Open in new window"
+                title={t('customize.openInNewWindow')}
               >
                 <ExternalLink size={13} />
               </button>
             </div>
-            {/* Live artifact or fallback image */}
             {artifactLoading ? (
               <div className="w-full flex items-center justify-center bg-white dark:bg-[#1a1a19]" style={{ minHeight: '400px' }}>
                 <Loader2 size={24} className="animate-spin text-claude-textSecondary" />
@@ -246,18 +222,16 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
             )}
           </div>
 
-          {/* Bottom: About + Keep learning */}
           <div className="flex gap-10 flex-wrap">
-            {/* About - left */}
             <div className="flex-1 min-w-[300px]">
-              <h2 className="text-[16px] font-semibold text-claude-text mb-4">About</h2>
+              <h2 className="text-[16px] font-semibold text-claude-text mb-4">{t('customize.about')}</h2>
               <div className="bg-[#f5f5f4] dark:bg-[#121212] border border-black/[0.06] dark:border-white/[0.06] rounded-xl p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-[14px] font-semibold text-claude-text">Starting prompt</h3>
+                  <h3 className="text-[14px] font-semibold text-claude-text">{t('customize.startingPrompt')}</h3>
                   <button
                     onClick={() => handleCopyPrompt(selectedItem.starting_prompt)}
                     className="p-1.5 rounded-md text-claude-textSecondary hover:bg-claude-hover hover:text-claude-text transition-colors"
-                    title={copied ? 'Copied!' : 'Copy prompt'}
+                    title={copied ? t('customize.copied') : t('customize.copyPrompt')}
                   >
                     {copied ? <Check size={15} /> : <Copy size={15} />}
                   </button>
@@ -268,15 +242,14 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
               </div>
             </div>
 
-            {/* Keep learning - right */}
             <div className="w-[200px] flex-shrink-0">
-              <h2 className="text-[16px] font-semibold text-claude-text mb-4">Keep learning</h2>
+              <h2 className="text-[16px] font-semibold text-claude-text mb-4">{t('customize.keepLearning')}</h2>
               <div className="flex flex-col gap-2">
                 <button
                   onClick={() => handleTryIt(selectedItem.starting_prompt)}
                   className="flex items-center justify-between w-full px-4 py-2.5 border border-claude-border rounded-xl text-[13px] font-medium text-claude-text hover:bg-claude-hover transition-colors"
                 >
-                  <span>View full chat</span>
+                  <span>{t('customize.viewFullChat')}</span>
                   <ExternalLink size={13} className="text-claude-textSecondary" />
                 </button>
                 <a
@@ -285,7 +258,7 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
                   rel="noopener noreferrer"
                   className="flex items-center justify-between w-full px-4 py-2.5 border border-claude-border rounded-xl text-[13px] font-medium text-claude-text hover:bg-claude-hover transition-colors"
                 >
-                  <span>Artifacts guide</span>
+                  <span>{t('customize.artifactsGuide')}</span>
                   <ExternalLink size={13} className="text-claude-textSecondary" />
                 </a>
               </div>
@@ -296,7 +269,6 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
     );
   }
 
-  // Main grid view
   return (
     <div className="flex-1 h-full bg-claude-bg overflow-y-auto">
       <div className="max-w-[800px] mx-auto px-4 py-8 md:px-8 md:py-12">
@@ -305,36 +277,34 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
             className="font-[Spectral] text-[32px] text-claude-text"
             style={{ fontWeight: 500, WebkitTextStroke: '0.5px currentColor' }}
           >
-            Artifacts
+            {t('artifacts.title')}
           </h1>
           <button
             onClick={() => handleTryIt('Create a new interactive artifact.')}
             className="flex items-center gap-2 px-3.5 py-1.5 bg-claude-text text-claude-bg hover:opacity-90 rounded-lg transition-opacity font-medium"
             style={{ fontSize: '14px' }}
           >
-            New artifact
+            {t('customize.newArtifact')}
           </button>
         </div>
 
-        {/* Tabs */}
         <div className="flex items-center gap-6 border-b border-[#262624] mb-6">
           <button
             onClick={() => setActiveTab('inspiration')}
             className={`pb-3 text-[14px] font-medium transition-colors border-b-2 ${activeTab === 'inspiration' ? 'text-claude-text border-claude-text' : 'text-claude-textSecondary border-transparent hover:text-claude-text'}`}
           >
-            Inspiration
+            {t('customize.inspiration')}
           </button>
           <button
             onClick={() => setActiveTab('your_artifacts')}
             className={`pb-3 text-[14px] font-medium transition-colors border-b-2 ${activeTab === 'your_artifacts' ? 'text-claude-text border-claude-text' : 'text-claude-textSecondary border-transparent hover:text-claude-text'}`}
           >
-            Your artifacts
+            {t('customize.yourArtifacts')}
           </button>
         </div>
 
         {activeTab === 'inspiration' ? (
           <>
-            {/* Filters */}
             <div className="flex flex-wrap items-center gap-2 mb-8">
               {CATEGORY_ORDER.map(id => (
                 <button
@@ -345,12 +315,11 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
                     : 'text-claude-textSecondary hover:bg-black/5 dark:hover:bg-white/5'
                     }`}
                 >
-                  {CATEGORY_LABELS[id]}
+                  {t(`customize.${id === 'all' ? 'all' : id === 'learn' ? 'learn' : id === 'life-hacks' ? 'lifeHacks' : id === 'games' ? 'games' : id === 'creative' ? 'creative' : 'touchGrass'}`)}
                 </button>
               ))}
             </div>
 
-            {/* Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {filteredItems.map(item => (
                 <div
@@ -364,7 +333,6 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
                       alt={item.name}
                       className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
                       onError={(e) => {
-                        // Fallback: show a gradient placeholder
                         const el = e.target as HTMLImageElement;
                         el.style.display = 'none';
                         el.parentElement!.classList.add('bg-gradient-to-br', 'from-claude-hover', 'to-claude-input');
@@ -382,7 +350,6 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
             </div>
           </>
         ) : (
-          /* Your artifacts */
           userArtifactsLoading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 size={24} className="animate-spin text-claude-textSecondary" />
@@ -392,8 +359,8 @@ const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ onTryPrompt }) => {
               <div className="w-16 h-16 rounded-2xl bg-claude-hover flex items-center justify-center mb-4">
                 <FileCode size={24} className="opacity-40" />
               </div>
-              <p className="text-[15px] font-medium text-claude-text mb-1">No artifacts yet</p>
-              <p className="text-[13px]">HTML files created by Claude will appear here.</p>
+              <p className="text-[15px] font-medium text-claude-text mb-1">{t('customize.noArtifactsYet')}</p>
+              <p className="text-[13px]">{t('customize.artifactsDesc')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

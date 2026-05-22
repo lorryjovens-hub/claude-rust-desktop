@@ -25,12 +25,29 @@ mod ide;
 mod analytics;
 mod slash_commands;
 mod cost_tracker;
+mod native_engine;
+mod upload;
+mod project;
+mod computer_use;
+mod ask_user;
+mod document;
+mod sandbox;
+mod github;
+mod db;
+mod multiagent;
+mod orchestration;
+mod permissions;
 
 use bridge::BridgeServer;
+use native_engine::engine_core::NativeEngine;
+use native_engine::provider_manager::ProviderManager;
+use mcp::McpServerManager;
+use permissions::{AuditLogger, PermissionManager};
 use tauri::Manager;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Notify;
+use tokio::sync::Mutex;
 
 fn main() {
     let builder = tauri::Builder::default()
@@ -41,10 +58,37 @@ fn main() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_notification::init())
+        .manage(Arc::new(Mutex::new(None::<NativeEngine>)))
+        .manage(Arc::new(Mutex::new(None::<Arc<Mutex<ProviderManager>>>)))
+        .manage(Arc::new(claude_desktop_tauri_lib::db::DbManager::new(PathBuf::from(":memory:")).unwrap()))
+        .manage(Arc::new(Mutex::new(None::<Arc<Mutex<McpServerManager>>>)))
         .setup(|app| {
             let data_dir = app.path().app_data_dir().unwrap_or_else(|_| PathBuf::from("."));
             let bridge_ready = Arc::new(Notify::new());
             let bridge_ready_clone = bridge_ready.clone();
+
+            let mcp_config_path = data_dir.join("mcp-servers.json");
+            let mcp_manager = Arc::new(Mutex::new(McpServerManager::new(mcp_config_path)));
+            
+            {
+                let mcp_manager_ref = mcp_manager.clone();
+                tauri::async_runtime::block_on(async move {
+                    let manager = mcp_manager_ref.lock().await;
+                    if let Err(e) = manager.initialize().await {
+                        eprintln!("[MCP] Failed to initialize: {}", e);
+                    } else {
+                        println!("[MCP] Initialized successfully");
+                    }
+                });
+            }
+            
+            {
+                let app_handle = app.handle().clone();
+                let mcp_manager_clone = mcp_manager.clone();
+                tauri::async_runtime::block_on(async move {
+                    *app_handle.state::<Arc<Mutex<Option<Arc<Mutex<McpServerManager>>>>>>().lock().await = Some(mcp_manager_clone);
+                });
+            }
 
             tauri::async_runtime::spawn(async move {
                 let bridge = BridgeServer::new(data_dir);
@@ -87,6 +131,24 @@ fn main() {
             commands::get_slash_command_categories,
             commands::get_cost_summary,
             commands::get_all_session_costs,
+            commands::native_engine_init,
+            commands::native_chat,
+            commands::native_create_conversation,
+            commands::native_list_conversations,
+            commands::native_delete_conversation,
+            commands::native_get_messages,
+            commands::native_list_providers,
+            commands::native_update_provider,
+            commands::native_delete_provider,
+            commands::mcp_list_servers,
+            commands::mcp_start_server,
+            commands::mcp_stop_server,
+            commands::mcp_restart_server,
+            commands::mcp_add_server,
+            commands::mcp_update_server,
+            commands::mcp_remove_server,
+            commands::mcp_toggle_server,
+            commands::mcp_list_tools,
         ]);
 
     #[cfg(mobile)]

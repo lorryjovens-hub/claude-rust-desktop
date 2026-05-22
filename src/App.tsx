@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, useParams, useNavigate } from 'react-router-dom';
-import { FileText, ChevronDown, Trash, Pencil, Star, BellRing, Menu, Folder, ArrowLeft, ArrowRight, GitBranch, BarChart3 } from 'lucide-react';
+import { FileText, ChevronDown, Trash, Pencil, Star, BellRing, Menu, Folder, ArrowLeft, ArrowRight, GitBranch, BarChart3, Terminal } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import MainContent from './components/MainContent';
 import { IconSidebarToggle } from './components/Icons';
@@ -11,6 +11,7 @@ import Onboarding from './components/Onboarding';
 import SettingsPage from './components/SettingsPage';
 import AgentPanel from './components/AgentPanel';
 import AnalyticsPanel from './components/AnalyticsPanel';
+import TerminalPanel from './components/TerminalPanel';
 import UpgradePlan from './components/UpgradePlan';
 import DocumentPanel from './components/DocumentPanel';
 import ArtifactsPanel from './components/ArtifactsPanel';
@@ -30,6 +31,8 @@ import CustomizePage from './components/CustomizePage';
 import ProjectsPage from './components/ProjectsPage';
 import ModelsPage from './components/ModelsPage';
 import DesignPage from './components/DesignPage';
+import DirectoryModal from './components/DirectoryModal';
+import PromptSuggestionsPanel from './components/PromptSuggestionsPanel';
 import { tauriAPI } from './utils/tauriAPI';
 
 const isTauri = typeof window !== 'undefined' && !!(window as any).__TAURI_INTERNALS__;
@@ -238,8 +241,12 @@ const Layout = () => {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showAgentPanel, setShowAgentPanel] = useState(false);
   const [showAnalyticsPanel, setShowAnalyticsPanel] = useState(false);
+  const [showTerminal, setShowTerminal] = useState(false);
+  const [terminalHeight, setTerminalHeight] = useState(300);
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('onboarding_done'));
   const [needsGitBash, setNeedsGitBash] = useState(false);
+  const [showDirectoryModal, setShowDirectoryModal] = useState(false);
+  const [showPromptSuggestions, setShowPromptSuggestions] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -487,6 +494,10 @@ const Layout = () => {
         setShowZoomIndicator(true);
         setTimeout(() => setShowZoomIndicator(false), 1500);
       }
+      if ((e.ctrlKey || e.metaKey) && e.key === '`') {
+        e.preventDefault();
+        setShowTerminal(prev => !prev);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -539,9 +550,10 @@ const Layout = () => {
             ) : (<span className="p-1.5" style={{ color: '#B7B5B0' }}><ArrowRight size={16} strokeWidth={1.5} /></span>)}
             <Tooltip text="Agent Worktree" shortcut="Ctrl+Shift+A"><button onClick={() => { setShowAgentPanel(true); setShowAnalyticsPanel(false); }} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-claude-textSecondary hover:text-claude-text transition-colors"><GitBranch size={16} strokeWidth={1.5} /></button></Tooltip>
             <Tooltip text="使用统计"><button onClick={() => { setShowAnalyticsPanel(true); setShowAgentPanel(false); }} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-claude-textSecondary hover:text-claude-text transition-colors"><BarChart3 size={16} strokeWidth={1.5} /></button></Tooltip>
+            <Tooltip text="终端" shortcut="Ctrl+`"><button onClick={() => setShowTerminal(!showTerminal)} className={`p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors ${showTerminal ? 'text-[#C6613F]' : 'text-claude-textSecondary hover:text-claude-text'}`}><Terminal size={16} strokeWidth={1.5} /></button></Tooltip>
           </div>
         </div>
-        <Sidebar isCollapsed={isSidebarCollapsed} toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)} refreshTrigger={refreshTrigger} onNewChatClick={handleNewChat} onOpenSettings={() => { setShowSettings(true); setShowUpgrade(false); }} onOpenUpgrade={() => { setShowUpgrade(true); setShowSettings(false); }} onCloseOverlays={() => { setShowSettings(false); setShowUpgrade(false); }} tunerConfig={tunerConfig} setTunerConfig={setTunerConfig} titleBarHeight={titleBarHeight} />
+        <Sidebar isCollapsed={isSidebarCollapsed} toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)} refreshTrigger={refreshTrigger} onNewChatClick={handleNewChat} onOpenSettings={() => { setShowSettings(true); setShowUpgrade(false); }} onOpenUpgrade={() => { setShowUpgrade(true); setShowSettings(false); }} onOpenDirectory={() => setShowDirectoryModal(true)} onCloseOverlays={() => { setShowSettings(false); setShowUpgrade(false); }} tunerConfig={tunerConfig} setTunerConfig={setTunerConfig} titleBarHeight={titleBarHeight} />
         <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative" style={{ paddingTop: `${titleBarHeight}px` }}>
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[150] flex items-center rounded-xl p-0.5 pointer-events-auto" style={{ backgroundColor: 'var(--bg-mode-tabs)' as React.CSSProperties['backgroundColor'] }}>
             <Tooltip text="Chat" shortcut="Ctrl+1"><button className="px-3.5 py-1 text-[13px] font-medium rounded-[10px] text-claude-text shadow-sm transition-colors" style={{ backgroundColor: 'var(--bg-mode-tab-active)', fontFamily: 'Inter, system-ui, -apple-system, sans-serif', letterSpacing: '0.01em' }}>Chat</button></Tooltip>
@@ -626,6 +638,25 @@ const Layout = () => {
       )}
       {showAgentPanel && <AgentPanel onClose={() => setShowAgentPanel(false)} />}
       {showAnalyticsPanel && <AnalyticsPanel onClose={() => setShowAnalyticsPanel(false)} />}
+      {showTerminal && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-[80] border-t border-claude-border bg-[#1e1e2e] shadow-2xl"
+          style={{ height: `${terminalHeight}px` }}
+        >
+          <TerminalPanel onClose={() => setShowTerminal(false)} />
+        </div>
+      )}
+      <DirectoryModal isOpen={showDirectoryModal} onClose={() => setShowDirectoryModal(false)} />
+      {showPromptSuggestions && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[100]">
+          <PromptSuggestionsPanel onSelectPrompt={(prompt) => {
+            sessionStorage.setItem('prefill_input', prompt);
+            setShowPromptSuggestions(false);
+            handleNewChat();
+            window.location.hash = '#/';
+          }} />
+        </div>
+      )}
     </>
   );
 };

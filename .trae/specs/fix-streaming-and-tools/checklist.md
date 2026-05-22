@@ -1,0 +1,9 @@
+- [x] SSE 响应 Content-Type 包含 charset=utf-8，中文不再乱码
+- [x] tool_use_done 事件的 output 字段正确映射到前端 content
+- [x] sendMessage 和 sendMessageNative 都能处理 tool_use_start/tool_use_done 事件
+- [x] SSE data 前缀解析兼容 `data:` 和 `data: ` 两种格式
+- [x] 模型选择器显示自托管 provider 的模型
+- [x] ToolUseStart 事件包含 textBefore 字段
+- [x] 应用启动后中文流式对话正常显示
+- [x] 工具调用结果在前端可见
+- [x] 后端日志确认请求正确处理

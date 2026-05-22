@@ -4,10 +4,16 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { IconPlus, IconVoice, IconPencil, IconProjects, IconResearch, IconWebSearch } from './Icons';
 import ClaudeLogo from './ClaudeLogo';
 import { getConversation, sendMessage, createConversation, getUser, updateConversation, deleteMessagesFrom, deleteMessagesTail, branchConversation, uploadFile, deleteAttachment, compactConversation, answerUserQuestion, respondToolPermission, getUserUsage, getAttachmentUrl, getGenerationStatus, stopGeneration, getContextSize, getUserModels, getStreamStatus, reconnectStream, getProviderModels, getSkills, warmEngine, getProjects, createProject, Project, materializeGithub, getProviders, Provider } from '../api';
-import { addStreaming, removeStreaming, isStreaming } from '../streamingState';
+import { useChatStore } from '../stores/useChatStore';
+import { useStreamingStore } from '../stores/useStreamingStore';
+import { useUIStore } from '../stores/useUIStore';
+import { useAuthStore } from '../stores/useAuthStore';
+import { useProjectStore } from '../stores/useProjectStore';
+import { useToolStore } from '../stores/useToolStore';
 import MarkdownRenderer from './MarkdownRenderer';
 import ResearchPanel from './ResearchPanel';
 import ModelSelector, { SelectableModel } from './ModelSelector';
+import PermissionModeSelector from './PermissionModeSelector';
 import FileUploadPreview, { PendingFile } from './FileUploadPreview';
 import AddFromGithubModal, { GithubAddPayload } from './AddFromGithubModal';
 import MessageAttachments from './MessageAttachments';
@@ -20,6 +26,8 @@ import ToolDiffView, { shouldUseDiffView, hasExpandableContent, getToolStats } f
 import { executeCode, sendCodeResult, setStatusCallback } from '../pyodideRunner';
 import SlashCommandPalette from './SlashCommandPalette';
 import McpManagementPanel from './McpManagementPanel';
+import VoiceInput from './VoiceInput';
+import { useI18n } from '../hooks/useI18n';
 
 function formatChatError(err: string): string {
   const lower = (err || '').toLowerCase();
@@ -535,16 +543,17 @@ interface MessageListProps {
   onCopy: (content: string, idx: number) => void;
   onBranch: (idx: number) => void;
   onOpenDocument?: (doc: DocumentInfo) => void;
-  onSetMessages: React.Dispatch<React.SetStateAction<any[]>>;
+  onSetMessages: (messages: any[] | ((prev: any[]) => any[])) => void;
   messageContentRefs: React.MutableRefObject<Map<number, HTMLDivElement>>;
   onOpenResearch?: (msgId: string) => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 const MessageList = React.memo<MessageListProps>(({
   messages, loading, expandedMessages, editingMessageIdx, editingContent,
   copiedMessageIdx, compactStatus, onSetEditingContent, onEditCancel, onEditSave,
   onToggleExpand, onResend, onEdit, onCopy, onBranch, onOpenDocument, onSetMessages,
-  messageContentRefs, onOpenResearch,
+  messageContentRefs, onOpenResearch, t,
 }) => {
   return (
     <>
@@ -598,7 +607,7 @@ const MessageList = React.memo<MessageListProps>(({
                   <div className="flex items-start gap-2 text-claude-textSecondary text-[13px] leading-tight pt-1">
                     <Info size={14} className="mt-0.5 shrink-0" />
                     <span>
-                      Editing this message will create a new conversation branch. You can switch between branches using the arrow navigation buttons.
+                      {t('chat.editingMessageWarning')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -606,14 +615,14 @@ const MessageList = React.memo<MessageListProps>(({
                       onClick={onEditCancel}
                       className="px-3 py-1.5 text-[13px] font-medium text-claude-text bg-white dark:bg-claude-bg border border-black/10 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-claude-hover rounded-lg transition-colors"
                     >
-                      Cancel
+                      {t('chat.cancelEdit')}
                     </button>
                     <button
                       onClick={onEditSave}
                       disabled={!editingContent.trim() || editingContent === msg.content}
                       className="px-3 py-1.5 text-[13px] font-medium text-white bg-claude-text hover:bg-claude-textSecondary rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                      Save
+                      {t('chat.saveEdit')}
                     </button>
                   </div>
                 </div>
@@ -722,7 +731,7 @@ const MessageList = React.memo<MessageListProps>(({
                         const lines = text.split('\n').filter((l: string) => l.trim());
                         const last = lines[lines.length - 1] || '';
                         const summary = last.length > 40 ? last.slice(0, 40) + '...' : last;
-                        return summary || 'Thinking...';
+                        return summary || t('chat.thinking');
                       })()}
                     </span>
                     <ChevronDown size={14} className={`transform transition-transform duration-200 ${msg.isThinkingExpanded ? 'rotate-180' : ''}`} />
@@ -1041,6 +1050,7 @@ const MessageList = React.memo<MessageListProps>(({
 });
 
 const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtifactsUpdate, onOpenArtifacts, onTitleChange, onChatModeChange }: MainContentProps) => {
+  const { t } = useI18n();
   const { id } = useParams(); // Get conversation ID from URL
   const location = useLocation();
   const [localId, setLocalId] = useState<string | null>(null);
@@ -1050,9 +1060,80 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
   const activeId = id || localId || null;
 
   const navigate = useNavigate();
-  const [inputText, setInputText] = useState("");
-  const [messages, setMessages] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const {
+    messages, setMessages,
+    loading, setLoading,
+    inputText, setInputText,
+    conversationTitle, setConversationTitle,
+    modelCatalog, setModelCatalog,
+    currentModel: currentModelString, setCurrentModel: setCurrentModelString,
+    researchMode, setResearchMode,
+    openedResearchMsgId, setOpenedResearchMsgId,
+    compactStatus, setCompactStatus,
+    compactInstruction, setCompactInstruction,
+    planMode, setPlanMode,
+    crossModeWarning, setCrossModeWarning,
+    providersCache, setProvidersCache,
+    webSearchToast, setWebSearchToast,
+  } = useChatStore();
+  const {
+    addStreaming, removeStreaming, isStreaming,
+  } = useStreamingStore();
+  const {
+    showPlusMenu, setShowPlusMenu,
+    inputHeight, setInputHeight,
+    isDragging, setIsDragging,
+    showSkillsSubmenu, setShowSkillsSubmenu,
+    showProjectsSubmenu, setShowProjectsSubmenu,
+    showGithubModal, setShowGithubModal,
+    showCompactDialog, setShowCompactDialog,
+    showMcpPanel, setShowMcpPanel,
+    showSlashPalette, setShowSlashPalette,
+    slashPaletteInput, setSlashPaletteInput,
+  } = useUIStore();
+  const {
+    user, setUser,
+    showLoginRequired, setShowLoginRequired,
+    hasSubscription, setHasSubscription,
+  } = useAuthStore();
+  const {
+    projectList, setProjectList,
+    currentProjectId, setCurrentProjectId,
+    pendingProjectId, setPendingProjectId,
+    enabledSkills, setEnabledSkills,
+    selectedSkill, setSelectedSkill,
+    contextInfo, setContextInfo,
+    tokenUsage, setTokenUsage,
+  } = useProjectStore();
+  const {
+    activeTasks, setActiveTasks,
+    toolPermissionDialog, setToolPermissionDialog,
+    askUserDialog, setAskUserDialog,
+    expandedMessages, toggleExpandedMessage,
+    copiedMessageIdx, setCopiedMessageIdx,
+    editingMessageIdx, setEditingMessageIdx,
+    editingContent, setEditingContent,
+    pendingFiles, setPendingFiles,
+  } = useToolStore();
+
+  // Initialize currentModel from localStorage on mount
+  useEffect(() => {
+    if (!currentModelString) {
+      const saved = localStorage.getItem('default_model');
+      if (saved) {
+        setCurrentModelString(saved);
+      } else if (isSelfHostedMode && selfHostedModels.length > 0) {
+        setCurrentModelString(selfHostedModels[0].id);
+      } else {
+        setCurrentModelString('claude-sonnet-4-6');
+      }
+    }
+  }, []);
+
+  // Initialize providersCache
+  useEffect(() => {
+    getProviders().then(setProvidersCache).catch(() => {});
+  }, []);
 
   // Notify parent about artifacts
   useEffect(() => {
@@ -1078,7 +1159,6 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
 
 
   // Model state
-  const [modelCatalog, setModelCatalog] = useState<ModelCatalog | null>(null);
   const isSelfHostedMode = localStorage.getItem('user_mode') === 'selfhosted';
 
   // Self-hosted: read chat_models from localStorage synchronously to avoid flash of wrong models
@@ -1133,36 +1213,18 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
   }, [displayCommonModels, modelCatalog, isSelfHostedMode]);
 
   // Initial model: for self-hosted, prefer first configured model over hardcoded claude-sonnet-4-6
-  const [currentModelString, setCurrentModelString] = useState(() => {
-    const saved = localStorage.getItem('default_model');
-    if (saved) return saved;
-    if (isSelfHostedMode && selfHostedModels.length > 0) return selfHostedModels[0].id;
-    return 'claude-sonnet-4-6';
-  });
-  const [conversationTitle, setConversationTitle] = useState("");
   // Cross-mode warning: when an existing conversation's model isn't available in the
   // current user_mode (e.g. user opened a clawparrot-opus chat after switching to
   // selfhosted), we delay falling back. The first send attempt triggers a modal so
   // the user explicitly picks "keep cross-mode" or "switch to current mode model".
-  const [crossModeWarning, setCrossModeWarning] = useState<{
-    convId: string;
-    originalModel: string;
-    otherMode: 'clawparrot' | 'selfhosted';
-    fallbackModel: string;
-  } | null>(null);
-  // After user picks "switch model", we proceed to send. Stash the pending send args
-  // here so the modal callback can fire them after dismissal.
   const pendingCrossModeSendRef = useRef<(() => void) | null>(null);
   // Clawparrot login-required gate: shown when an un-logged-in clawparrot user
   // tries to send their first message.
-  const [showLoginRequired, setShowLoginRequired] = useState(false);
   const pendingLoginSendRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     onTitleChange?.(conversationTitle);
   }, [conversationTitle, onTitleChange]);
-
-  const [user, setUser] = useState<any>(null);
 
   // Welcome greeting — randomized per new chat, time-aware
   const welcomeGreeting = useMemo(() => {
@@ -1269,19 +1331,11 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
   const isAtBottomRef = useRef(true);
   const userScrolledUpRef = useRef(false);
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
-  const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
-  const [copiedMessageIdx, setCopiedMessageIdx] = useState<number | null>(null);
-  const [editingMessageIdx, setEditingMessageIdx] = useState<number | null>(null);
-  const [editingContent, setEditingContent] = useState('');
   const messageContentRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const [inputHeight, setInputHeight] = useState(160);
   const inputWrapperRef = useRef<HTMLDivElement>(null);
-  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [showPlusMenu, setShowPlusMenu] = useState(false);
-  const [researchMode, setResearchMode] = useState(false);
-  const [openedResearchMsgId, setOpenedResearchMsgId] = useState<string | null>(null);
+  const [isInputExpanded, setIsInputExpanded] = useState(false);
+  const [showMediaUpload, setShowMediaUpload] = useState(false);
   const toggleResearchMode = useCallback(async () => {
     const next = !researchMode;
     setResearchMode(next);
@@ -1293,16 +1347,11 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
   // Provider web-search capability (derived from the current model's provider).
   // The bridge strips web_search_20250305 automatically when the provider doesn't support it,
   // so this state is purely a UI indicator — no need to persist or toggle.
-  const [providersCache, setProvidersCache] = useState<Provider[]>([]);
-  const [webSearchToast, setWebSearchToast] = useState<string | null>(null);
-  useEffect(() => {
-    getProviders().then(setProvidersCache).catch(() => {});
-  }, []);
   const currentProviderSupportsWebSearch = useMemo(() => {
     if (!providersCache.length) return false;
     const bareModel = (currentModelString || '').replace(/-thinking$/, '');
     for (const p of providersCache) {
-      if ((p.models || []).some(m => m.id === bareModel)) {
+      if ((p.models || []).some((m: any) => m.id === bareModel)) {
         return p.supportsWebSearch === true;
       }
     }
@@ -1313,52 +1362,13 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
     const t = setTimeout(() => setWebSearchToast(null), 2800);
     return () => clearTimeout(t);
   }, [webSearchToast]);
-  const [showSkillsSubmenu, setShowSkillsSubmenu] = useState(false);
-  const [enabledSkills, setEnabledSkills] = useState<Array<{ id: string; name: string; description?: string }>>([]);
-  const [selectedSkill, setSelectedSkill] = useState<{ name: string; slug: string; description?: string } | null>(null);
   const plusMenuRef = useRef<HTMLDivElement>(null);
   const plusBtnRef = useRef<HTMLButtonElement>(null);
   // Add-to-project state
-  const [showProjectsSubmenu, setShowProjectsSubmenu] = useState(false);
-  const [projectList, setProjectList] = useState<Project[]>([]);
-  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
-  const [pendingProjectId, setPendingProjectId] = useState<string | null>(null);
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [projectAddToast, setProjectAddToast] = useState<string | null>(null);
-  const [compactStatus, setCompactStatus] = useState<{ state: 'idle' | 'compacting' | 'done' | 'error'; message?: string }>({ state: 'idle' });
-  const [showCompactDialog, setShowCompactDialog] = useState(false);
-  const [compactInstruction, setCompactInstruction] = useState('');
-  const [showGithubModal, setShowGithubModal] = useState(false);
-  const [hasSubscription, setHasSubscription] = useState<boolean | null>(null); // null = loading
-  const [contextInfo, setContextInfo] = useState<{ tokens: number; limit: number } | null>(null);
-  const [showSlashPalette, setShowSlashPalette] = useState(false);
-  const [slashPaletteInput, setSlashPaletteInput] = useState('');
-  const [showMcpPanel, setShowMcpPanel] = useState(false);
-
-  // AskUserQuestion state
-  const [askUserDialog, setAskUserDialog] = useState<{
-    request_id: string;
-    tool_use_id: string;
-    questions: Array<{ question: string; header?: string; options?: Array<{ label: string; description?: string }>; multiSelect?: boolean }>;
-    answers: Record<string, string>;
-  } | null>(null);
-
-  // Tool permission state
-  const [toolPermissionDialog, setToolPermissionDialog] = useState<{
-    request_id: string;
-    tool_use_id: string;
-    tool_name: string;
-    input: any;
-  } | null>(null);
-
-  // Token usage state
-  const [tokenUsage, setTokenUsage] = useState<{ input_tokens: number; output_tokens: number } | null>(null);
-
-  // Task/Agent progress state
-  const [activeTasks, setActiveTasks] = useState<Map<string, { description: string; status?: string; summary?: string; last_tool_name?: string }>>(new Map());
-
   const [slashCommandFilter, setSlashCommandFilter] = useState<string | null>(null);
 
   const SLASH_COMMANDS = [
@@ -1377,6 +1387,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
 
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
+  const [showVoicePanel, setShowVoicePanel] = useState(false);
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
@@ -1420,9 +1431,6 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
     }
   }, [isListening]);
 
-  // Plan mode state
-  const [planMode, setPlanMode] = useState(false);
-
   // 草稿持久化 refs（跟踪最新值，供 effect cleanup 读取）
   const inputTextRef = useRef(inputText);
   inputTextRef.current = inputText;
@@ -1442,6 +1450,18 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
     el.style.overflowY = newH >= 316 ? 'auto' : 'hidden';
     textareaHeightVal.current = newH;
   }, [inputBarBaseHeight]);
+
+  const handleVoiceResult = useCallback((text: string) => {
+    setInputText(prev => {
+      const base = prev.endsWith(' ') || prev === '' ? prev : prev + ' ';
+      return base + text;
+    });
+    adjustTextareaHeight();
+  }, [adjustTextareaHeight]);
+
+  const openVoicePanel = useCallback(() => {
+    setShowVoicePanel(true);
+  }, []);
 
   useEffect(() => {
     // If we have a URL param ID, clear any local ID to ensure we sync with source of truth
@@ -1646,6 +1666,21 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
               if (descMap[m.id] && !m.description) m.description = descMap[m.id];
             }
           }
+          // Merge models from /api/providers/models into the catalog
+          try {
+            const pModels = await getProviderModels();
+            if (Array.isArray(pModels) && pModels.length > 0) {
+              const existingIds = new Set((data?.all || []).map((m: any) => m.id));
+              const merged = [...(data?.all || [])];
+              for (const pm of pModels) {
+                if (!existingIds.has(pm.id)) {
+                  merged.push({ id: pm.id, name: pm.name || pm.id, enabled: 1, tier: 'extra' });
+                  existingIds.add(pm.id);
+                }
+              }
+              data = { ...data, all: merged };
+            }
+          } catch {}
         }
         if (cancelled) return;
         setModelCatalog(data);
@@ -1819,13 +1854,13 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                   setToolPermissionDialog({ request_id: data.request_id, tool_use_id: data.tool_use_id, tool_name: data.tool_name, input: data.input });
                 }
                 if (event === 'message_start' && data?.usage) {
-                  setTokenUsage(prev => {
+                  setTokenUsage((prev: any) => {
                     const u = data.usage;
                     return { input_tokens: (prev?.input_tokens || 0) + (u.input_tokens || 0), output_tokens: (prev?.output_tokens || 0) + (u.output_tokens || 0) };
                   });
                 }
                 if (event === 'message_delta' && data?.usage) {
-                  setTokenUsage(prev => {
+                  setTokenUsage((prev: any) => {
                     const u = data.usage;
                     return { input_tokens: prev?.input_tokens || 0, output_tokens: (prev?.output_tokens || 0) + (u.output_tokens || 0) };
                   });
@@ -2915,13 +2950,13 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
         }
         // Token usage tracking
         if (event === 'message_start' && data?.usage) {
-          setTokenUsage(prev => {
+          setTokenUsage((prev: any) => {
             const u = data.usage;
             return { input_tokens: (prev?.input_tokens || 0) + (u.input_tokens || 0), output_tokens: (prev?.output_tokens || 0) + (u.output_tokens || 0) };
           });
         }
         if (event === 'message_delta' && data?.usage) {
-          setTokenUsage(prev => {
+          setTokenUsage((prev: any) => {
             const u = data.usage;
             return { input_tokens: prev?.input_tokens || 0, output_tokens: (prev?.output_tokens || 0) + (u.output_tokens || 0) };
           });
@@ -3126,7 +3161,9 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
           return newMsgs;
         });
       },
-      controller.signal
+      controller.signal,
+      currentModelString,
+      [...messages, tempUserMsg]
     );
   };
 
@@ -3386,7 +3423,9 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
       },
       undefined,
       undefined,
-      controller.signal
+      controller.signal,
+      currentModelString,
+      [...messages.slice(0, idx), tempUserMsg]
     );
   };
 
@@ -3601,21 +3640,10 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
       },
       undefined,
       undefined,
-      controller.signal
+      controller.signal,
+      currentModelString,
+      [...messages.slice(0, idx), tempUserMsg]
     );
-  };
-
-  // 切换消息展开/折叠
-  const toggleMessageExpand = (idx: number) => {
-    setExpandedMessages(prev => {
-      const next = new Set(prev);
-      if (next.has(idx)) {
-        next.delete(idx);
-      } else {
-        next.add(idx);
-      }
-      return next;
-    });
   };
 
   // === 文件上传相关 ===
@@ -3958,7 +3986,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                     ref={inputRef}
                     className={`w-full pl-5 pr-4 pt-5 pb-1 placeholder:text-claude-textSecondary text-[16px] outline-none resize-none overflow-hidden bg-transparent font-sans font-[350] ${inputText.match(/^\/[a-zA-Z0-9_-]+/) ? 'text-transparent caret-claude-text' : 'text-claude-text'}`}
                     style={{ minHeight: '48px', borderRadius: `${tunerConfig?.inputRadius || 16}px ${tunerConfig?.inputRadius || 16}px 0 0` }}
-                    placeholder={selectedSkill ? `Describe what you want ${selectedSkill.name} to do...` : "How can I help you today?"}
+                    placeholder={selectedSkill ? `Describe what you want ${selectedSkill.name} to do...` : t('chat.inputPlaceholder')}
                     value={inputText}
                     onChange={(e) => {
                       const val = e.target.value;
@@ -4007,7 +4035,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-claude-text hover:bg-claude-hover transition-colors"
                       >
                         <Paperclip size={16} className="text-claude-textSecondary" />
-                        Add files or photos
+                        {t('chat.addAttachment')}
                       </button>
                       <button
                         onMouseEnter={() => { setShowSkillsSubmenu(false); setShowProjectsSubmenu(false); }}
@@ -4026,7 +4054,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                         >
                           <div className="flex items-center gap-3">
                             <IconProjects size={16} className="text-claude-textSecondary scale-[1.6] dark:[filter:brightness(0)_invert(1)_brightness(0.68)_sepia(0.18)]" />
-                            Add to project
+                            {t('projects.addToProject')}
                           </div>
                           <ChevronDown size={14} className="text-claude-textSecondary -rotate-90" />
                         </button>
@@ -4048,7 +4076,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                                 </button>
                               );
                             }) : (
-                              <div className="px-4 py-2 text-[12px] text-claude-textSecondary italic">No projects yet</div>
+                              <div className="px-4 py-2 text-[12px] text-claude-textSecondary italic">{t('projects.noProjectsYet')}</div>
                             )}
                             <div className="border-t border-claude-border mt-1 pt-1">
                               <button
@@ -4062,7 +4090,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                                 className="w-full flex items-center gap-3 px-4 py-2 text-[13px] text-claude-textSecondary hover:bg-claude-hover transition-colors"
                               >
                                 <Plus size={14} />
-                                Start a new project
+                                {t('projects.createNewProject')}
                               </button>
                             </div>
                           </div>
@@ -4141,7 +4169,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                         >
                           <div className="flex items-center gap-3">
                             <IconWebSearch size={16} className={currentProviderSupportsWebSearch ? 'text-[#2E7CF6]' : 'text-claude-textSecondary'} />
-                            <span className={currentProviderSupportsWebSearch ? 'text-[#2E7CF6] font-medium' : 'text-claude-text'}>Web search</span>
+                            <span className={currentProviderSupportsWebSearch ? 'text-[#2E7CF6] font-medium' : 'text-claude-text'}>{t('chat.webSearch')}</span>
                           </div>
                           {currentProviderSupportsWebSearch && <Check size={14} className="text-[#2E7CF6]" />}
                         </button>
@@ -4177,9 +4205,9 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                   {speechSupported && (
                     <button
                       onMouseDown={(e) => e.preventDefault()}
-                      onClick={toggleVoiceInput}
+                      onClick={openVoicePanel}
                       className={`p-2 rounded-lg transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-claude-textSecondary hover:bg-claude-hover hover:text-claude-text'}`}
-                      title={isListening ? 'Stop voice input' : 'Start voice input'}
+                      title="语音输入"
                     >
                       <IconVoice size={20} />
                     </button>
@@ -4246,7 +4274,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
               onSetEditingContent={setEditingContent}
               onEditCancel={handleEditCancel}
               onEditSave={handleEditSave}
-              onToggleExpand={toggleMessageExpand}
+              onToggleExpand={toggleExpandedMessage}
               onResend={handleResendMessage}
               onEdit={handleEditMessage}
               onBranch={handleBranchMessage}
@@ -4255,6 +4283,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
               onSetMessages={setMessages}
               messageContentRefs={messageContentRefs}
               onOpenResearch={(msgId) => setOpenedResearchMsgId(msgId)}
+              t={t}
             />
             <div ref={messagesEndRef} />
           </div>
@@ -4301,7 +4330,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                     ref={inputRef}
                     className={`w-full px-4 pt-4 pb-0 placeholder:text-claude-textSecondary text-[16px] outline-none resize-none bg-transparent font-sans font-[350] ${inputText.match(/^\/[a-zA-Z0-9_-]+/) ? 'text-transparent caret-claude-text' : 'text-claude-text'}`}
                     style={{ height: `${inputBarBaseHeight}px`, minHeight: '16px', boxSizing: 'border-box', overflowY: 'hidden' }}
-                    placeholder={selectedSkill ? `Describe what you want ${selectedSkill.name} to do...` : "How can I help you today?"}
+                    placeholder={selectedSkill ? `Describe what you want ${selectedSkill.name} to do...` : t('chat.inputPlaceholder')}
                     value={inputText}
                     onChange={(e) => {
                       setInputText(e.target.value);
@@ -4352,7 +4381,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                           className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-claude-text hover:bg-claude-hover transition-colors"
                         >
                           <Paperclip size={16} className="text-claude-textSecondary" />
-                          Add files or photos
+                          {t('chat.addAttachment')}
                         </button>
                         <button
                           onMouseEnter={() => { setShowSkillsSubmenu(false); setShowProjectsSubmenu(false); }}
@@ -4374,7 +4403,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                           >
                             <div className="flex items-center gap-3">
                               <IconProjects size={16} className="text-claude-textSecondary scale-[1.6] dark:[filter:brightness(0)_invert(1)_brightness(0.68)_sepia(0.18)]" />
-                              Add to project
+                              {t('projects.addToProject')}
                             </div>
                             <ChevronDown size={14} className="text-claude-textSecondary -rotate-90" />
                           </button>
@@ -4396,7 +4425,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                                   </button>
                                 );
                               }) : (
-                                <div className="px-4 py-2 text-[12px] text-claude-textSecondary italic">No projects yet</div>
+                                <div className="px-4 py-2 text-[12px] text-claude-textSecondary italic">{t('projects.noProjectsYet')}</div>
                               )}
                               <div className="border-t border-claude-border mt-1 pt-1">
                                 <button
@@ -4410,7 +4439,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                                   className="w-full flex items-center gap-3 px-4 py-2 text-[13px] text-claude-textSecondary hover:bg-claude-hover transition-colors"
                                 >
                                   <Plus size={14} />
-                                  Start a new project
+                                  {t('projects.createNewProject')}
                                 </button>
                               </div>
                             </div>
@@ -4523,7 +4552,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                           >
                             <div className="flex items-center gap-3">
                               <IconWebSearch size={16} className={currentProviderSupportsWebSearch ? 'text-[#2E7CF6]' : 'text-claude-textSecondary'} />
-                              <span className={currentProviderSupportsWebSearch ? 'text-[#2E7CF6] font-medium' : 'text-claude-text'}>Web search</span>
+                              <span className={currentProviderSupportsWebSearch ? 'text-[#2E7CF6] font-medium' : 'text-claude-text'}>{t('chat.webSearch')}</span>
                             </div>
                             {currentProviderSupportsWebSearch && <Check size={14} className="text-[#2E7CF6]" />}
                           </button>
@@ -4576,6 +4605,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                     )}
                   </div>
                   <div className="flex items-center gap-3">
+                    <PermissionModeSelector />
                     <ModelSelector
                       currentModelString={currentModelString}
                       models={selectorModels}
@@ -4586,9 +4616,9 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                     {speechSupported && (
                       <button
                         onMouseDown={(e) => e.preventDefault()}
-                        onClick={toggleVoiceInput}
+                        onClick={openVoicePanel}
                         className={`p-2 rounded-lg transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-claude-textSecondary hover:bg-claude-hover hover:text-claude-text'}`}
-                        title={isListening ? 'Stop voice input' : 'Start voice input'}
+                        title="语音输入"
                       >
                         <IconVoice size={20} />
                       </button>
@@ -5009,6 +5039,13 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
       {showMcpPanel && (
         <McpManagementPanel onClose={() => setShowMcpPanel(false)} />
       )}
+
+      {/* Voice Input Panel */}
+      <VoiceInput
+        isOpen={showVoicePanel}
+        onClose={() => setShowVoicePanel(false)}
+        onResult={handleVoiceResult}
+      />
     </div>
   );
 };

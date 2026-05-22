@@ -115,6 +115,39 @@ impl StreamManager {
             .map(|(id, _)| id.clone())
             .collect()
     }
+
+    pub fn has_listeners(&self, conversation_id: &str) -> bool {
+        self.streams.get(conversation_id)
+            .map(|s| !s.listeners.is_empty() && !s.done)
+            .unwrap_or(false)
+    }
+
+    pub fn is_active(&self, conversation_id: &str) -> bool {
+        self.streams.get(conversation_id)
+            .map(|s| !s.done)
+            .unwrap_or(false)
+    }
+
+    pub fn get_historical_events(&self, conversation_id: &str) -> Vec<StreamEvent> {
+        self.streams.get(conversation_id)
+            .map(|s| s.events.clone())
+            .unwrap_or_default()
+    }
+
+    pub fn add_listener_with_replay(&mut self, conversation_id: &str) -> Option<(broadcast::Receiver<StreamEvent>, Vec<StreamEvent>)> {
+        self.streams.get_mut(conversation_id).map(|stream| {
+            let (tx, rx) = broadcast::channel(100);
+            stream.listeners.push(tx);
+            let history = stream.events.clone();
+            (rx, history)
+        })
+    }
+
+    pub fn remove_all_listeners(&mut self, conversation_id: &str) {
+        if let Some(stream) = self.streams.get_mut(conversation_id) {
+            stream.listeners.clear();
+        }
+    }
 }
 
 impl Default for StreamManager {

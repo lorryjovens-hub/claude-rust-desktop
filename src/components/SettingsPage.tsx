@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, Smartphone, MonitorIcon, LogOut, MoreHorizontal, Check, X } from 'lucide-react';
+import { ChevronRight, Smartphone, MonitorIcon, LogOut, MoreHorizontal, Check, X, Server, Globe } from 'lucide-react';
 import { getUserProfile, updateUserProfile, getUserUsage, getGatewayUsage, getSessions, deleteSession, logoutOtherSessions, changePassword, deleteAccount, logout, getProviderModels } from '../api';
 import ProviderSettings from './ProviderSettings';
+import McpSettingsPage from './McpSettingsPage';
+import { useI18n } from '../hooks/useI18n';
 
 interface SettingsPageProps {
   onClose: () => void;
@@ -13,9 +15,10 @@ const WORK_OPTIONS = [
   '法律', '医疗健康', '其他',
 ];
 
-type Tab = 'general' | 'account' | 'usage' | 'models';
+type Tab = 'general' | 'account' | 'usage' | 'models' | 'mcp';
 
 const SettingsPage = ({ onClose }: SettingsPageProps) => {
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>('general');
   const [profile, setProfile] = useState<any>(null);
   const [usage, setUsage] = useState<any>(null);
@@ -46,6 +49,7 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; sessionId: string } | null>(null);
   const [sendKey, setSendKey] = useState(localStorage.getItem('sendKey') || 'enter'); // enter or ctrl+enter
   const [newlineKey, setNewlineKey] = useState(localStorage.getItem('newlineKey') || (localStorage.getItem('sendKey') === 'enter' ? 'shift_enter' : 'enter'));
+  const [language, setLanguage] = useState(localStorage.getItem('language') || 'zh');
 
   const isSelfHosted = localStorage.getItem('user_mode') === 'selfhosted';
 
@@ -111,11 +115,11 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
       }
       window.dispatchEvent(new Event('userProfileUpdated'));
       if (!silent) {
-        setSaveMsg('已保存');
+        setSaveMsg(t('settings.saveSuccess'));
         setTimeout(() => setSaveMsg(''), 2000);
       }
     } catch (err: any) {
-      if (!silent) setSaveMsg(err.message || '保存失败');
+      if (!silent) setSaveMsg(err.message || t('common.error'));
     } finally {
       if (!silent) setSaving(false);
     }
@@ -208,7 +212,7 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
             WebkitTextStroke: '0.5px currentColor'
           }}
         >
-          Settings
+          {t('settings.title')}
         </h2>
 
         <button
@@ -216,7 +220,7 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
           className={`text-left px-3 py-2 rounded-lg text-[15px] font-medium transition-colors ${tab === 'general' ? 'bg-claude-btn-hover text-claude-text' : 'text-claude-textSecondary hover:bg-claude-hover'
             }`}
         >
-          General
+          {t('settings.general')}
         </button>
         {localStorage.getItem('user_mode') === 'selfhosted' && (
           <button
@@ -224,7 +228,7 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
             className={`text-left px-3 py-2 rounded-lg text-[15px] font-medium transition-colors ${tab === 'models' ? 'bg-claude-btn-hover text-claude-text' : 'text-claude-textSecondary hover:bg-claude-hover'
               }`}
           >
-            Models
+            {t('settings.models')}
           </button>
         )}
         {localStorage.getItem('user_mode') !== 'selfhosted' && (
@@ -233,7 +237,7 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
             className={`text-left px-3 py-2 rounded-lg text-[15px] font-medium transition-colors ${tab === 'account' ? 'bg-claude-btn-hover text-claude-text' : 'text-claude-textSecondary hover:bg-claude-hover'
               }`}
           >
-            Account
+            {t('settings.account')}
           </button>
         )}
         {localStorage.getItem('user_mode') !== 'selfhosted' && (
@@ -242,9 +246,17 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
             className={`text-left px-3 py-2 rounded-lg text-[15px] font-medium transition-colors ${tab === 'usage' ? 'bg-claude-btn-hover text-claude-text' : 'text-claude-textSecondary hover:bg-claude-hover'
               }`}
           >
-            Usage
+            {t('settings.usage')}
           </button>
         )}
+        <button
+          onClick={() => setTab('mcp')}
+          className={`text-left px-3 py-2 rounded-lg text-[15px] font-medium transition-colors flex items-center gap-2 ${tab === 'mcp' ? 'bg-claude-btn-hover text-claude-text' : 'text-claude-textSecondary hover:bg-claude-hover'
+            }`}
+        >
+          <Server size={16} />
+          {t('settings.mcpServers')}
+        </button>
       </div>
 
       {/* Right Content Area */}
@@ -254,6 +266,7 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
           {tab === 'models' && <ProviderSettings />}
           {tab === 'account' && renderAccount()}
           {tab === 'usage' && renderUsage()}
+          {tab === 'mcp' && <McpSettingsPage />}
         </div>
       </div>
     </div>
@@ -262,17 +275,17 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
   function renderAccount() {
     const handleChangePassword = async () => {
       setPwdError(''); setPwdMsg('');
-      if (!pwdCurrent || !pwdNew || !pwdConfirm) { setPwdError('请填写所有字段'); return; }
-      if (pwdNew.length < 6) { setPwdError('新密码至少 6 位'); return; }
-      if (pwdNew !== pwdConfirm) { setPwdError('两次输入的新密码不一致'); return; }
+      if (!pwdCurrent || !pwdNew || !pwdConfirm) { setPwdError(t('settings.pleaseFillAllFields')); return; }
+      if (pwdNew.length < 6) { setPwdError(t('settings.passwordMinLength')); return; }
+      if (pwdNew !== pwdConfirm) { setPwdError(t('settings.passwordMismatch')); return; }
       setPwdSaving(true);
       try {
         await changePassword(pwdCurrent, pwdNew);
-        setPwdMsg('密码修改成功，其他设备已自动登出');
+        setPwdMsg(t('settings.passwordChanged'));
         setPwdCurrent(''); setPwdNew(''); setPwdConfirm('');
         setShowPwdForm(false);
         getSessions().then(data => { setSessions(data.sessions || []); setCurrentSessionId(data.currentSessionId || ''); }).catch(() => { });
-      } catch (e: any) { setPwdError(e.message || '修改失败'); }
+      } catch (e: any) { setPwdError(e.message || t('common.error')); }
       finally { setPwdSaving(false); }
     };
 
@@ -280,15 +293,15 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
       try {
         await deleteSession(id);
         setSessions(prev => prev.filter(s => s.id !== id));
-      } catch (e: any) { alert(e.message || '操作失败'); }
+      } catch (e: any) { alert(e.message || t('common.error')); }
     };
 
     const handleLogoutOthers = async () => {
-      if (!confirm('确定登出所有其他设备？')) return;
+      if (!confirm(t('settings.confirmLogoutOthers'))) return;
       try {
         await logoutOtherSessions();
         setSessions(prev => prev.filter(s => s.id === currentSessionId));
-      } catch (e: any) { alert(e.message || '操作失败'); }
+      } catch (e: any) { alert(e.message || t('common.error')); }
     };
 
     const formatTime = (t: string) => {
@@ -321,11 +334,11 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
       <div className="space-y-10 animate-fade-in">
         {/* 邮箱 */}
         <section>
-          <h3 className="text-[16px] font-semibold text-claude-text mb-5">账号</h3>
+          <h3 className="text-[16px] font-semibold text-claude-text mb-5">{t('settings.account')}</h3>
           <div className="space-y-5">
             <div className="flex items-center justify-between">
               <div>
-                <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">邮箱地址</label>
+                <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">{t('settings.emailAddress')}</label>
                 <div className="text-[14px] text-claude-text">{profile?.email || '-'}</div>
               </div>
               <div className="flex items-center gap-4 mt-4">
@@ -334,7 +347,7 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
                   onClick={(e) => { e.preventDefault(); setShowPwdForm(true); setPwdError(''); setPwdMsg(''); }}
                   className="text-[13px] text-claude-textSecondary hover:text-claude-text hover:underline transition-colors"
                 >
-                  修改密码
+                  {t('settings.changePassword')}
                 </button>
                 <div className="w-[1px] h-3 bg-claude-border"></div>
                 <button
@@ -342,7 +355,7 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
                   onClick={(e) => { e.preventDefault(); setShowDeleteAccount(true); setDeleteError(''); setDeletePassword(''); }}
                   className="text-[13px] text-[#B9382C] hover:text-[#a02e23] hover:underline transition-colors"
                 >
-                  注销账号
+                  {t('settings.deleteAccount')}
                 </button>
               </div>
             </div>
@@ -353,25 +366,25 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
               onClick={() => { setShowPwdForm(false); setPwdError(''); setPwdCurrent(''); setPwdNew(''); setPwdConfirm(''); }}>
               <div className="bg-white dark:bg-[#2B2A29] p-6 rounded-2xl w-full max-w-sm shadow-xl border border-claude-border animate-in zoom-in-95 duration-200"
                 onClick={e => e.stopPropagation()}>
-                <h4 className="text-[18px] font-semibold text-claude-text mb-4">修改密码</h4>
+                <h4 className="text-[18px] font-semibold text-claude-text mb-4">{t('settings.changePassword')}</h4>
                 {pwdMsg && <div className="p-2 mb-3 bg-green-50 text-green-700 text-[13px] rounded-lg">{pwdMsg}</div>}
                 {pwdError && <div className="p-2 mb-3 bg-red-50 text-red-600 text-[13px] rounded-lg">{pwdError}</div>}
                 <div className="space-y-3">
                   <input type="password" value={pwdCurrent} onChange={e => setPwdCurrent(e.target.value)}
-                    placeholder="当前密码" className="w-full px-3 py-2 bg-claude-input border border-claude-border rounded-lg text-[14px] text-claude-text focus:outline-none focus:border-[#387ee0] focus:ring-0" />
+                    placeholder={t('settings.currentPassword')} className="w-full px-3 py-2 bg-claude-input border border-claude-border rounded-lg text-[14px] text-claude-text focus:outline-none focus:border-[#387ee0] focus:ring-0" />
                   <input type="password" value={pwdNew} onChange={e => setPwdNew(e.target.value)}
-                    placeholder="新密码（至少 6 位）" className="w-full px-3 py-2 bg-claude-input border border-claude-border rounded-lg text-[14px] text-claude-text focus:outline-none focus:border-[#387ee0] focus:ring-0" />
+                    placeholder={t('settings.newPassword')} className="w-full px-3 py-2 bg-claude-input border border-claude-border rounded-lg text-[14px] text-claude-text focus:outline-none focus:border-[#387ee0] focus:ring-0" />
                   <input type="password" value={pwdConfirm} onChange={e => setPwdConfirm(e.target.value)}
-                    placeholder="确认新密码" className="w-full px-3 py-2 bg-claude-input border border-claude-border rounded-lg text-[14px] text-claude-text focus:outline-none focus:border-[#387ee0] focus:ring-0" />
+                    placeholder={t('settings.confirmNewPassword')} className="w-full px-3 py-2 bg-claude-input border border-claude-border rounded-lg text-[14px] text-claude-text focus:outline-none focus:border-[#387ee0] focus:ring-0" />
                 </div>
                 <div className="flex gap-3 pt-5 justify-end">
                   <button onClick={(e) => { e.preventDefault(); setShowPwdForm(false); setPwdError(''); setPwdCurrent(''); setPwdNew(''); setPwdConfirm(''); }}
                     className="px-4 py-2 text-claude-textSecondary hover:bg-claude-hover rounded-lg text-[14px] font-medium transition-colors">
-                    取消
+                    {t('settings.cancel')}
                   </button>
                   <button onClick={(e) => { e.preventDefault(); handleChangePassword(); }} disabled={pwdSaving}
                     className="px-4 py-2 bg-claude-btn-hover text-white text-[14px] font-medium rounded-lg transition-colors disabled:opacity-60">
-                    {pwdSaving ? '保存中...' : '更新密码'}
+                    {pwdSaving ? t('settings.updating') : t('settings.updatePassword')}
                   </button>
                 </div>
               </div>
@@ -384,31 +397,31 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
               onClick={() => { setShowDeleteAccount(false); setDeleteError(''); setDeletePassword(''); }}>
               <div className="bg-white dark:bg-[#2B2A29] p-6 rounded-2xl w-full max-w-sm shadow-xl border border-red-200 dark:border-red-900/30 animate-in zoom-in-95 duration-200"
                 onClick={e => e.stopPropagation()}>
-                <h4 className="text-[18px] font-semibold text-[#B9382C] mb-2">注销账号</h4>
+                <h4 className="text-[18px] font-semibold text-[#B9382C] mb-2">{t('settings.deleteAccount')}</h4>
                 <p className="text-[14px] text-claude-textSecondary mb-4">
-                  此操作不可撤销。您的所有数据将被永久删除。
+                  {t('settings.deleteAccountWarning2')}
                 </p>
                 {deleteError && <div className="p-2 mb-3 bg-red-50 text-red-600 text-[13px] rounded-lg">{deleteError}</div>}
                 <input type="password" value={deletePassword} onChange={e => setDeletePassword(e.target.value)}
-                  placeholder="输入密码以确认"
+                  placeholder={t('settings.enterPasswordToConfirm')}
                   className="w-full px-3 py-2 bg-claude-input border border-claude-border rounded-lg text-[14px] text-claude-text focus:outline-none focus:border-[#B9382C] focus:ring-1 focus:ring-[#B9382C]" />
                 <div className="flex gap-3 pt-5 justify-end">
                   <button onClick={(e) => { e.preventDefault(); setShowDeleteAccount(false); setDeleteError(''); setDeletePassword(''); }}
                     className="px-4 py-2 text-claude-textSecondary hover:bg-claude-hover rounded-lg text-[14px] font-medium transition-colors">
-                    取消
+                    {t('settings.cancel')}
                   </button>
                   <button onClick={async (e) => {
                     e.preventDefault();
-                    if (!deletePassword) { setDeleteError('请输入密码'); return; }
+                    if (!deletePassword) { setDeleteError(t('settings.pleaseEnterPasswordError')); return; }
                     setDeleting(true); setDeleteError('');
                     try {
                       await deleteAccount(deletePassword);
                       logout();
-                    } catch (e: any) { setDeleteError(e.message || '注销失败'); }
+                    } catch (e: any) { setDeleteError(e.message || t('common.error')); }
                     finally { setDeleting(false); }
                   }} disabled={deleting}
                     className="px-4 py-2 bg-[#B9382C] hover:bg-[#a02e23] text-white text-[14px] font-medium rounded-lg transition-colors disabled:opacity-60">
-                    {deleting ? '注销中...' : '确认注销'}
+                    {deleting ? t('settings.deletingAccount') : t('settings.confirmDeleteAccount')}
                   </button>
                 </div>
               </div>
@@ -421,16 +434,16 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
         {/* 活跃会话 */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[16px] font-semibold text-claude-text">活跃会话</h3>
+            <h3 className="text-[16px] font-semibold text-claude-text">{t('settings.activeSessions')}</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-claude-border text-[13px] font-medium text-claude-textSecondary">
-                  <th className="py-2 pb-3 font-medium">设备</th>
-                  <th className="py-2 pb-3 font-medium">地址</th>
-                  <th className="py-2 pb-3 font-medium">创建时间</th>
-                  <th className="py-2 pb-3 font-medium">最近活跃</th>
+                  <th className="py-2 pb-3 font-medium">{t('settings.device')}</th>
+                  <th className="py-2 pb-3 font-medium">{t('settings.location')}</th>
+                  <th className="py-2 pb-3 font-medium">{t('settings.createdAt')}</th>
+                  <th className="py-2 pb-3 font-medium">{t('settings.lastActiveLabel')}</th>
                   <th className="py-2 pb-3 font-medium"></th>
                 </tr>
               </thead>
@@ -442,14 +455,14 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
                         <span className="text-claude-textSecondary flex-shrink-0">
                           {s.device?.includes('Android') || s.device?.includes('iOS') ? <Smartphone size={16} /> : <MonitorIcon size={16} />}
                         </span>
-                        <span className="font-medium">{s.device || 'Unknown Device'}</span>
+                        <span className="font-medium">{s.device || t('settings.unknownDevice')}</span>
                         {s.id === currentSessionId && (
-                          <span className="ml-1 text-[11px] px-1.5 py-0.5 rounded-sm bg-neutral-200 dark:bg-neutral-700 text-claude-textSecondary">Current</span>
+                          <span className="ml-1 text-[11px] px-1.5 py-0.5 rounded-sm bg-neutral-200 dark:bg-neutral-700 text-claude-textSecondary">{t('settings.currentDeviceTag')}</span>
                         )}
                       </div>
                     </td>
                     <td className="py-3 pr-4 align-middle text-claude-textSecondary">
-                      {s.location || 'Unknown Location'}
+                      {s.location || t('settings.unknownLocation')}
                     </td>
                     <td className="py-3 pr-4 align-middle text-claude-textSecondary whitespace-nowrap">
                       {formatTime(s.created_at || '')}
@@ -478,7 +491,7 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
               </tbody>
             </table>
             {sessions.length === 0 && (
-              <div className="text-[13px] text-claude-textSecondary py-4 text-center">No active sessions</div>
+              <div className="text-[13px] text-claude-textSecondary py-4 text-center">{t('settings.noActiveSessions')}</div>
             )}
           </div>
 
@@ -494,7 +507,7 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
                 }}>
                 <button onClick={() => { handleDeleteSession(ctxMenu.sessionId); setCtxMenu(null); }}
                   className="w-full text-left px-4 py-2 text-[13px] text-claude-text hover:bg-[#F5F4F1] dark:hover:bg-[#383838] transition-colors">
-                  Log out
+                  {t('settings.logOut')}
                 </button>
               </div>
             </>
@@ -507,14 +520,39 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
   function renderGeneral() {
     return (
       <div className="space-y-10 animate-fade-in">
+        {/* Language Selector */}
+        <section>
+          <h3 className="text-[16px] font-semibold text-claude-text mb-5">{t('settings.language')}</h3>
+          <div>
+            <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">{t('settings.languageLabel')}</label>
+            <div className="relative">
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="w-full max-w-xs px-3 py-2 bg-claude-input border border-claude-border rounded-md text-[14px] text-claude-text focus:outline-none focus:border-[#387ee0] focus:ring-0 appearance-none transition-all"
+              >
+                <option value="zh">{t('settings.chinese')}</option>
+                <option value="en">{t('settings.english')}</option>
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-claude-textSecondary">
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr className="border-claude-border" />
+
         {/* Profile Section */}
         <section>
-          <h3 className="text-[16px] font-semibold text-claude-text mb-5">个人资料</h3>
+          <h3 className="text-[16px] font-semibold text-claude-text mb-5">{t('settings.personalInfo')}</h3>
 
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">全名</label>
+                <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">{t('settings.fullName')}</label>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-claude-avatar text-claude-avatarText flex items-center justify-center text-[16px] font-medium flex-shrink-0">
                     {initials}
@@ -525,34 +563,34 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
                     onChange={e => setFullName(e.target.value)}
                     onBlur={() => handleSave(true)}
                     className="flex-1 px-3 py-2 bg-claude-input border border-claude-border rounded-md text-[14px] text-claude-text focus:outline-none focus:border-[#387ee0] focus:ring-0 transition-all placeholder-claude-textSecondary"
-                    placeholder="输入你的全名"
+                    placeholder={t('settings.fullNamePlaceholder')}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">Claude 应该怎么称呼你？</label>
+                <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">{t('settings.whatToCallYou')}</label>
                 <input
                   type="text"
                   value={displayName}
                   onChange={e => setDisplayName(e.target.value)}
                   onBlur={() => handleSave(true)}
                   className="w-full px-3 py-2 bg-claude-input border border-claude-border rounded-md text-[14px] text-claude-text focus:outline-none focus:border-[#387ee0] focus:ring-0 transition-all placeholder-claude-textSecondary"
-                  placeholder="例如你的名字或昵称"
+                  placeholder={t('settings.whatToCallYouPlaceholder')}
                 />
               </div>
             </div>
 
             {/* Work Function */}
             <div>
-              <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">你的职业是什么？</label>
+              <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">{t('settings.occupation')}</label>
               <div className="relative">
                 <select
                   value={workFunction}
                   onChange={e => { setWorkFunction(e.target.value); setTimeout(() => handleSave(true), 100); }}
                   className="w-full px-3 py-2.5 bg-claude-input border border-claude-border rounded-md text-[14px] text-claude-text focus:outline-none focus:border-[#387ee0] focus:ring-0 transition-all appearance-none cursor-pointer"
                 >
-                  <option value="">选择你的职业</option>
+                  <option value="">{t('settings.occupationPlaceholder')}</option>
                   {WORK_OPTIONS.filter(Boolean).map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
                 <ChevronRight size={16} className="absolute right-3 top-1/2 -translate-y-1/2 rotate-90 text-claude-textSecondary pointer-events-none" />
@@ -561,15 +599,15 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
 
             {/* Personal Preferences */}
             <div>
-              <label className="block text-[13px] font-medium text-claude-textSecondary mb-1">Claude 在回复中应考虑哪些个人偏好？</label>
-              <p className="text-[12px] text-claude-textSecondary/60 mb-2">你的偏好将应用于所有对话。</p>
+              <label className="block text-[13px] font-medium text-claude-textSecondary mb-1">{t('settings.personalPreferences')}</label>
+              <p className="text-[12px] text-claude-textSecondary/60 mb-2">{t('settings.personalPreferencesSubtitle')}</p>
               <textarea
                 value={personalPreferences}
                 onChange={e => setPersonalPreferences(e.target.value)}
                 onBlur={() => handleSave(true)}
                 rows={3}
                 className="w-full px-3 py-2.5 bg-claude-input border border-claude-border rounded-md text-[14px] text-claude-text focus:outline-none focus:border-[#387ee0] focus:ring-0 transition-all resize-none placeholder-claude-textSecondary"
-                placeholder="例如：回答尽量简洁，使用中文，代码注释用英文"
+                placeholder={t('settings.personalPreferencesPlaceholder')}
               />
             </div>
 
@@ -578,10 +616,10 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
 
         {/* Default Model Section — only for Clawparrot (self-hosted configures in Models tab) */}
         {localStorage.getItem('user_mode') !== 'selfhosted' && <><hr className="border-claude-border" /><section>
-          <h3 className="text-[16px] font-semibold text-claude-text mb-5">默认模型</h3>
+          <h3 className="text-[16px] font-semibold text-claude-text mb-5">{t('settings.defaultModel')}</h3>
           <div className="space-y-5">
             <div>
-              <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">新对话默认使用的模型</label>
+              <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">{t('settings.defaultModelLabel')}</label>
               <div className="relative">
                 <select
                   value={defaultModelBase}
@@ -602,8 +640,8 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
 
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[13px] font-medium text-claude-textSecondary">扩展思考</div>
-                <div className="text-[12px] text-claude-textSecondary mt-0.5">让模型在回答前进行深度思考</div>
+                <div className="text-[13px] font-medium text-claude-textSecondary">{t('settings.extendedThinking')}</div>
+                <div className="text-[12px] text-claude-textSecondary mt-0.5">{t('settings.extendedThinkingDesc')}</div>
               </div>
               <button
                 onClick={() => applyDefaultModel(defaultModelBase, !defaultModelIsThinking)}
@@ -617,10 +655,10 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
 
         {/* Send Key Section */}
         <section>
-          <h3 className="text-[16px] font-semibold text-claude-text mb-5">发送消息</h3>
+          <h3 className="text-[16px] font-semibold text-claude-text mb-5">{t('settings.sendMessage')}</h3>
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">发送消息</label>
+              <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">{t('settings.sendMessageLabel')}</label>
               <div className="relative">
                 <select
                   value={sendKey}
@@ -653,7 +691,7 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
             </div>
 
             <div>
-              <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">换行</label>
+              <label className="block text-[13px] font-medium text-claude-textSecondary mb-1.5">{t('settings.newlineLabel')}</label>
               <div className="relative">
                 <select
                   value={newlineKey}
@@ -683,16 +721,16 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
 
         {/* Appearance Section */}
         <section>
-          <h3 className="text-[16px] font-semibold text-claude-text mb-5">外观</h3>
+          <h3 className="text-[16px] font-semibold text-claude-text mb-5">{t('settings.appearance')}</h3>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-[13px] font-medium text-claude-textSecondary mb-2">颜色模式</label>
+              <label className="block text-[13px] font-medium text-claude-textSecondary mb-2">{t('settings.colorMode')}</label>
               <div className="flex gap-3">
                 {([
-                  { value: 'light', label: 'Light' },
-                  { value: 'auto', label: 'Auto' },
-                  { value: 'dark', label: 'Dark' },
+                  { value: 'light', label: t('settings.light') },
+                  { value: 'auto', label: t('settings.auto') },
+                  { value: 'dark', label: t('settings.dark') },
                 ] as const).map(opt => (
                   <button
                     key={opt.value}
@@ -762,13 +800,13 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
 
             {/* Chat Font - kept for feature parity even if not in screenshot */}
             <div>
-              <label className="block text-[13px] font-medium text-claude-textSecondary mb-2">聊天字体</label>
+              <label className="block text-[13px] font-medium text-claude-textSecondary mb-2">{t('settings.chatFont')}</label>
               <div className="flex gap-3">
                 {([
-                  { value: 'default', label: '默认', sample: 'Aa', font: 'font-serif-claude' },
-                  { value: 'sans', label: 'Sans', sample: 'Aa', font: 'font-sans' },
-                  { value: 'system', label: '系统', sample: 'Aa', font: 'font-system' }, // approximations for preview
-                  { value: 'dyslexic', label: '阅读障碍', sample: 'Aa', font: 'font-serif' },
+                  { value: 'default', label: t('settings.default'), sample: 'Aa', font: 'font-serif-claude' },
+                  { value: 'sans', label: t('settings.sans'), sample: 'Aa', font: 'font-sans' },
+                  { value: 'system', label: t('settings.system'), sample: 'Aa', font: 'font-system' }, // approximations for preview
+                  { value: 'dyslexic', label: t('settings.readingDisability'), sample: 'Aa', font: 'font-serif' },
                 ] as const).map(opt => (
                   <button
                     key={opt.value}
@@ -798,11 +836,11 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
 
         {/* User Mode Switch */}
         <section>
-          <h3 className="text-[16px] font-semibold text-claude-text mb-5">用户模式</h3>
+          <h3 className="text-[16px] font-semibold text-claude-text mb-5">{t('settings.userMode')}</h3>
           <div className="flex gap-3">
             {([
-              { value: 'selfhosted', label: '自行部署', desc: '使用自己的 API Key' },
-              { value: 'clawparrot', label: 'Clawparrot', desc: '使用托管 API 服务' },
+              { value: 'selfhosted', label: t('settings.selfHosted'), desc: t('settings.selfHostedSubtitle') },
+              { value: 'clawparrot', label: t('settings.clawparrot'), desc: t('settings.clawparrotSubtitle') },
             ] as const).map(opt => {
               const current = localStorage.getItem('user_mode') || 'selfhosted';
               const active = current === opt.value;
@@ -835,9 +873,9 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
 
         {/* About Section */}
         <section>
-          <h3 className="text-[16px] font-semibold text-claude-text mb-3">关于</h3>
+          <h3 className="text-[16px] font-semibold text-claude-text mb-3">{t('settings.about')}</h3>
           <div className="flex items-center justify-between py-2">
-            <span className="text-[14px] text-claude-textSecondary">当前版本</span>
+            <span className="text-[14px] text-claude-textSecondary">{t('settings.currentVersion')}</span>
             <span className="text-[14px] font-mono text-claude-text">v{'1.6.12'}</span>
           </div>
         </section>
@@ -847,7 +885,7 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
 
   function renderUsage() {
     if (!usage) {
-      return <div className="text-[14px] text-[#999] py-8">Loading usage data...</div>;
+      return <div className="text-[14px] text-[#999] py-8">{t('common.loading')}</div>;
     }
 
     const tokenQuota = Number(usage.token_quota) || 0;
@@ -879,19 +917,19 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
     const formatTimeLeft = (isoStr: string | null) => {
       if (!isoStr) return '';
       const diff = new Date(isoStr).getTime() - Date.now();
-      if (diff <= 0) return '即将重置';
+      if (diff <= 0) return t('settings.resetSoon');
       const hours = Math.floor(diff / 3600000);
       const mins = Math.floor((diff % 3600000) / 60000);
-      if (hours > 0) return `${hours}小时${mins}分钟后重置`;
-      return `${mins}分钟后重置`;
+      if (hours > 0) return `${hours}${t('settings.hours')}${mins}${t('settings.minutesReset')}`;
+      return `${mins}${t('settings.minutesReset')}`;
     };
 
     const formatResetDate = (isoStr: string | null) => {
       if (!isoStr) return '';
       const d = new Date(isoStr);
       const diff = d.getTime() - Date.now();
-      if (diff <= 0) return '即将重置';
-      return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} 重置`;
+      if (diff <= 0) return t('settings.resetSoon');
+      return `${d.getMonth() + 1}${t('settings.monthSlash')}${d.getDate()}${t('settings.dayLabel')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} ${t('settings.reset')}`;
     };
 
     const renderLimitItem = (title: string, used: number, limit: number, subtitle: string) => {
@@ -908,7 +946,7 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
               <div className="text-[13px] text-claude-textSecondary">{subtitle}</div>
             </div>
             <div className="text-[14px] text-claude-textSecondary font-medium">
-              {Math.round(pct)}% 已使用
+              {Math.round(pct)}% {t('settings.percentUsedSuffix')}
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -927,24 +965,24 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
     return (
       <div className="space-y-8 animate-fade-in">
         <section>
-          <h3 className="text-[16px] font-semibold text-claude-text mb-5">使用量</h3>
+          <h3 className="text-[16px] font-semibold text-claude-text mb-5">{t('settings.usageTitle')}</h3>
 
           <div className="space-y-6">
             {/* Plan info */}
             <div className="p-4 bg-claude-bg border border-claude-border rounded-xl shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-[15px] font-semibold text-claude-text">
-                  {plan ? plan.name : '免费套餐'}
+                  {plan ? plan.name : t('settings.freePlanLabel')}
                 </span>
                 <span className={`px-2 py-0.5 text-[11px] font-medium rounded-full ${plan ? 'bg-[#4B9C68]/10 text-[#4B9C68]' : 'bg-claude-hover text-claude-textSecondary'
                   }`}>
-                  {plan ? '生效中' : '免费'}
+                  {plan ? t('settings.activeLabel') : t('settings.freeLabel')}
                 </span>
               </div>
               {plan ? (
-                <p className="text-[13px] text-claude-textSecondary">到期时间：{plan.expires_at?.slice(0, 10)}（剩余 {daysRemaining} 天）</p>
+                <p className="text-[13px] text-claude-textSecondary">{t('settings.expiresOn')}：{plan.expires_at?.slice(0, 10)}（{t('settings.daysRemaining', { days: daysRemaining })}）</p>
               ) : (
-                <p className="text-[13px] text-claude-textSecondary">您当前没有活跃套餐</p>
+                <p className="text-[13px] text-claude-textSecondary">{t('settings.noActivePlan')}</p>
               )}
             </div>
 
@@ -952,11 +990,11 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
             {quota && (
               <div className="space-y-6">
                 <div>
-                  <h4 className="text-[16px] font-semibold text-claude-text mb-1">套餐用量限制</h4>
+                  <h4 className="text-[16px] font-semibold text-claude-text mb-1">{t('settings.planUsageLimits')}</h4>
 
                   {/* Window (5h) */}
                   {quota.window.limit > 0 && renderLimitItem(
-                    '当前5h窗口',
+                    t('settings.current5hWindow'),
                     quota.window.used,
                     quota.window.limit,
                     formatTimeLeft(quota.window.resetAt)
@@ -966,17 +1004,17 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
                 <div>
                   {/* Weekly */}
                   {quota.week.limit > 0 && renderLimitItem(
-                    '每周限额',
+                    t('settings.weeklyLimit'),
                     quota.week.used,
                     quota.week.limit,
                     formatResetDate(quota.week.resetAt)
                   )}
 
                   {renderLimitItem(
-                    '每月 / 总计',
+                    t('settings.monthlyTotal'),
                     quota.total.used,
                     quota.total.limit,
-                    '基于套餐额度'
+                    t('settings.basedOnPlan')
                   )}
                 </div>
               </div>
@@ -985,9 +1023,9 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
             {!quota && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[13px] font-medium text-claude-text">额度</span>
+                  <span className="text-[13px] font-medium text-claude-text">{t('settings.quotaLabel')}</span>
                   <span className="text-[13px] text-claude-textSecondary">
-                    已使用 {usagePercent.toFixed(2)}%
+                    {t('settings.percentUsed', { percent: usagePercent.toFixed(2) })}
                   </span>
                 </div>
                 <div className="h-2 bg-claude-border rounded-full overflow-hidden">
@@ -1006,9 +1044,9 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
             {!(typeof window !== 'undefined' && !!(window as any).__TAURI_INTERNALS__) && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[13px] font-medium text-claude-text">存储空间</span>
+                  <span className="text-[13px] font-medium text-claude-text">{t('settings.storageLabel')}</span>
                   <span className="text-[13px] text-claude-textSecondary">
-                    已使用 {formatBytes(storageUsed)} / {formatBytes(storageQuota)}
+                    {t('settings.storageUsedLabel', { used: formatBytes(storageUsed), total: formatBytes(storageQuota) })}
                   </span>
                 </div>
                 <div className="h-2 bg-claude-border rounded-full overflow-hidden">
@@ -1021,8 +1059,8 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
                   />
                 </div>
                 <div className="flex justify-between mt-1.5">
-                  <span className="text-[12px] text-claude-textSecondary">已使用 {storagePercent}%</span>
-                  <span className="text-[12px] text-claude-textSecondary">剩余 {formatBytes(storageQuota - storageUsed)}</span>
+                  <span className="text-[12px] text-claude-textSecondary">{t('settings.percentUsed', { percent: storagePercent })}</span>
+                  <span className="text-[12px] text-claude-textSecondary">{t('settings.storageRemaining')} {formatBytes(storageQuota - storageUsed)}</span>
                 </div>
               </div>
             )}
@@ -1032,11 +1070,11 @@ const SettingsPage = ({ onClose }: SettingsPageProps) => {
               <div className="flex gap-4">
                 <div className="flex-1 p-3 bg-claude-bg border border-claude-border rounded-xl text-center">
                   <div className="text-[20px] font-semibold text-claude-text">{messages.today}</div>
-                  <div className="text-[12px] text-claude-textSecondary">今日消息</div>
+                  <div className="text-[12px] text-claude-textSecondary">{t('settings.messagesToday')}</div>
                 </div>
                 <div className="flex-1 p-3 bg-claude-bg border border-claude-border rounded-xl text-center">
                   <div className="text-[20px] font-semibold text-claude-text">{messages.month}</div>
-                  <div className="text-[12px] text-claude-textSecondary">本月消息</div>
+                  <div className="text-[12px] text-claude-textSecondary">{t('settings.messagesThisMonth')}</div>
                 </div>
               </div>
             )}

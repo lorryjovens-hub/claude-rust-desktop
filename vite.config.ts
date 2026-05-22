@@ -21,10 +21,10 @@ export default defineConfig(({ mode }) => {
     },
     clearScreen: false,
     server: {
-      port: 3456,
+      port: 5173,
       strictPort: true,
-      host: host || false,
-      hmr: host ? { protocol: 'ws', host, port: 3457 } : undefined,
+      host: '127.0.0.1',
+      hmr: { protocol: 'ws', host: '127.0.0.1', port: 5174 },
       watch: { ignored: ['**/src-tauri/**'] },
     },
     envPrefix: ['VITE_', 'TAURI_ENV_*'],

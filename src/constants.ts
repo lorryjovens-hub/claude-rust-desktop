@@ -22,4 +22,5 @@ export const NAV_ITEMS = [
   { label: "Artifacts", icon: "sparkles" },
   { label: "Models", icon: "cpu" },
   { label: "Design", icon: "palette" },
+  { label: "Directory", icon: "grid" },
 ];

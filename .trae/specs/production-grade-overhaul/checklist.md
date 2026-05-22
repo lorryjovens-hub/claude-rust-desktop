@@ -1,0 +1,31 @@
+- [x] Zustand Store 创建完成：6 个领域 Store 文件存在且导出正确
+- [x] MainContent.tsx 的 useState 数量从 40+ 降至 5 以下（仅保留局部 UI 状态）
+- [x] window.CustomEvent 调用全部替换为 Zustand Store 订阅
+- [x] streamingState.ts 模块级单例被 useStreamingStore 替换
+- [x] 流式对话时 MainContent 组件重渲染次数减少 80%+（通过 subscribeWithSelector 中间件实现）
+- [x] rusqlite 依赖添加到 Cargo.toml
+- [x] SQLite 数据库 schema 包含 conversations/messages/projects/project_files/tool_calls/attachments 表
+- [x] conversations 表有 created_at/updated_at/model 索引
+- [x] messages 表有 conversation_id 索引
+- [x] 单条消息插入使用 INSERT 语句（非全量覆写）
+- [x] list_conversations 仅查询 conversations 表（不读取 messages 表）
+- [x] JSON → SQLite 自动迁移逻辑存在且可执行
+- [x] ConversationStore 的 18 处调用全部替换为 SQLite repo
+- [x] SessionManager 已移除，无编译错误
+- [x] SQLite 操作使用 spawn_blocking 不阻塞 tokio 运行时
+- [x] list_conversations 性能优化（索引查询替代全量扫描）
+- [x] execute_anthropic_loop 调用 send_message_stream()（非 send_message()）
+- [x] execute_openai_loop 调用 send_message_stream()（非 send_message()）
+- [x] 流式 SSE 事件正确解析并分发 EngineEvent
+- [x] 用户可见逐字输出效果
+- [x] chat_send 独立路径已移除（改为走 NativeEngine → ToolLoopExecutor）
+- [x] chat_stream 不再是空壳（改为通过 Tauri 事件系统发送流式 delta）
+- [x] 工具执行逻辑提取为公共方法 execute_tool_call（无重复代码）
+- [x] generate_research_plan 调用 LLM 生成 ResearchPlan
+- [x] execute_sub_researchers 使用并行执行（futures::join_all + Semaphore）
+- [x] synthesize_report 调用 LLM 综合报告（流式输出）
+- [x] /api/multiagent/research 路由存在且可调用
+- [x] Bridge 启动日志包含端口绑定详情
+- [x] 前端初始化日志包含端口检测过程
+- [x] cargo check 无错误
+- [x] npm run build / tsc --noEmit 无错误

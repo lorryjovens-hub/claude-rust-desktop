@@ -1,13 +1,12 @@
 use crate::bridge::ChatRequest;
-use crate::streaming::{consume_sse_payloads, merge_tool_args, try_parse_tool_input, SsePayloads};
+use crate::streaming::{consume_sse_payloads, merge_tool_args, try_parse_tool_input};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::Arc;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt};
+use tokio::io::AsyncBufReadExt;
 use tokio::process::{Child, Command};
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::mpsc;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -382,15 +381,16 @@ impl EnginePool {
         conv_id: &str,
         req: &ChatRequest,
     ) -> Result<EngineOutput> {
+        let model_str = if req.model.is_empty() { "claude-sonnet-4-20250514" } else { &req.model };
         if !self.engines.contains_key(conv_id) {
-            self.spawn_engine(conv_id, &req.model, None).await?;
+            self.spawn_engine(conv_id, model_str, None).await?;
         }
 
         if let Some(stdin_tx) = self.stdin_senders.get(conv_id) {
             let message = serde_json::json!({
                 "type": "user_message",
                 "messages": req.get_messages(),
-                "model": req.model,
+                "model": model_str,
             });
             let mut payload = message.to_string();
             payload.push('\n');
@@ -411,15 +411,16 @@ impl EnginePool {
         conv_id: &str,
         req: &ChatRequest,
     ) -> Result<Option<mpsc::Receiver<EngineOutput>>> {
+        let model_str = if req.model.is_empty() { "claude-sonnet-4-20250514" } else { &req.model };
         if !self.engines.contains_key(conv_id) {
-            self.spawn_engine(conv_id, &req.model, None).await?;
+            self.spawn_engine(conv_id, model_str, None).await?;
         }
 
         if let Some(stdin_tx) = self.stdin_senders.get(conv_id) {
             let message = serde_json::json!({
                 "type": "user_message",
                 "messages": req.get_messages(),
-                "model": req.model,
+                "model": model_str,
             });
             let mut payload = message.to_string();
             payload.push('\n');

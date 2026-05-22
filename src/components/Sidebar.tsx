@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { getStreamingIds } from '../streamingState';
+import { useStreamingStore } from '../stores/useStreamingStore';
+import { useUIStore } from '../stores/useUIStore';
+import { useI18n } from '../hooks/useI18n';
 import {
   IconSidebarToggle,
   IconChatBubble,
@@ -14,17 +16,20 @@ import {
   IconPencil,
   IconTrash,
   IconModels,
-  IconPalette
+  IconPalette,
+  IconDirectory
 } from './Icons';
 import claudeImg from '../assets/icons/claude.png';
 import searchIconImg from '../assets/icons/search-icon.png';
 import customizeIconImg from '../assets/icons/customize-icon.png';
 import { NAV_ITEMS } from '../constants';
-import { ChevronUp, Settings, HelpCircle, LogOut, Shield, CreditCard, Search } from 'lucide-react';
+import { ChevronUp, Settings, HelpCircle, LogOut, Shield, CreditCard, Search, Globe, Users, MessageSquare } from 'lucide-react';
 import { getConversations, deleteConversation, updateConversation, getUser, getUserUsage, logout, getUserProfile, getCodeSSO } from '../api';
 
 import SearchModal from './SearchModal';
 import CostTracker from './CostTracker';
+import EmbeddedBrowser from './EmbeddedBrowser';
+import SwarmCollaboration from './SwarmCollaboration';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -33,6 +38,7 @@ interface SidebarProps {
   onNewChatClick?: () => void;
   onOpenSettings?: () => void;
   onOpenUpgrade?: () => void;
+  onOpenDirectory?: () => void;
   onCloseOverlays?: () => void;
   tunerConfig?: any;
   setTunerConfig?: (config: any) => void;
@@ -48,13 +54,13 @@ interface RenameModalProps {
 }
 
 const RenameModal = ({ isOpen, onClose, onSave, initialTitle }: RenameModalProps) => {
+  const { t } = useI18n();
   const [title, setTitle] = useState(initialTitle);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setTitle(initialTitle);
-      // Focus and select all text after a short delay to ensure modal is rendered
       setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
@@ -72,7 +78,7 @@ const RenameModal = ({ isOpen, onClose, onSave, initialTitle }: RenameModalProps
         className="bg-claude-input rounded-2xl shadow-xl w-[400px] p-6 animate-fade-in"
         onClick={e => e.stopPropagation()}
       >
-        <h3 className="text-[18px] font-semibold text-claude-text mb-4">Rename chat</h3>
+        <h3 className="text-[18px] font-semibold text-claude-text mb-4">{t('common.rename')}</h3>
         <input
           ref={inputRef}
           type="text"
@@ -93,7 +99,7 @@ const RenameModal = ({ isOpen, onClose, onSave, initialTitle }: RenameModalProps
             onClick={onClose}
             className="px-4 py-2 text-[14px] font-medium text-claude-text hover:bg-claude-hover rounded-lg transition-colors"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={() => {
@@ -102,7 +108,7 @@ const RenameModal = ({ isOpen, onClose, onSave, initialTitle }: RenameModalProps
             disabled={!title.trim()}
             className="px-4 py-2 text-[14px] font-medium text-white bg-[#333333] hover:bg-[#1a1a1a] dark:bg-[#FFFFFF] dark:text-black dark:hover:bg-[#e5e5e5] rounded-lg transition-colors disabled:opacity-50"
           >
-            Save
+            {t('common.save')}
           </button>
         </div>
       </div>
@@ -111,7 +117,8 @@ const RenameModal = ({ isOpen, onClose, onSave, initialTitle }: RenameModalProps
   );
 };
 
-const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, onOpenSettings, onOpenUpgrade, onCloseOverlays, tunerConfig, setTunerConfig, titleBarHeight, activeConversationId }: SidebarProps) => {
+const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, onOpenSettings, onOpenUpgrade, onOpenDirectory, onCloseOverlays, tunerConfig, setTunerConfig, titleBarHeight, activeConversationId }: SidebarProps) => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const codeJumpUrl = ((import.meta as any).env?.VITE_CODE_JUMP_URL || '/code/').trim();
@@ -132,17 +139,18 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
   const [showSearch, setShowSearch] = useState(false);
   const [isRecentsCollapsed, setIsRecentsCollapsed] = useState(false);
   const [isNewChatAnimating, setIsNewChatAnimating] = useState(false);
-  const [streamingIds, setStreamingIds] = useState<Set<string>>(new Set());
+  const [streamingIds, setStreamingIds] = useState<Set<string>>(new Set(useStreamingStore.getState().streamingIds));
   const [updateStatus, setUpdateStatus] = useState<{ type: string; version?: string; percent?: number } | null>(null);
+  
+  // New states for tabs and browser
+  const [activeTab, setActiveTab] = useState<'chat' | 'cowork' | 'code'>('chat');
+  const [showBrowser, setShowBrowser] = useState(false);
+  const [browserUrl, setBrowserUrl] = useState('https://example.com');
 
-  // Listen for streaming state changes. When a stream JUST ended (set size shrunk),
-  // also refetch usage so the bottom-left progress bar reflects the new spend.
-  // Bridge records usage to Chengdu fire-and-forget at finishTurn — wait ~1.5s for
-  // the round trip (SG gateway → Chengdu DB write) to settle before reading.
   useEffect(() => {
-    let prevSize = getStreamingIds().size;
+    let prevSize = useStreamingStore.getState().streamingIds.size;
     const handler = () => {
-      const newIds = new Set(getStreamingIds());
+      const newIds = new Set(useStreamingStore.getState().streamingIds);
       setStreamingIds(newIds);
       if (newIds.size < prevSize) {
         setTimeout(() => fetchPlan(), 1500);
@@ -173,6 +181,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
       case 'Artifacts': return <IconArtifactsExact size={size} className={className} />;
       case 'Models': return <IconModels size={size} className={className} />;
       case 'Design': return <IconPalette size={size} className={className} />;
+      case 'Directory': return <IconDirectory size={size} className={className} />;
       case 'Code': return <IconCode size={size} className={className} />;
       default: return <IconChatBubble size={size} className={className} />;
     }
@@ -210,6 +219,10 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
     }
     if (label === 'Design') {
       navigate('/design');
+      return;
+    }
+    if (label === 'Directory') {
+      onOpenDirectory?.();
       return;
     }
     if (label === 'Code') {
@@ -278,14 +291,14 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
       });
       if (data.plan && data.plan.name) {
         const nameMap: Record<string, string> = {
-          '体验包': 'Trail plan',
-          '基础月卡': 'Pro plan',
-          '专业月卡': 'Max x5 plan',
-          '尊享月卡': 'Max x20 plan',
+          '体验包': t('sidebar.trailPlan'),
+          '基础月卡': t('sidebar.proPlan'),
+          '专业月卡': t('sidebar.maxX5Plan'),
+          '尊享月卡': t('sidebar.maxX20Plan'),
         };
         setPlanLabel(nameMap[data.plan.name] || data.plan.name);
       } else {
-        setPlanLabel('Free plan');
+        setPlanLabel(t('sidebar.freePlan'));
       }
     } catch (e) {
       // 获取失败保持默认
@@ -418,15 +431,49 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
           h-screen bg-claude-sidebar border-r border-claude-border flex-shrink-0 text-claude-text antialiased flex flex-col transition-all duration-200 ease-in-out overflow-hidden relative
         `}
         style={{
-          width: isCollapsed ? '46px' : `${tunerConfig?.sidebarWidth || 280}px`
+          width: isCollapsed ? '46px' : (showBrowser ? `${tunerConfig?.sidebarWidth || 280}px` : `${tunerConfig?.sidebarWidth || 280}px`)
         }}
       >
+        {/* New Tab Navigation - Chat/Cowork/Code */}
+        {!isCollapsed && (
+          <div
+            className="flex-shrink-0 border-b border-claude-border"
+            style={{
+              marginTop: `${titleBarHeight || 44}px`,
+              paddingLeft: '8px',
+              paddingRight: '8px',
+              paddingTop: '8px',
+              paddingBottom: '4px'
+            }}
+          >
+            <div className="flex gap-1">
+              {[
+                { id: 'chat' as const, icon: <MessageSquare size={14} />, label: 'Chat' },
+                { id: 'cowork' as const, icon: <Users size={14} />, label: 'Cowork' },
+                { id: 'code' as const, icon: <IconCode size={14} />, label: 'Code' }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-claude-hover text-claude-text'
+                      : 'text-claude-textSecondary hover:bg-claude-hover hover:text-claude-text'
+                  }`}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-        {/* New Chat - Fixed */}
+        {/* New Chat Button */}
         <div
           className="flex-shrink-0"
           style={{
-            marginTop: `${(titleBarHeight || 44) + 14}px`,
+            marginTop: '8px',
             paddingLeft: '9px',
             paddingRight: '9px',
             marginBottom: '2px'
@@ -452,10 +499,47 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
               className={`leading-none transition-opacity duration-200 text-left ${isCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 block'}`}
               style={{ fontSize: '14px', fontWeight: 400 }}
             >
-              New chat
+              {t('sidebar.newChat')}
             </span>
           </button>
         </div>
+
+        {/* Browser Toggle Button */}
+        {!isCollapsed && (
+          <div
+            className="flex-shrink-0"
+            style={{
+              marginTop: '2px',
+              paddingLeft: '9px',
+              paddingRight: '9px',
+              marginBottom: '8px'
+            }}
+          >
+            <button
+              onClick={() => setShowBrowser(!showBrowser)}
+              className={`w-full flex items-center justify-start text-claude-text hover:bg-claude-hover rounded-lg transition-colors group overflow-hidden whitespace-nowrap ${showBrowser ? 'bg-claude-hover' : ''}`}
+              style={{
+                paddingTop: '2px',
+                paddingBottom: '2px',
+                paddingLeft: '0px',
+                gap: '8px'
+              }}
+            >
+              <div className={`text-claude-text flex-shrink-0 flex items-center justify-center`}>
+                <Globe
+                  size={27}
+                  className={`transition-all duration-200 group-hover:brightness-90 group-hover:scale-110 ${showBrowser ? 'text-blue-400' : ''}`}
+                />
+              </div>
+              <span
+                className={`leading-none transition-opacity duration-200 text-left opacity-100 block`}
+                style={{ fontSize: '14px', fontWeight: 400 }}
+              >
+                {t('sidebar.browser') || '浏览器'}
+              </span>
+            </button>
+          </div>
+        )}
 
         {/* Customize - Fixed */}
         <div
@@ -489,7 +573,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
               className={`leading-none transition-opacity duration-200 text-left ${isCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 block'}`}
               style={{ fontSize: '14px', fontWeight: 400 }}
             >
-              Customize
+              {t('sidebar.customize')}
             </span>
           </button>
         </div>
@@ -499,11 +583,15 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
           ref={scrollRef}
           className="flex-1 overflow-y-auto sidebar-scroll min-h-0 pb-6"
           style={{
-            paddingLeft: '9px',
-            paddingRight: '9px',
+            paddingLeft: activeTab === 'cowork' ? '0px' : '9px',
+            paddingRight: activeTab === 'cowork' ? '0px' : '9px',
             paddingTop: '0px'
           }}
         >
+          {activeTab === 'cowork' ? (
+            <SwarmCollaboration />
+          ) : (
+            <>
 
           {/* Navigation Links */}
           <nav className="space-y-0.5 mb-6">
@@ -542,7 +630,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
               paddingRight: '12px'
             }}
           >
-            <span className="text-[13px] font-medium text-claude-textSecondary">Recents</span>
+            <span className="text-[13px] font-medium text-claude-textSecondary">{t('sidebar.recents')}</span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -550,7 +638,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
               }}
               className="text-[13px] font-medium text-claude-textSecondary opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity cursor-pointer outline-none"
             >
-              {isRecentsCollapsed ? 'Show' : 'Hide'}
+              {isRecentsCollapsed ? t('sidebar.show') : t('sidebar.hide')}
             </button>
           </div>
 
@@ -619,10 +707,13 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
                 }}
               >
                 <IconDotsHorizontal size={18} className="opacity-60" />
-                <span style={{ fontSize: `${tunerConfig?.recentsFontSize || 13}px` }} className="leading-tight">All chats</span>
+                <span style={{ fontSize: `${tunerConfig?.recentsFontSize || 13}px` }} className="leading-tight">{t('sidebar.allChats')}</span>
               </button>
             )}
           </div>
+
+            </>
+          )}
 
         </div>
 
@@ -636,7 +727,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
                 </svg>
                 <div className="flex-1 min-w-0">
                   <div className="text-[12px] text-claude-textSecondary leading-tight">
-                    Downloading update...{updateStatus.percent != null ? ` ${updateStatus.percent}%` : ''}
+                    {t('sidebar.updateDownloading')}{updateStatus.percent != null ? ` ${updateStatus.percent}%` : ''}
                   </div>
                   {updateStatus.percent != null && (
                     <div className="mt-1.5 h-[3px] rounded-full bg-claude-border overflow-hidden">
@@ -654,14 +745,14 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
-                  <div className="text-[13px] text-claude-text font-medium leading-tight">Updated to {updateStatus.version}</div>
+                  <div className="text-[13px] text-claude-text font-medium leading-tight">{t('sidebar.updatedTo')} {updateStatus.version}</div>
                 </div>
-                <div className="text-[11.5px] text-claude-textSecondary mb-2.5 ml-6">Relaunch to apply</div>
+                <div className="text-[11.5px] text-claude-textSecondary mb-2.5 ml-6">{t('sidebar.relaunchToApply')}</div>
                 <button
                   onClick={() => { import('../utils/tauriAPI').then(m => m.tauriAPI.installUpdate()); }}
                   className="w-full px-3 py-1.5 rounded-md bg-claude-bg border border-claude-border text-[13px] text-claude-text font-medium hover:bg-claude-btnHover transition-colors"
                 >
-                  Relaunch
+                  {t('sidebar.relaunch')}
                 </button>
               </div>
             )}
@@ -700,7 +791,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
               className={`leading-none transition-opacity duration-200 text-left ${isCollapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 block'}`}
               style={{ fontSize: '14px', fontWeight: 400 }}
             >
-              Search
+              {t('sidebar.search')}
             </span>
           </button>
         </div>
@@ -745,7 +836,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
                   {userUser?.display_name || userUser?.full_name || userUser?.nickname || 'User'}
                 </div>
                 {localStorage.getItem('user_mode') === 'selfhosted' ? (
-                  <div className="text-[13px] text-claude-textSecondary mt-1 leading-tight">Self-hosted</div>
+                  <div className="text-[13px] text-claude-textSecondary mt-1 leading-tight">{t('sidebar.selfHosted')}</div>
                 ) : usageData && usageData.token_quota > 0 ? (
                   <div className="mt-1.5 mr-3">
                     <div className="h-1 w-full rounded-full bg-claude-hover overflow-hidden">
@@ -783,7 +874,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
                   className="w-full flex items-center gap-3 px-4 py-2 text-[13px] text-claude-text hover:bg-claude-hover transition-colors"
                 >
                   <Settings size={16} className="text-claude-textSecondary" />
-                  Settings
+                  {t('sidebar.settings')}
                 </button>
                 {localStorage.getItem('user_mode') !== 'selfhosted' && (
                   <button
@@ -791,7 +882,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
                     onClick={() => { setShowUserMenu(false); onOpenUpgrade?.(); }}
                   >
                     <CreditCard size={16} className="text-claude-textSecondary" />
-                    Payment
+                    {t('sidebar.payment')}
                   </button>
                 )}
                 {isAdmin && localStorage.getItem('user_mode') !== 'selfhosted' && (
@@ -800,7 +891,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
                     onClick={() => { setShowUserMenu(false); navigate('/admin'); }}
                   >
                     <Shield size={16} className="text-claude-textSecondary" />
-                    Admin Panel
+                    {t('sidebar.adminPanel')}
                   </button>
                 )}
                 <button
@@ -808,7 +899,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
                   className="w-full flex items-center gap-3 px-4 py-2 text-[13px] text-claude-text hover:bg-claude-hover transition-colors"
                 >
                   <HelpCircle size={16} className="text-claude-textSecondary" />
-                  Get Help
+                  {t('sidebar.getHelp')}
                 </button>
               </div>
               <div className="h-[1px] bg-claude-border mx-3" />
@@ -818,7 +909,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
                   className="w-full flex items-center gap-3 px-4 py-2 text-[13px] text-claude-text hover:bg-claude-hover transition-colors"
                 >
                   <LogOut size={16} className="text-claude-textSecondary" />
-                  Log out
+                  {t('sidebar.logout')}
                 </button>
               </div>
             </div>
@@ -839,14 +930,14 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
           >
             <button className="flex items-center gap-3 px-3 py-2 hover:bg-claude-hover text-left w-full transition-colors group">
               <IconStarOutline size={16} className="text-claude-textSecondary group-hover:text-claude-text" />
-              <span className="text-[13px] text-claude-text">Star</span>
+              <span className="text-[13px] text-claude-text">{t('sidebar.star')}</span>
             </button>
             <button
               onClick={(e) => handleRenameClick(e, activeMenuIndex as number)}
               className="flex items-center gap-3 px-3 py-2 hover:bg-claude-hover text-left w-full transition-colors group"
             >
               <IconPencil size={16} className="text-claude-textSecondary group-hover:text-claude-text" />
-              <span className="text-[13px] text-claude-text">Rename</span>
+              <span className="text-[13px] text-claude-text">{t('sidebar.rename')}</span>
             </button>
             <div className="h-[1px] bg-claude-border my-1 mx-3" />
             <button
@@ -854,7 +945,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
               className="flex items-center gap-3 px-3 py-2 hover:bg-claude-hover text-left w-full transition-colors group"
             >
               <IconTrash size={16} className="text-[#B9382C]" />
-              <span className="text-[13px] text-[#B9382C]">Delete</span>
+              <span className="text-[13px] text-[#B9382C]">{t('sidebar.delete')}</span>
             </button>
           </div>
         )
@@ -866,6 +957,26 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
         onClose={() => setShowSearch(false)}
         chats={chats}
       />
+
+      {/* Embedded Browser Panel - Slides in from the right */}
+      {showBrowser && !isCollapsed && (
+        <div
+          className="fixed z-40 border-l border-claude-border bg-claude-sidebar flex flex-col shadow-2xl transition-all duration-300 ease-in-out"
+          style={{
+            top: `${titleBarHeight || 44}px`,
+            left: `${tunerConfig?.sidebarWidth || 280}px`,
+            width: 'min(700px, 60vw)',
+            height: `calc(100vh - ${titleBarHeight || 44}px)`,
+            borderRadius: '0 12px 12px 0'
+          }}
+        >
+          <EmbeddedBrowser
+            initialUrl={browserUrl}
+            onClose={() => setShowBrowser(false)}
+            className="flex-1"
+          />
+        </div>
+      )}
 
       {/* Rename Modal */}
       <RenameModal
@@ -882,21 +993,20 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40">
           <div className="bg-claude-input rounded-2xl shadow-xl w-[360px] p-6">
-            <h3 className="text-[16px] font-semibold text-claude-text mb-2">确定退出登录？</h3>
-            <p className="text-[14px] text-claude-textSecondary mb-6">此操作将清除您的登录状态。</p>
+            <h3 className="text-[16px] font-semibold text-claude-text mb-2">{t('sidebar.logoutConfirm')}</h3>
+            <p className="text-[14px] text-claude-textSecondary mb-6">{t('sidebar.logoutMessage')}</p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowLogoutConfirm(false)}
                 className="px-4 py-2 text-[13px] text-claude-text bg-claude-btn-hover hover:bg-claude-hover rounded-lg transition-colors"
-              // Using btn-hover for light gray bg? 
               >
-                取消
+                {t('sidebar.cancelLogout')}
               </button>
               <button
                 onClick={() => { setShowLogoutConfirm(false); logout(); }}
                 className="px-4 py-2 text-[13px] text-white bg-[#B9382C] hover:bg-[#A02E23] rounded-lg transition-colors"
               >
-                确认退出
+                {t('sidebar.confirmLogout')}
               </button>
             </div>
           </div>
@@ -909,8 +1019,8 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
             className="bg-claude-input rounded-2xl shadow-xl w-[360px] p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-[16px] font-semibold text-claude-text mb-2">售后支持</h3>
-            <p className="text-[14px] text-claude-textSecondary mb-3">售后 QQ 群号：</p>
+            <h3 className="text-[16px] font-semibold text-claude-text mb-2">{t('sidebar.supportTitle')}</h3>
+            <p className="text-[14px] text-claude-textSecondary mb-3">{t('sidebar.supportQQLabel')}</p>
             <div className="px-4 py-3 mb-6 rounded-xl bg-claude-btn-hover text-[20px] font-semibold tracking-wide text-claude-text text-center select-all">
               629466903
             </div>
@@ -919,7 +1029,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
                 onClick={() => setShowHelpModal(false)}
                 className="px-4 py-2 text-[13px] text-claude-text bg-claude-btn-hover hover:bg-claude-hover rounded-lg transition-colors"
               >
-                关闭
+                {t('sidebar.close')}
               </button>
             </div>
           </div>

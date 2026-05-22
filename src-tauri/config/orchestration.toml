@@ -1,0 +1,55 @@
+# Multi-Agent Orchestration Configuration
+# Configuration for OpenSpace, Superpowers, and GStack integration
+
+[orchestrator]
+# Maximum number of agents that can run concurrently
+max_concurrent_agents = 8
+
+# Default model to use for orchestration
+default_model = "claude-sonnet-4-6"
+
+# Timeout for workflow execution in milliseconds
+timeout_ms = 300000
+
+[priority_scheduling]
+# Enable dynamic priority scheduling
+enabled = true
+
+# Interval to adjust priorities of waiting tasks in milliseconds
+priority_adjust_interval_ms = 10000
+
+# Factor by which to increase priority for older tasks (0.0 to 1.0)
+aging_factor = 0.1
+
+[logging]
+# Log level for orchestrator: trace, debug, info, warn, error
+log_level = "trace"
+
+# Enable task-specific logging
+task_logging_enabled = true
+
+# Enable dependency tracking logging
+dependency_tracking_enabled = true
+
+[queue]
+# Queue check interval in milliseconds
+queue_check_interval_ms = 100
+
+# Maximum tasks to process per scheduling cycle
+max_tasks_per_cycle = 5
+
+[workflow]
+# Enable OpenSpace requirements analysis
+openspace_enabled = true
+
+# Enable Superpowers validation
+superpowers_enabled = true
+
+# Enable GStack work planning
+gstack_enabled = true
+
+# Auto-validate work plans before execution
+auto_validate_plan = true
+
+# Auto-execute after plan generation
+auto_execute = false

@@ -1,0 +1,22 @@
+- [x] 权限模式枚举类型已定义（AskPermissions, AcceptEdits, PlanMode, BypassPermissions）
+- [x] useChatStore 已添加 permissionMode 状态和 setPermissionMode 方法
+- [x] PermissionModeSelector 组件已创建
+- [x] 权限模式选择器 UI 已实现（包含 4 种模式选项）
+- [x] 全托管模式切换警告对话框已实现
+- [x] PermissionManager 已添加 PermissionMode 枚举
+- [x] check_permission 方法已修改，根据模式自动决定是否需要确认
+- [x] Bypass permissions 下的自动通过逻辑已实现
+- [x] Plan mode 下的只读限制已实现
+- [x] Accept edits 下的编辑操作自动通过已实现
+- [x] PermissionModeSelector 已集成到 MainContent 组件
+- [x] 权限模式切换功能正常工作
+- [x] 权限模式从前端正确传递到后端
+- [x] 全托管模式下工具调用自动通过
+- [x] Plan mode 下写操作被正确拒绝
+- [x] 后端文件上传接口已修复
+- [x] 前端附件预览和发送逻辑已修复
+- [x] 支持图片、PDF、文档等多种文件类型上传
+- [x] 所有工具调用已解禁（Read/Write/Bash/ListDir/Edit/Grep 等）
+- [x] 工具调用结果正确返回前端
+- [x] 项目编译无错误
+- [x] 开发服务器正常运行

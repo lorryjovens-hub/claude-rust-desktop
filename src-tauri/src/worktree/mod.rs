@@ -257,13 +257,12 @@ impl WorktreeManager {
         let mut existing = self.worktrees.lock().await;
         let mut parsed: Vec<WorktreeInfo> = Vec::new();
         let mut current_path = String::new();
-        let mut current_branch = String::new();
 
         for line in output.lines() {
             if line.starts_with("worktree ") {
                 current_path = line[9..].to_string();
             } else if line.starts_with("branch ") {
-                current_branch = line[7..].to_string();
+                let current_branch = line[7..].to_string();
                 if current_path.contains(".git-worktrees") {
                     let path = Path::new(&current_path);
                     let id = path.file_name()
@@ -285,7 +284,6 @@ impl WorktreeManager {
                     }
                 }
                 current_path = String::new();
-                current_branch = String::new();
             }
         }
 

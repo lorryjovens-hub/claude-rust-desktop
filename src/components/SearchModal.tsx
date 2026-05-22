@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useI18n } from '../hooks/useI18n';
 
 interface Chat {
   id: string;
@@ -15,7 +16,7 @@ interface SearchModalProps {
   chats: Chat[];
 }
 
-const getTimeLabel = (dateStr: string) => {
+const getTimeLabel = (dateStr: string, t: (key: string) => string) => {
   const date = new Date(dateStr);
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -24,13 +25,14 @@ const getTimeLabel = (dateStr: string) => {
   const last7Days = new Date(today);
   last7Days.setDate(last7Days.getDate() - 7);
 
-  if (date >= today) return 'Today';
-  if (date >= yesterday) return 'Yesterday';
-  if (date >= last7Days) return 'Past week';
-  return 'Past month';
+  if (date >= today) return t('customize.today');
+  if (date >= yesterday) return t('customize.yesterday');
+  if (date >= last7Days) return t('customize.pastWeek');
+  return t('customize.pastMonth');
 };
 
 const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, chats }) => {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [filteredChats, setFilteredChats] = useState<Chat[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -54,10 +56,10 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, chats }) => 
     }
     const lowerQuery = query.toLowerCase();
     const filtered = chats.filter(chat =>
-      (chat.title || 'Untitled conversation').toLowerCase().includes(lowerQuery)
+      (chat.title || t('customize.untitledConversation')).toLowerCase().includes(lowerQuery)
     );
     setFilteredChats(filtered);
-  }, [query, chats]);
+  }, [query, chats, t]);
 
   if (!isOpen) return null;
 
@@ -84,7 +86,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, chats }) => 
             ref={inputRef}
             type="text"
             className="flex-1 bg-transparent border-none outline-none text-[15px] text-gray-800 dark:text-claude-text placeholder-gray-400 dark:placeholder-claude-text/60 font-normal"
-            placeholder="Search chats and projects"
+            placeholder={t('customize.searchChatsProjects')}
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={e => {
@@ -103,7 +105,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, chats }) => 
         <div className="overflow-y-auto flex-1 py-2 custom-scrollbar bg-[#F9F9F8] dark:bg-[#2D2D2A]">
           {filteredChats.length === 0 ? (
             <div className="px-6 py-12 text-center text-gray-500 text-sm">
-              No results found
+              {t('customize.noResultsSearch')}
             </div>
           ) : (
             <div className="px-2 space-y-0.5">
@@ -118,11 +120,11 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, chats }) => 
                       <MessageSquare className="w-4 h-4" strokeWidth={2} />
                     </div>
                     <span className="text-[14px] text-gray-700 dark:text-claude-text truncate font-normal leading-none pt-0.5">
-                      {chat.title || 'Untitled conversation'}
+                      {chat.title || t('customize.untitledConversation')}
                     </span>
                   </div>
                   <span className="text-[12px] text-gray-400 dark:text-claude-text/60 flex-shrink-0 font-normal">
-                    {getTimeLabel(chat.updated_at || chat.created_at)}
+                    {getTimeLabel(chat.updated_at || chat.created_at, t)}
                   </span>
                 </div>
               ))}

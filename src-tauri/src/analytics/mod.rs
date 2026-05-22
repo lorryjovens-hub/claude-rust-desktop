@@ -1,9 +1,9 @@
 use anyhow::Result;
-use chrono::{DateTime, Datelike, Duration, NaiveDate, Utc};
+use chrono::{Duration, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -210,7 +210,7 @@ impl AnalyticsStore {
         let total_errors: u64 = stats.iter().map(|s| s.errors).sum();
         let total_voice_inputs: u64 = stats.iter().map(|s| s.voice_inputs).sum();
 
-        let active_days = stats.iter().filter(|s| s.messages_sent > 0).count() as u64;
+        let _active_days = stats.iter().filter(|s| s.messages_sent > 0).count() as u64;
 
         let mut streak: u64 = 0;
         for s in stats.iter().rev() {

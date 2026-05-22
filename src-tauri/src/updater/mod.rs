@@ -93,7 +93,7 @@ impl AutoUpdater {
 
     pub async fn download_update(&self, url: &str) -> Result<PathBuf> {
         let response = reqwest::get(url).await?;
-        let total_bytes = response.content_length().unwrap_or(0);
+        let _total_bytes = response.content_length().unwrap_or(0);
         
         let file_name = url.split('/').last().unwrap_or("update");
         let output_path = self.cache_dir.join(file_name);
@@ -101,15 +101,12 @@ impl AutoUpdater {
         std::fs::create_dir_all(&self.cache_dir)?;
         
         let mut file = tokio::fs::File::create(&output_path).await?;
-        let mut bytes_downloaded = 0u64;
 
         let mut stream = response.bytes_stream();
-        use tokio::io::AsyncWriteExt;
         
         while let Some(chunk) = stream.next().await {
             let chunk = chunk?;
             tokio::io::copy(&mut chunk.as_ref(), &mut file).await?;
-            bytes_downloaded += chunk.len() as u64;
         }
 
         Ok(output_path)

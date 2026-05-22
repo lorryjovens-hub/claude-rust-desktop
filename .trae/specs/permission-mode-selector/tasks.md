@@ -1,0 +1,52 @@
+# Tasks
+- [x] Task 1: 创建权限模式枚举和状态管理
+  - [x] SubTask 1.1: 在 useChatStore 中添加 permissionMode 状态和 setPermissionMode 方法
+  - [x] SubTask 1.2: 创建权限模式类型定义（AskPermissions, AcceptEdits, PlanMode, BypassPermissions）
+- [x] Task 2: 创建权限模式选择器组件
+  - [x] SubTask 2.1: 创建 `src/components/PermissionModeSelector.tsx` 组件
+  - [x] SubTask 2.2: 实现模式切换 UI（下拉菜单/弹窗，类似图一）
+  - [x] SubTask 2.3: 添加全托管模式切换警告对话框
+- [x] Task 3: 修改后端 PermissionManager 支持权限模式
+  - [x] SubTask 3.1: 添加 PermissionMode 枚举
+  - [x] SubTask 3.2: 修改 check_permission 方法，根据模式自动决定是否需要确认
+  - [x] SubTask 3.3: 实现 Bypass permissions 下的自动通过逻辑
+  - [x] SubTask 3.4: 实现 Plan mode 下的只读限制
+  - [x] SubTask 3.5: 实现 Accept edits 下的编辑操作自动通过
+- [x] Task 4: 集成权限模式选择器到 MainContent
+  - [x] SubTask 4.1: 在 MainContent 组件中导入并使用 PermissionModeSelector
+  - [x] SubTask 4.2: 确保 permissionMode 状态正确传递到后端
+- [x] Task 5: 修复附件上传功能
+  - [x] SubTask 5.1: 修复后端文件上传接口
+  - [x] SubTask 5.2: 修复前端附件预览和发送逻辑
+  - [x] SubTask 5.3: 支持图片、PDF、文档等多种文件类型
+- [x] Task 6: 解禁所有工具调用
+  - [x] SubTask 6.1: 修复权限模式从前端到后端的传递
+  - [x] SubTask 6.2: 解禁 Read/Write/Bash/ListDir/Edit/Grep 等所有工具
+  - [x] SubTask 6.3: 验证工具调用结果正确返回前端
+- [x] Task 7: 修复 Bypass 模式确认框问题
+  - [x] SubTask 7.1: 修复 tool_loop.rs 中 Bypass 模式下仍弹出确认框的问题
+  - [x] SubTask 7.2: 确保所有工具（包括 computer_use）在 Bypass 模式下自动通过
+  - [x] SubTask 7.3: 验证工具调用不再需要用户确认
+- [x] Task 8: 集成终端 CLI 组件
+  - [x] SubTask 8.1: 安装 xterm.js 相关依赖
+  - [x] SubTask 8.2: 创建 TerminalPanel.tsx 组件
+  - [x] SubTask 8.3: 在 api.ts 中添加终端相关 API 函数
+  - [x] SubTask 8.4: 集成终端面板到 App.tsx
+  - [x] SubTask 8.5: 支持多标签页、命令执行、实时输出
+- [x] Task 9: 验证和测试
+  - [x] SubTask 9.1: 验证中英文切换功能
+  - [x] SubTask 9.2: 验证权限模式切换功能
+  - [x] SubTask 9.3: 验证全托管模式下工具调用自动通过
+  - [x] SubTask 9.4: 验证 Plan mode 下写操作被正确拒绝
+  - [x] SubTask 9.5: 验证终端面板功能正常
+  - [x] SubTask 9.6: 检查编译无错误
+
+# Task Dependencies
+- Task 2 依赖 Task 1
+- Task 3 依赖 Task 1
+- Task 4 依赖 Task 1, 2, 3
+- Task 5 独立
+- Task 6 依赖 Task 3, 4
+- Task 7 依赖 Task 6
+- Task 8 独立
+- Task 9 依赖 Task 4, 5, 6, 7, 8

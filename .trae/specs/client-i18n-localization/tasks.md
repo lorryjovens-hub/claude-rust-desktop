@@ -1,0 +1,35 @@
+# Tasks
+- [x] Task 1: 创建 i18n 翻译文件和 hook
+  - [x] SubTask 1.1: 创建 `src/locales/zh.json` 中文翻译文件
+  - [x] SubTask 1.2: 创建 `src/locales/en.json` 英文翻译文件
+  - [x] SubTask 1.3: 创建 `src/hooks/useI18n.ts` hook
+- [x] Task 2: 扩展 UI Store 支持语言设置
+  - [x] SubTask 2.1: 在 useUIStore 中添加 language 状态和 setLanguage 方法
+  - [x] SubTask 2.2: 在 App 入口初始化语言设置（检测系统语言 + localStorage）
+- [x] Task 3: 汉化 Sidebar 组件
+  - [x] SubTask 3.1: 使用 useI18n hook 替换所有硬编码文本
+- [x] Task 4: 汉化 SettingsPage 并添加语言切换选项
+  - [x] SubTask 4.1: 使用 useI18n hook 替换所有硬编码文本
+  - [x] SubTask 4.2: 在"通用"标签中添加语言切换下拉选项
+- [x] Task 5: 汉化 Header 组件
+  - [x] SubTask 5.1: 使用 useI18n hook 替换所有硬编码文本
+- [x] Task 6: 汉化 ChatInput 和 MessageBubble 组件
+  - [x] SubTask 6.1: 汉化 ChatInput 组件
+  - [x] SubTask 6.2: 汉化 MessageBubble 组件
+- [x] Task 7: 汉化其他组件
+  - [x] SubTask 7.1: 汉化 SearchModal 组件
+  - [x] SubTask 7.2: 汉化 CustomizePage 组件
+  - [x] SubTask 7.3: 汉化 ModelsPage/ProjectsPage/ArtifactsPage 组件
+- [x] Task 8: 验证和测试
+  - [x] SubTask 8.1: 验证中英文切换功能
+  - [x] SubTask 8.2: 验证语言持久化功能
+  - [x] SubTask 8.3: 检查编译无错误
+
+# Task Dependencies
+- Task 2 依赖 Task 1
+- Task 3 依赖 Task 2
+- Task 4 依赖 Task 2
+- Task 5 依赖 Task 2
+- Task 6 依赖 Task 2
+- Task 7 依赖 Task 2
+- Task 8 依赖 Task 3-7

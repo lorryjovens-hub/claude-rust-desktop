@@ -1,11 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-cli/schema.json",
   "productName": "Claude (rust)",
-  "version": "1.8.12",
+  "version": "2.0.0",
   "identifier": "com.claude.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:3456",
+    "devUrl": "http://localhost:5173",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
@@ -19,11 +19,12 @@
         "minHeight": 600,
         "center": true,
         "decorations": true,
-        "visible": false
+        "visible": false,
+        "additionalBrowserArgs": "--enable-features=WebRTCPipeWireCapturer"
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; img-src 'self' asset: https: data: blob:; font-src 'self' https:; connect-src 'self' http://127.0.0.1:30080 http://127.0.0.1:30090 https: http://localhost:*; frame-src 'self' blob: data:;"
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; img-src 'self' asset: https: data: blob:; font-src 'self' https:; connect-src 'self' http://127.0.0.1:30080 http://127.0.0.1:30090 https: http://localhost:*; frame-src 'self' blob: data:; media-src 'self' blob:;"
     }
   },
   "bundle": {

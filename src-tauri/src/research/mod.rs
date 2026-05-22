@@ -1,16 +1,15 @@
-use anyhow::{anyhow, Result};
-use futures::stream::{self, StreamExt};
-use reqwest::Client;
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use tokio::time::{timeout, Duration};
+use tokio::sync::mpsc;
 
-const MAX_SUB_QUESTIONS: usize = 5;
-const MAX_WEB_SEARCHES_PER_SUBAGENT: usize = 8;
-const SUB_RESEARCHER_MAX_TOKENS: u32 = 8192;
-const SYNTHESIS_MAX_TOKENS: u32 = 32768;
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResearchRequest {
+    pub query: String,
+    pub api_key: String,
+    pub base_url: String,
+    pub model: String,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResearchPlan {
@@ -19,391 +18,544 @@ pub struct ResearchPlan {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SubResearchFinding {
-    pub sub_agent_id: String,
+pub struct ResearchSource {
+    pub url: String,
+    pub title: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub snippet: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SubAgentResult {
     pub sub_question: String,
-    pub markdown: String,
+    pub findings: String,
     pub sources: Vec<ResearchSource>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ResearchSource {
-    pub url: String,
-    pub title: String,
-    pub snippet: Option<String>,
-    pub favicon: Option<String>,
+pub struct ResearchResult {
+    pub plan: ResearchPlan,
+    pub sub_results: Vec<SubAgentResult>,
+    pub sources: Vec<ResearchSource>,
+    pub report: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[derive(Debug, Clone, Serialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum ResearchEvent {
-    #[serde(rename = "research_phase")]
-    Phase { phase: String, label: String },
-    #[serde(rename = "research_plan")]
-    Plan { sub_questions: Vec<String>, title: String },
-    #[serde(rename = "research_subagent_started")]
-    SubagentStarted { sub_agent_id: String, sub_question: String },
-    #[serde(rename = "research_source")]
-    Source { sub_agent_id: String, source: ResearchSource },
-    #[serde(rename = "research_finding")]
-    Finding { sub_agent_id: String, markdown: String },
-    #[serde(rename = "research_subagent_done")]
-    SubagentDone { sub_agent_id: String, sources_count: usize },
-    #[serde(rename = "research_report_delta")]
-    ReportDelta { text: String },
-    #[serde(rename = "research_report")]
-    Report { markdown: String },
-    #[serde(rename = "research_done")]
-    Done { sources_count: usize, duration_ms: u64 },
-    #[serde(rename = "error")]
-    Error { error: String },
+    ResearchPhase { phase: String, label: String },
+    ResearchPlan { title: String, sub_questions: Vec<String> },
+    ResearchSubagentStarted { sub_agent_id: String, index: usize, sub_question: String },
+    ResearchSource { sub_agent_id: String, source: ResearchSource },
+    ResearchFinding { sub_agent_id: String, sub_question: String, markdown: String },
+    ResearchSubagentDone { sub_agent_id: String, sources_count: usize },
+    ResearchReportDelta { text: String },
+    ResearchReport { markdown: String },
+    ResearchDone { sources_count: usize, sub_agents_count: usize, duration_ms: u64 },
+    ResearchError { error: String },
 }
 
-pub struct ResearchOrchestrator {
-    client: Client,
-    api_key: String,
-    base_url: String,
-}
+const MAX_SUB_QUESTIONS: usize = 5;
+const MAX_WEB_SEARCHES_PER_SUBAGENT: u32 = 8;
+const SUB_RESEARCHER_MAX_TOKENS: u32 = 8192;
+const SYNTHESIS_MAX_TOKENS: u32 = 32768;
 
-impl ResearchOrchestrator {
-    pub fn new(api_key: String, base_url: String) -> Self {
-        Self {
-            client: Client::builder()
-                .timeout(Duration::from_secs(120))
-                .build()
-                .unwrap_or_else(|_| Client::new()),
-            api_key,
-            base_url,
-        }
-    }
-
-    pub async fn run_research<F, Fut>(
-        &self,
-        query: String,
-        event_sender: F,
-    ) -> Result<String>
-    where
-        F: Fn(ResearchEvent) -> Fut + Clone + Send + 'static,
-        Fut: std::future::Future<Output = ()> + Send + 'static,
-    {
-        let start_time = std::time::Instant::now();
-        let mut all_sources: Vec<ResearchSource> = Vec::new();
-
-        event_sender(ResearchEvent::Phase {
-            phase: "planning".to_string(),
-            label: "创建研究计划".to_string(),
-        }).await;
-
-        let plan = self.create_research_plan(&query).await?;
-
-        event_sender(ResearchEvent::Plan {
-            title: plan.title.clone(),
-            sub_questions: plan.sub_questions.clone(),
-        }).await;
-
-        event_sender(ResearchEvent::Phase {
-            phase: "gathering".to_string(),
-            label: "并行搜索信息".to_string(),
-        }).await;
-
-        let findings = self.gather_findings(&query, &plan, &event_sender, &mut all_sources).await?;
-
-        event_sender(ResearchEvent::Phase {
-            phase: "writing".to_string(),
-            label: "撰写研究报告".to_string(),
-        }).await;
-
-        let report = self.synthesize_report(&query, &findings, &all_sources).await?;
-
-        let sources_count = all_sources.len();
-        let duration_ms = start_time.elapsed().as_millis() as u64;
-
-        event_sender(ResearchEvent::Done {
-            sources_count,
-            duration_ms,
-        }).await;
-
-        Ok(report)
-    }
-
-    async fn create_research_plan(&self, query: &str) -> Result<ResearchPlan> {
-        let planning_prompt = format!(
-            r#"You are a research planner. Your job is to decompose a user's research question into a structured research plan.
+const PLANNING_SYSTEM_PROMPT: &str = r#"You are a research planner. Your job is to decompose a user's research question into a structured research plan.
 
 Given a research question, you must:
 1. Identify the core subject and scope
-2. Break it into 3-{} focused, non-overlapping sub-questions
-3. Each sub-question should be specific, answerable, and collectively cover the main question
+2. Break it into 3-5 focused, non-overlapping sub-questions that together cover the full scope
+3. Each sub-question should be specific enough to be answerable by 3-5 high-quality web sources
+4. Order sub-questions logically (foundational context first, specifics later)
+5. Generate a concise title for the final research report
 
-Output ONLY a JSON object in this exact format:
-{{"title": "Brief Title", "sub_questions": ["Question 1", "Question 2", "Question 3"]}}
+IMPORTANT:
+- Keep each sub-question to ONE concise sentence (max 30 words)
+- The title must be under 15 words
+- Use English for JSON keys and structure; sub-question text should match the language of the user's query
 
-Research question: {}"#,
-            MAX_SUB_QUESTIONS, query
-        );
+Respond in strict JSON with this shape:
+{
+  "title": "string",
+  "sub_questions": ["string", "string", ...]
+}
 
-        let response = self.call_llm(&planning_prompt, 2048).await?;
-        
-        let plan: ResearchPlan = serde_json::from_str(&response)
-            .map_err(|e| anyhow!("Failed to parse research plan: {}", e))?;
+Do NOT include markdown code fences. Output only the raw JSON object."#;
 
-        Ok(plan)
+const SUB_RESEARCHER_SYSTEM_PROMPT: &str = r#"You are a research specialist. You will be given ONE specific sub-question as part of a larger research project. Your job:
+
+1. Use the web_search tool aggressively to find 3-8 high-quality, recent, authoritative sources
+2. Prefer primary sources, academic papers, official documentation, and reputable publications
+3. After gathering sources, write a detailed markdown-formatted findings report on this sub-question ONLY
+4. Include inline markdown hyperlinks to each source you cite: ([source name](url))
+5. Use markdown tables for structured data or comparisons
+6. Be precise with facts, numbers, dates, and technical details
+7. Do NOT write an introduction or conclusion — just the findings body
+8. Aim for 500-1500 words of dense, well-cited content
+
+IMPORTANT:
+- Stay strictly focused on your assigned sub-question
+- If sources disagree, note the disagreement and cite both
+- Prefer quantitative data when available
+- Do not speculate beyond what the sources say"#;
+
+const SYNTHESIS_SYSTEM_PROMPT: &str = r#"You are a senior research writer. You will receive:
+1. The original research question
+2. A collection of findings from multiple sub-researchers, each covering a different sub-question
+3. The list of all sources gathered
+
+Your job is to synthesize these findings into a single, comprehensive, long-form research report. Requirements:
+
+1. Write a clear H1 title
+2. Open with an executive summary (2-3 paragraphs) stating the main conclusions
+3. Organize the body into logical ## sections (not necessarily mirroring the sub-questions — reorganize as needed for coherence)
+4. Use ### sub-sections where helpful
+5. Use markdown tables for any structured comparisons or data
+6. Include inline citations as markdown hyperlinks: ([source name](url))
+7. Every non-trivial factual claim MUST have an inline citation
+8. End with a ## Conclusion section summarizing key takeaways and open questions
+9. End with a ## References section listing all cited sources as a numbered markdown list with hyperlinks
+
+Style:
+- Objective, analytical tone
+- Precise with numbers, dates, and technical terminology
+- Acknowledge uncertainty and disagreements between sources
+- Do not speculate beyond what the findings support
+- Target 2000-4000 words for a substantive report
+- Prefer prose over bullet lists for the main body
+
+Do NOT wrap the output in markdown code fences. Output the report directly as markdown."#;
+
+#[derive(Clone)]
+pub struct ResearchOrchestrator {
+    http_client: reqwest::Client,
+}
+
+impl ResearchOrchestrator {
+    pub fn new(http_client: reqwest::Client) -> Self {
+        Self { http_client }
     }
 
-    async fn gather_findings<F, Fut>(
+    pub async fn run_pipeline(
         &self,
-        query: &str,
-        plan: &ResearchPlan,
-        event_sender: &F,
-        all_sources: &mut Vec<ResearchSource>,
-    ) -> Result<Vec<SubResearchFinding>>
-    where
-        F: Fn(ResearchEvent) -> Fut + Clone + Send + 'static,
-        Fut: std::future::Future<Output = ()> + Send + 'static,
-    {
-        let mut findings: Vec<SubResearchFinding> = Vec::new();
+        request: ResearchRequest,
+        event_tx: mpsc::UnboundedSender<ResearchEvent>,
+    ) -> Result<ResearchResult> {
+        let started_at = std::time::Instant::now();
 
-        let research_tasks: Vec<_> = plan.sub_questions.iter().enumerate().map(|(idx, sub_q)| {
-            let sub_q = sub_q.clone();
-            let query = query.to_string();
-            let event_sender = event_sender.clone();
-            let api_key = self.api_key.clone();
-            let base_url = self.base_url.clone();
+        let emit = |event: ResearchEvent| {
+            let _ = event_tx.send(event);
+        };
 
-            async move {
-                let sub_agent_id = format!("sub_agent_{}", idx);
-                
-                event_sender(ResearchEvent::SubagentStarted {
-                    sub_agent_id: sub_agent_id.clone(),
-                    sub_question: sub_q.clone(),
-                }).await;
+        // Phase 1: Planning
+        emit(ResearchEvent::ResearchPhase {
+            phase: "planning".to_string(),
+            label: "Planning research...".to_string(),
+        });
 
-                let result = Self::research_sub_question(
-                    &Client::new(),
-                    &api_key,
-                    &base_url,
-                    &query,
-                    &sub_q,
-                    &sub_agent_id,
-                    event_sender.clone(),
-                ).await;
+        let plan = self.run_planner(&request).await?;
+        emit(ResearchEvent::ResearchPlan {
+            title: plan.title.clone(),
+            sub_questions: plan.sub_questions.clone(),
+        });
 
-                (sub_agent_id, sub_q, result)
-            }
-        }).collect();
+        // Phase 2: Parallel sub-researchers
+        let sub_count = plan.sub_questions.len();
+        emit(ResearchEvent::ResearchPhase {
+            phase: "gathering".to_string(),
+            label: format!("Researching {} sub-topics in parallel...", sub_count),
+        });
 
-        let results = stream::iter(research_tasks)
-            .buffer_unordered(3)
-            .collect::<Vec<_>>().await;
+        let mut sub_results = Vec::new();
+        let mut handles: Vec<tokio::task::JoinHandle<Result<SubAgentResult, anyhow::Error>>> = Vec::new();
+        let sub_questions: Vec<String> = plan.sub_questions.clone();
 
-        for (_sub_agent_id, _sub_question, finding) in results {
-            match finding {
-                Ok(f) => {
-                    for source in &f.sources {
-                        all_sources.push(source.clone());
+        for (idx, sub_question) in sub_questions.into_iter().enumerate() {
+            let sub_agent_id = format!("sub-{}", idx);
+            let request_clone = request.clone();
+            let event_tx_clone = event_tx.clone();
+            let http_client = self.http_client.clone();
+            let sub_question_clone = sub_question.clone();
+
+            emit(ResearchEvent::ResearchSubagentStarted {
+                sub_agent_id: sub_agent_id.clone(),
+                index: idx,
+                sub_question: sub_question_clone,
+            });
+
+            let handle = tokio::spawn(async move {
+                let sub_q = sub_question.clone();
+                let orchestrator = ResearchOrchestrator::new(http_client);
+                match orchestrator.run_sub_researcher(&request_clone, sub_question).await {
+                    Ok((findings, sources)) => {
+                        for source in &sources {
+                            let _ = event_tx_clone.send(ResearchEvent::ResearchSource {
+                                sub_agent_id: sub_agent_id.clone(),
+                                source: source.clone(),
+                            });
+                        }
+                        let _ = event_tx_clone.send(ResearchEvent::ResearchFinding {
+                            sub_agent_id: sub_agent_id.clone(),
+                            sub_question: sub_q.clone(),
+                            markdown: findings.clone(),
+                        });
+                        let _ = event_tx_clone.send(ResearchEvent::ResearchSubagentDone {
+                            sub_agent_id: sub_agent_id.clone(),
+                            sources_count: sources.len(),
+                        });
+                        Ok(SubAgentResult {
+                            sub_question: sub_q.clone(),
+                            findings,
+                            sources,
+                        })
                     }
-                    event_sender(ResearchEvent::SubagentDone {
-                        sub_agent_id: _sub_agent_id.clone(),
-                        sources_count: f.sources.len(),
-                    }).await;
-                    findings.push(f);
+                    Err(e) => {
+                        eprintln!("[Research] Sub-agent {} failed: {}", sub_agent_id, e);
+                        let _ = event_tx_clone.send(ResearchEvent::ResearchSubagentDone {
+                            sub_agent_id: sub_agent_id.clone(),
+                            sources_count: 0,
+                        });
+                        Ok(SubAgentResult {
+                            sub_question: sub_q.clone(),
+                            findings: String::new(),
+                            sources: Vec::new(),
+                        })
+                    }
                 }
-                Err(e) => {
-                    tracing::warn!("Sub-agent {} failed: {}", _sub_agent_id, e);
-                }
+            });
+            handles.push(handle);
+        }
+
+        for handle in handles {
+            if let Ok(result) = handle.await? {
+                sub_results.push(result);
             }
         }
 
-        Ok(findings)
-    }
-
-    async fn research_sub_question<F, Fut>(
-        client: &Client,
-        api_key: &str,
-        base_url: &str,
-        parent_query: &str,
-        sub_question: &str,
-        sub_agent_id: &str,
-        event_sender: F,
-    ) -> Result<SubResearchFinding>
-    where
-        F: Fn(ResearchEvent) -> Fut + Clone + Send + 'static,
-        Fut: std::future::Future<Output = ()> + Send + 'static,
-    {
-        let search_query = format!("{} {}", parent_query, sub_question);
-        
-        let sources = Self::perform_web_search(client, api_key, base_url, &search_query, MAX_WEB_SEARCHES_PER_SUBAGENT).await?;
-
-        for source in &sources {
-            event_sender(ResearchEvent::Source {
-                sub_agent_id: sub_agent_id.to_string(),
-                source: source.clone(),
-            }).await;
+        // Aggregate and dedupe sources
+        let mut all_sources_map: HashMap<String, ResearchSource> = HashMap::new();
+        for r in &sub_results {
+            for s in &r.sources {
+                all_sources_map.entry(s.url.clone()).or_insert_with(|| s.clone());
+            }
         }
+        let all_sources: Vec<ResearchSource> = all_sources_map.into_values().collect();
 
-        let synthesis_prompt = format!(
-            r#"Based on the following sources, answer this specific question:
+        // Phase 3: Synthesis
+        emit(ResearchEvent::ResearchPhase {
+            phase: "writing".to_string(),
+            label: "Writing final report...".to_string(),
+        });
 
-Question: {}
+        let findings_blocks: Vec<(String, String)> = sub_results
+            .iter()
+            .filter(|r| !r.findings.trim().is_empty())
+            .map(|r| (r.sub_question.clone(), r.findings.clone()))
+            .collect();
 
-Sources:
-{}
+        let final_report = self.run_synthesis(
+            &request,
+            &request.query,
+            &findings_blocks,
+            &all_sources,
+            event_tx.clone(),
+        ).await?;
 
-Provide a comprehensive answer in markdown format."#,
-            sub_question,
-            sources.iter().map(|s| format!("- {}: {}", s.title, s.url)).collect::<Vec<_>>().join("\n")
-        );
+        let duration_ms = started_at.elapsed().as_millis() as u64;
 
-        let markdown = Self::call_llm_static(client, api_key, base_url, &synthesis_prompt, SUB_RESEARCHER_MAX_TOKENS).await?;
+        emit(ResearchEvent::ResearchReport {
+            markdown: final_report.clone(),
+        });
+        emit(ResearchEvent::ResearchDone {
+            sources_count: all_sources.len(),
+            sub_agents_count: sub_count,
+            duration_ms,
+        });
 
-        event_sender(ResearchEvent::Finding {
-            sub_agent_id: sub_agent_id.to_string(),
-            markdown: markdown.clone(),
-        }).await;
-
-        Ok(SubResearchFinding {
-            sub_agent_id: sub_agent_id.to_string(),
-            sub_question: sub_question.to_string(),
-            markdown,
-            sources,
+        Ok(ResearchResult {
+            plan,
+            sub_results,
+            sources: all_sources,
+            report: final_report,
         })
     }
 
-    async fn perform_web_search(
-        client: &Client,
-        _api_key: &str,
-        _base_url: &str,
-        query: &str,
-        max_results: usize,
-    ) -> Result<Vec<ResearchSource>> {
-        let search_url = format!(
-            "https://www.google.com/search?q={}&num={}",
-            urlencoding::encode(query),
-            max_results
+    async fn run_planner(&self, request: &ResearchRequest) -> Result<ResearchPlan> {
+        let today = chrono::Utc::now().format("%Y-%m-%d");
+        let user_prompt = format!(
+            r#"Research question: "{}"
+
+Today's date: {}
+
+Produce the research plan now."#,
+            request.query, today
         );
-
-        let response = client.get(&search_url)
-            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-            .send().await?;
-
-        let html = response.text().await?;
-        
-        let sources = parse_search_results(&html)?;
-        Ok(sources.into_iter().take(max_results).collect())
-    }
-
-    async fn synthesize_report(
-        &self,
-        query: &str,
-        findings: &[SubResearchFinding],
-        sources: &[ResearchSource],
-    ) -> Result<String> {
-        let findings_text = findings.iter()
-            .map(|f| format!("## {}\n{}\n", f.sub_question, f.markdown))
-            .collect::<Vec<_>>()
-            .join("\n");
-
-        let sources_text = sources.iter()
-            .map(|s| format!("- [{}]({})", s.title, s.url))
-            .collect::<Vec<_>>()
-            .join("\n");
-
-        let synthesis_prompt = format!(
-            r#"Synthesize the following research findings into a comprehensive markdown report.
-
-Original Question: {}
-
-Findings:
-{}
-
-Sources:
-{}
-
-Write a well-structured report that:
-1. Has a clear title
-2. Includes an executive summary
-3. Organizes findings logically
-4. Cites sources appropriately
-5. Provides actionable insights"#,
-            query, findings_text, sources_text
-        );
-
-        self.call_llm(&synthesis_prompt, SYNTHESIS_MAX_TOKENS).await
-    }
-
-    async fn call_llm(&self, prompt: &str, max_tokens: u32) -> Result<String> {
-        Self::call_llm_static(&self.client, &self.api_key, &self.base_url, prompt, max_tokens).await
-    }
-
-    async fn call_llm_static(
-        client: &Client,
-        api_key: &str,
-        base_url: &str,
-        prompt: &str,
-        max_tokens: u32,
-    ) -> Result<String> {
-        let url = format!("{}/v1/messages", normalize_api_format_endpoint(base_url));
 
         let body = serde_json::json!({
-            "model": "claude-sonnet-4-6",
-            "max_tokens": max_tokens,
-            "messages": [{"role": "user", "content": prompt}]
+            "model": request.model,
+            "max_tokens": 4096,
+            "system": PLANNING_SYSTEM_PROMPT,
+            "messages": [{
+                "role": "user",
+                "content": user_prompt
+            }]
         });
 
-        let response = client.post(&url)
-            .header("x-api-key", api_key)
-            .header("content-type", "application/json")
-            .json(&body)
-            .send().await?;
+        let response = self.call_anthropic(request, &body).await?;
+        let content = response["content"].as_array().ok_or_else(|| anyhow::anyhow!("Planner returned no content"))?;
+        let text_block = content.iter().find(|b| b["type"] == "text").ok_or_else(|| anyhow::anyhow!("Planner returned no text content"))?;
+        let raw_text = text_block["text"].as_str().ok_or_else(|| anyhow::anyhow!("Planner text is invalid"))?;
 
-        if !response.status().is_success() {
-            return Err(anyhow!("LLM API error: {}", response.status()));
+        let cleaned = raw_text
+            .replace("```json", "")
+            .replace("```", "")
+            .trim()
+            .to_string();
+
+        let parsed: serde_json::Value = serde_json::from_str(&cleaned)
+            .map_err(|e| anyhow::anyhow!("Planner returned invalid JSON: {}", e))?;
+
+        let title = parsed["title"].as_str().unwrap_or(&request.query).to_string();
+        let sub_questions: Vec<String> = parsed["sub_questions"]
+            .as_array()
+            .ok_or_else(|| anyhow::anyhow!("Planner returned no sub_questions"))?
+            .iter()
+            .filter_map(|v| v.as_str().map(String::from))
+            .take(MAX_SUB_QUESTIONS)
+            .collect();
+
+        if sub_questions.is_empty() {
+            return Err(anyhow::anyhow!("Planner returned no sub_questions"));
         }
 
-        let result: serde_json::Value = response.json().await?;
-        let content = result["content"][0]["text"]
-            .as_str()
-            .ok_or_else(|| anyhow!("Invalid LLM response format"))?;
-
-        Ok(content.to_string())
+        Ok(ResearchPlan { title, sub_questions })
     }
-}
 
-fn parse_search_results(html: &str) -> Result<Vec<ResearchSource>> {
-    let mut sources = Vec::new();
-    
-    let title_re = regex::Regex::new(r#"<h3[^>]*>([^<]+)</h3>"#).unwrap();
-    let url_re = regex::Regex::new(r#"href="/url\?q=([^&]+)"#).unwrap();
+    async fn run_sub_researcher(
+        &self,
+        request: &ResearchRequest,
+        sub_question: String,
+    ) -> Result<(String, Vec<ResearchSource>)> {
+        let today = chrono::Utc::now().format("%Y-%m-%d");
+        let user_prompt = format!(
+            r#"Main research topic: "{}"
 
-    let titles: Vec<_> = title_re.captures_iter(html)
-        .filter_map(|c| c.get(1).map(|m| m.as_str().to_string()))
-        .collect();
+YOUR ASSIGNED SUB-QUESTION: "{}"
 
-    let urls: Vec<_> = url_re.captures_iter(html)
-        .filter_map(|c| c.get(1).map(|m| m.as_str().to_string()))
-        .collect();
+Today's date: {}
 
-    for (i, (title, url)) in titles.iter().zip(urls.iter()).enumerate().take(10) {
-        sources.push(ResearchSource {
-            url: url.clone(),
-            title: title.clone(),
-            snippet: None,
-            favicon: None,
+Research this sub-question now. Use web_search to find high-quality sources, then write your markdown findings report. Cite every factual claim with an inline markdown link."#,
+            request.query, sub_question, today
+        );
+
+        let body = serde_json::json!({
+            "model": request.model,
+            "max_tokens": SUB_RESEARCHER_MAX_TOKENS,
+            "system": SUB_RESEARCHER_SYSTEM_PROMPT,
+            "messages": [{
+                "role": "user",
+                "content": user_prompt
+            }],
+            "tools": [{
+                "type": "web_search_20250305",
+                "name": "web_search",
+                "max_uses": MAX_WEB_SEARCHES_PER_SUBAGENT,
+            }]
         });
+
+        let response = self.call_anthropic(request, &body).await?;
+        let (text, sources) = self.extract_sub_agent_result(&response);
+        Ok((text, sources))
     }
 
-    Ok(sources)
-}
+    async fn run_synthesis(
+        &self,
+        request: &ResearchRequest,
+        query: &str,
+        findings_blocks: &[(String, String)],
+        all_sources: &[ResearchSource],
+        event_tx: mpsc::UnboundedSender<ResearchEvent>,
+    ) -> Result<String> {
+        let today = chrono::Utc::now().format("%Y-%m-%d");
 
-pub fn normalize_base_url(url: &str) -> String {
-    url.trim_end_matches('/').to_string()
-}
+        let sources_list = all_sources
+            .iter()
+            .enumerate()
+            .map(|(i, s)| format!("[{}] {} — {}", i + 1, s.title, s.url))
+            .collect::<Vec<_>>()
+            .join("\n");
 
-pub fn normalize_api_format_endpoint(url: &str) -> String {
-    let url = url.trim_end_matches('/');
-    if url.ends_with("/v1") {
-        url.to_string()
-    } else {
-        format!("{}/v1", url)
+        let findings_text = findings_blocks
+            .iter()
+            .enumerate()
+            .map(|(i, (sub_q, markdown))| {
+                format!("### Sub-research {}: {}\n\n{}", i + 1, sub_q, markdown)
+            })
+            .collect::<Vec<_>>()
+            .join("\n\n---\n\n");
+
+        let user_prompt = format!(
+            r#"Original research question: "{}"
+
+Today's date: {}
+
+## All Sources Gathered ({} total)
+{}
+
+## Findings from Sub-Researchers
+
+{}
+
+---
+
+Now synthesize all of the above into a comprehensive research report following the structure and style described in the system prompt."#,
+            query, today, all_sources.len(), sources_list, findings_text
+        );
+
+        let body = serde_json::json!({
+            "model": request.model,
+            "max_tokens": SYNTHESIS_MAX_TOKENS,
+            "system": SYNTHESIS_SYSTEM_PROMPT,
+            "messages": [{
+                "role": "user",
+                "content": user_prompt
+            }],
+            "stream": true
+        });
+
+        self.call_anthropic_streaming(request, &body, event_tx).await
+    }
+
+    async fn call_anthropic(
+        &self,
+        request: &ResearchRequest,
+        body: &serde_json::Value,
+    ) -> Result<serde_json::Value> {
+        let endpoint = self.normalize_endpoint(&request.base_url);
+
+        let response = self.http_client
+            .post(&endpoint)
+            .header("Content-Type", "application/json")
+            .header("x-api-key", &request.api_key)
+            .header("anthropic-version", "2023-06-01")
+            .header("anthropic-beta", "web-search-20250305")
+            .json(body)
+            .send()
+            .await?;
+
+        let status = response.status();
+        if !status.is_success() {
+            let err_text = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!("Anthropic API error {}: {}", status, &err_text[..err_text.len().min(500)]));
+        }
+
+        let json: serde_json::Value = response.json().await?;
+        Ok(json)
+    }
+
+    async fn call_anthropic_streaming(
+        &self,
+        request: &ResearchRequest,
+        body: &serde_json::Value,
+        event_tx: mpsc::UnboundedSender<ResearchEvent>,
+    ) -> Result<String> {
+        let endpoint = self.normalize_endpoint(&request.base_url);
+
+        let response = self.http_client
+            .post(&endpoint)
+            .header("Content-Type", "application/json")
+            .header("x-api-key", &request.api_key)
+            .header("anthropic-version", "2023-06-01")
+            .header("anthropic-beta", "web-search-20250305")
+            .header("accept", "text/event-stream")
+            .json(body)
+            .send()
+            .await?;
+
+        let status = response.status();
+        if !status.is_success() {
+            let err_text = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!("Anthropic API error {}: {}", status, &err_text[..err_text.len().min(500)]));
+        }
+
+        let mut stream = response.bytes_stream();
+        use futures::StreamExt;
+        let mut buf = String::new();
+        let mut full_text = String::new();
+
+        while let Some(chunk) = stream.next().await {
+            let chunk = chunk?;
+            buf.push_str(&String::from_utf8_lossy(&chunk));
+
+            let lines: Vec<String> = buf.split('\n').map(String::from).collect();
+            buf = lines.last().cloned().unwrap_or_default();
+
+            for line in &lines[..lines.len() - 1] {
+                if !line.starts_with("data: ") {
+                    continue;
+                }
+                let payload = line[6..].trim();
+                if payload.is_empty() {
+                    continue;
+                }
+
+                if let Ok(evt) = serde_json::from_str::<serde_json::Value>(payload) {
+                    if evt["type"] == "content_block_delta" {
+                        if let Some(text) = evt["delta"]["text"].as_str() {
+                            full_text.push_str(text);
+                            let _ = event_tx.send(ResearchEvent::ResearchReportDelta {
+                                text: text.to_string(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(full_text)
+    }
+
+    fn extract_sub_agent_result(&self, response: &serde_json::Value) -> (String, Vec<ResearchSource>) {
+        let mut sources = Vec::new();
+        let mut seen_urls = std::collections::HashSet::new();
+        let mut text = String::new();
+
+        if let Some(content) = response["content"].as_array() {
+            for block in content {
+                if block["type"] == "text" {
+                    if let Some(t) = block["text"].as_str() {
+                        text.push_str(t);
+                    }
+                } else if block["type"] == "web_search_tool_result" {
+                    if let Some(items) = block["content"].as_array() {
+                        for item in items {
+                            if item["type"] == "web_search_result" {
+                                if let Some(url) = item["url"].as_str() {
+                                    if !seen_urls.contains(url) {
+                                        seen_urls.insert(url.to_string());
+                                        sources.push(ResearchSource {
+                                            url: url.to_string(),
+                                            title: item["title"].as_str().unwrap_or(url).to_string(),
+                                            snippet: item["page_age"].as_str().map(|age| format!("Last updated: {}", age)),
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        (text, sources)
+    }
+
+    fn normalize_endpoint(&self, base_url: &str) -> String {
+        let base = base_url.trim_end_matches('/');
+        if base.ends_with("/v1") {
+            format!("{}/messages", base)
+        } else {
+            format!("{}/v1/messages", base)
+        }
     }
 }
