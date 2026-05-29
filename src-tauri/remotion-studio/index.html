@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 Remotion Studio</title>
+    <style>
+        :root {
+            --bg: #0d0d0d;
+            --surface: #1a1a1a;
+            --surface2: #242424;
+            --surface3: #2e2e2e;
+            --text: #eaeaea;
+            --text2: #9a9a9a;
+            --text3: #5a5a5a;
+            --border: #2a2a2a;
+            --accent: #6366f1;
+            --accent2: #818cf8;
+            --accent-glow: rgba(99, 102, 241, 0.15);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius: 10px;
+            --radius-sm: 6px;
+            --radius-lg: 14px;
+            --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ═══════ HEADER ═══════ */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            z-index: 100;
+            -webkit-app-region: drag;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text);
+            text-decoration: none;
+        }
+        .logo-icon {
+            width: 28px; height: 28px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 2px 8px var(--accent-glow);
+        }
+        .nav-tabs {
+            display: flex;
+            gap: 2px;
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+        }
+        .nav-tab {
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--text2);
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .nav-tab.active {
+            background: var(--surface3);
+            color: var(--text);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .nav-tab:hover:not(.active) { color: var(--text); }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+
+        /* ═══════ BUTTONS ═══════ */
+        .btn {
+            padding: 7px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .btn:hover { background: var(--surface3); border-color: #444; }
+        .btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .btn-primary:hover { background: var(--accent2); border-color: var(--accent2); }
+        .btn-success { background: var(--success); border-color: var(--success); color: #000; }
+        .btn-ghost { background: transparent; border-color: transparent; }
+        .btn-sm { padding: 4px 10px; font-size: 11px; }
+
+        /* ═══════ MAIN LAYOUT ═══════ */
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ═══════ SIDEBAR ═══════ */
+        .sidebar {
+            width: 260px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .sidebar-section {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text3);
+            margin-bottom: 10px;
+        }
+        .project-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .project-item {
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            color: var(--text2);
+        }
+        .project-item:hover { background: var(--surface2); color: var(--text); }
+        .project-item.active { background: var(--accent-glow); color: var(--accent2); }
+        .project-item .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ═══════ CANVAS AREA ═══════ */
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+            position: relative;
+        }
+        .canvas-toolbar {
+            height: 40px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text2);
+        }
+        .canvas-toolbar .sep {
+            width: 1px; height: 18px;
+            background: var(--border);
+        }
+
+        .viewport {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: 
+                linear-gradient(45deg, #111 25%, transparent 25%),
+                linear-gradient(-45deg, #111 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #111 75%),
+                linear-gradient(-45deg, transparent 75%, #111 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        .preview-frame {
+            width: 640px;
+            height: 360px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+            color: var(--text3);
+            font-size: 14px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        .preview-frame .big-icon {
+            font-size: 48px;
+            opacity: 0.3;
+        }
+        .preview-frame h3 {
+            font-size: 16px;
+            color: var(--text2);
+            font-weight: 500;
+        }
+        .preview-frame p {
+            font-size: 12px;
+            color: var(--text3);
+            max-width: 300px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        /* ═══════ TIMELINE ═══════ */
+        .timeline-panel {
+            height: 180px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        .timeline-header {
+            height: 32px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--text2);
+        }
+        .timeline-ruler {
+            height: 24px;
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+        .timeline-tick {
+            position: absolute;
+            bottom: 0;
+            width: 1px;
+            height: 8px;
+            background: var(--text3);
+        }
+        .timeline-tick.major {
+            height: 14px;
+            background: var(--text2);
+        }
+        .timeline-label {
+            position: absolute;
+            top: 4px;
+            font-size: 9px;
+            color: var(--text3);
+            transform: translateX(-50%);
+        }
+        .timeline-tracks {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .timeline-track {
+            height: 36px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--text2);
+        }
+        .timeline-track-label {
+            width: 80px;
+            flex-shrink: 0;
+            font-size: 10px;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .timeline-track-canvas {
+            flex: 1;
+            height: 24px;
+            background: var(--surface2);
+            border-radius: 3px;
+            position: relative;
+        }
+        .timeline-clip {
+            position: absolute;
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            opacity: 0.8;
+            cursor: pointer;
+        }
+
+        /* ═══════ EMPTY STATE ═══════ */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            gap: 16px;
+        }
+        .empty-state .icon-wrap {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: var(--surface2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+        .empty-state h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .empty-state p {
+            color: var(--text2);
+            max-width: 400px;
+            text-align: center;
+            line-height: 1.6;
+            font-size: 13px;
+        }
+        .empty-state .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        /* ═══════ MODAL ═══════ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            width: 480px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .modal h3 {
+            font-size: 17px;
+            margin-bottom: 20px;
+        }
+        .modal label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text2);
+            margin-bottom: 6px;
+        }
+        .modal input, .modal select, .modal textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 13px;
+            font-family: var(--font);
+            outline: none;
+            transition: var(--transition);
+            margin-bottom: 14px;
+        }
+        .modal input:focus, .modal select:focus, .modal textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .modal textarea { resize: vertical; min-height: 80px; }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        /* ═══════ TEMPLATES GRID ═══════ */
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .template-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+        .template-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 16px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+        .template-card .template-icon {
+            width: 56px; height: 56px;
+            border-radius: var(--radius);
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+        .template-card h4 { font-size: 13px; margin-bottom: 4px; }
+        .template-card p { font-size: 11px; color: var(--text3); line-height: 1.4; }
+
+        /* ═══════ STATUS BAR ═══════ */
+        .status-bar {
+            height: 24px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 11px;
+            color: var(--text3);
+            gap: 16px;
+            flex-shrink: 0;
+        }
+        .status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        /* ═══════ SCROLLBAR ═══════ */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+
+        /* ═══════ NOTIFICATION ═══════ */
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            right: 20px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px 20px;
+            font-size: 13px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <!-- ═══════ HEADER ═══════ -->
+    <header class="header">
+        <div class="header-left">
+            <a class="logo" href="#">
+                <span class="logo-icon">🎬</span>
+                Remotion Studio
+            </a>
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-tab="projects">📁 Projects</button>
+                <button class="nav-tab" data-tab="templates">🎨 Templates</button>
+                <button class="nav-tab" data-tab="render">🎥 Render Queue</button>
+                <button class="nav-tab" data-tab="settings">⚙️ Settings</button>
+            </nav>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="showNewProjectModal()">+ New Project</button>
+            <button class="btn" onclick="openRemotionDocs()">📖 Docs</button>
+        </div>
+    </header>
+
+    <!-- ═══════ MAIN CONTENT ═══════ -->
+    <div class="main-content">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">📂 Projects</div>
+                <ul class="project-list" id="projectList">
+                    <li class="project-item" style="color:var(--text3); font-style:italic;">
+                        No projects yet
+                    </li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">📦 Compositions</div>
+                <ul class="project-list" id="compositionList">
+                    <li class="project-item" style="color:var(--text3); font-style:italic;">
+                        Select a project
+                    </li>
+                </ul>
+            </div>
+            <div class="sidebar-section" style="flex:1;">
+                <div class="sidebar-title">⚡ Quick Actions</div>
+                <button class="btn btn-sm" style="width:100%;margin-bottom:6px;" onclick="showNewProjectModal()">
+                    🎬 New Video Project
+                </button>
+                <button class="btn btn-sm" style="width:100%;margin-bottom:6px;" onclick="openTerminal()">
+                    💻 Open Terminal
+                </button>
+                <button class="btn btn-sm" style="width:100%;" onclick="openInExplorer()">
+                    📂 Open Project Folder
+                </button>
+            </div>
+        </aside>
+
+        <!-- Canvas Area -->
+        <div class="canvas-area" id="canvasArea">
+            <!-- Default: Empty State -->
+            <div class="empty-state" id="emptyState">
+                <div class="icon-wrap">🎬</div>
+                <h2>Welcome to Remotion Studio</h2>
+                <p>Create videos programmatically with React. Leverage CSS, Canvas, SVG, WebGL — and the full React ecosystem — to build stunning videos.</p>
+                <div class="btn-row">
+                    <button class="btn btn-primary" onclick="showNewProjectModal()">✨ Create New Project</button>
+                    <button class="btn" onclick="switchTab('templates')">🎨 Browse Templates</button>
+                </div>
+            </div>
+
+            <!-- Templates View -->
+            <div class="templates-grid hidden" id="templatesView">
+                <!-- Filled by JS -->
+            </div>
+
+            <!-- Render Queue -->
+            <div class="empty-state hidden" id="renderView">
+                <div class="icon-wrap">🎥</div>
+                <h2>Render Queue</h2>
+                <p>Your render queue is empty. Select a composition and start rendering.</p>
+            </div>
+
+            <!-- Settings -->
+            <div class="empty-state hidden" id="settingsView">
+                <div class="icon-wrap">⚙️</div>
+                <h2>Settings</h2>
+                <p>Configure output formats, codec settings, and default project preferences.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ TIMELINE ═══════ -->
+    <div class="timeline-panel" id="timelinePanel">
+        <div class="timeline-header">
+            <span>⏱ Timeline</span>
+            <span style="margin-left:auto;font-size:10px;">00:00 / 00:30</span>
+        </div>
+        <div class="timeline-ruler" id="timelineRuler"></div>
+        <div class="timeline-tracks">
+            <div class="timeline-track">
+                <span class="timeline-track-label">Video</span>
+                <div class="timeline-track-canvas">
+                    <div class="timeline-clip" style="left:0;width:60%;"></div>
+                </div>
+            </div>
+            <div class="timeline-track">
+                <span class="timeline-track-label">Audio</span>
+                <div class="timeline-track-canvas">
+                    <div class="timeline-clip" style="left:5%;width:55%;background:linear-gradient(135deg,#22c55e,#10b981);"></div>
+                </div>
+            </div>
+            <div class="timeline-track">
+                <span class="timeline-track-label">Effects</span>
+                <div class="timeline-track-canvas"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ STATUS BAR ═══════ -->
+    <div class="status-bar">
+        <span class="status-dot"></span>
+        <span id="statusText">Ready — Remotion v4.0</span>
+        <span style="margin-left:auto;">Frame: 0/900 | 1920×1080 @ 30fps</span>
+        <span>|</span>
+        <span>Node.js v20</span>
+    </div>
+
+    <!-- ═══════ MODAL: New Project ═══════ -->
+    <div class="modal-overlay hidden" id="newProjectModal">
+        <div class="modal">
+            <h3>🎬 Create New Remotion Project</h3>
+            <label>Project Name</label>
+            <input type="text" id="projectName" placeholder="my-awesome-video" value="my-video">
+            
+            <label>Template</label>
+            <select id="templateSelect">
+                <option value="blank">Blank (TypeScript)</option>
+                <option value="javascript">Blank (JavaScript)</option>
+                <option value="helloworld">Hello World</option>
+                <option value="three">3D / Three.js</option>
+                <option value="audiogram">Audiogram</option>
+                <option value="tiktok">TikTok Style</option>
+                <option value="stargazer">Stargazer</option>
+                <option value="music-visualization">Music Visualization</option>
+            </select>
+
+            <label>Project Location</label>
+            <input type="text" id="projectPath" placeholder="D:\projects\my-video" value="D:\remotion-projects">
+            
+            <div class="modal-actions">
+                <button class="btn" onclick="closeModal('newProjectModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createProject()">🎬 Create Project</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ TOAST ═══════ -->
+    <div class="toast hidden" id="toast"></div>
+
+    <script>
+        // ═══════ STATE ═══════
+        const state = {
+            projects: [],
+            activeProject: null,
+            activeTab: 'projects',
+        };
+
+        // ═══════ TEMPLATES DATA ═══════
+        const templates = [
+            { id: 'blank', name: 'Blank (TS)', desc: 'Empty TypeScript project with Remotion configured', icon: '📄', color: '#6366f1' },
+            { id: 'javascript', name: 'Blank (JS)', desc: 'Empty JavaScript project for quick prototyping', icon: '📜', color: '#f59e0b' },
+            { id: 'helloworld', name: 'Hello World', desc: 'Simple animated "Hello World" with React', icon: '👋', color: '#22c55e' },
+            { id: 'three', name: '3D / Three.js', desc: 'Create 3D scenes with React Three Fiber', icon: '🧊', color: '#8b5cf6' },
+            { id: 'audiogram', name: 'Audiogram', desc: 'Podcast-style audio visualization', icon: '🎙️', color: '#ef4444' },
+            { id: 'tiktok', name: 'TikTok Style', desc: 'Vertical video template for short-form', icon: '📱', color: '#ec4899' },
+            { id: 'stargazer', name: 'Stargazer', desc: 'GitHub star history visualization', icon: '⭐', color: '#f59e0b' },
+            { id: 'music-visualization', name: 'Music Viz', desc: 'Audio-reactive music visualizer', icon: '🎵', color: '#3b82f6' },
+        ];
+
+        // ═══════ INIT ═══════
+        function init() {
+            renderTemplates();
+            renderTimelineRuler();
+            loadProjects();
+        }
+
+        // ═══════ TAB SWITCHING ═══════
+        function switchTab(tab) {
+            state.activeTab = tab;
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+
+            const views = {
+                projects: 'emptyState',
+                templates: 'templatesView',
+                render: 'renderView',
+                settings: 'settingsView',
+            };
+
+            Object.entries(views).forEach(([key, id]) => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('hidden', key !== tab);
+            });
+        }
+
+        document.querySelectorAll('.nav-tab').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
+        // ═══════ MODALS ═══════
+        function showNewProjectModal() {
+            document.getElementById('newProjectModal').classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // Close modal on overlay click
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.classList.add('hidden');
+            }
+        });
+
+        // ═══════ PROJECT MANAGEMENT ═══════
+        function loadProjects() {
+            // Try to load from localStorage
+            const saved = localStorage.getItem('remotion-projects');
+            if (saved) {
+                state.projects = JSON.parse(saved);
+                renderProjectList();
+            }
+        }
+
+        function saveProjects() {
+            localStorage.setItem('remotion-projects', JSON.stringify(state.projects));
+        }
+
+        function createProject() {
+            const name = document.getElementById('projectName').value.trim();
+            const template = document.getElementById('templateSelect').value;
+            const basePath = document.getElementById('projectPath').value.trim();
+
+            if (!name) {
+                showToast('⚠️ Please enter a project name', 'warning');
+                return;
+            }
+
+            const project = {
+                id: Date.now().toString(36),
+                name,
+                template,
+                path: `${basePath}/${name}`,
+                createdAt: new Date().toISOString(),
+                status: 'created',
+            };
+
+            state.projects.unshift(project);
+            saveProjects();
+            renderProjectList();
+            closeModal('newProjectModal');
+
+            // Call Tauri backend to create project
+            createRemotionProject(project).then(() => {
+                project.status = 'ready';
+                saveProjects();
+                renderProjectList();
+                showToast(`✅ Project "${name}" created successfully!`);
+            }).catch(err => {
+                project.status = 'error';
+                saveProjects();
+                renderProjectList();
+                showToast(`❌ Failed: ${err}`, 'error');
+            });
+        }
+
+        async function createRemotionProject(project) {
+            // Try to invoke Tauri command
+            try {
+                if (window.__TAURI__) {
+                    const { invoke } = window.__TAURI__.core;
+                    await invoke('create_remotion_project', {
+                        name: project.name,
+                        path: project.path,
+                        template: project.template,
+                    });
+                } else {
+                    // Fallback: show command
+                    const cmd = `npx create-video@latest ${project.path} --template=${project.template}`;
+                    console.log('Would run:', cmd);
+                    showToast(`💡 Run manually: ${cmd}`);
+                }
+            } catch (e) {
+                console.error('Backend error:', e);
+                const cmd = `npx create-video@latest ${project.path}`;
+                showToast(`💡 Run in terminal: ${cmd}`);
+            }
+        }
+
+        function renderProjectList() {
+            const list = document.getElementById('projectList');
+            if (state.projects.length === 0) {
+                list.innerHTML = '<li class="project-item" style="color:var(--text3);font-style:italic;">No projects yet</li>';
+                return;
+            }
+
+            list.innerHTML = state.projects.map(p => `
+                <li class="project-item ${state.activeProject?.id === p.id ? 'active' : ''}"
+                    onclick="selectProject('${p.id}')">
+                    <span class="dot" style="background:${p.status === 'ready' ? 'var(--success)' : 'var(--warning)'}"></span>
+                    ${p.name}
+                    <span style="margin-left:auto;font-size:10px;color:var(--text3);">${new Date(p.createdAt).toLocaleDateString()}</span>
+                </li>
+            `).join('');
+        }
+
+        function selectProject(id) {
+            state.activeProject = state.projects.find(p => p.id === id);
+            renderProjectList();
+            renderCompositionList();
+        }
+
+        function renderCompositionList() {
+            const list = document.getElementById('compositionList');
+            if (!state.activeProject) {
+                list.innerHTML = '<li class="project-item" style="color:var(--text3);font-style:italic;">Select a project</li>';
+                return;
+            }
+            list.innerHTML = `
+                <li class="project-item">🎞️ MainComposition</li>
+                <li class="project-item">🎨 TitleSequence</li>
+                <li class="project-item">✨ OutroAnimation</li>
+            `;
+        }
+
+        // ═══════ TEMPLATES ═══════
+        function renderTemplates() {
+            const grid = document.getElementById('templatesView');
+            grid.innerHTML = templates.map(t => `
+                <div class="template-card" onclick="createFromTemplate('${t.id}')">
+                    <div class="template-icon" style="background:${t.color}20;color:${t.color};">${t.icon}</div>
+                    <h4>${t.name}</h4>
+                    <p>${t.desc}</p>
+                </div>
+            `).join('');
+        }
+
+        function createFromTemplate(templateId) {
+            document.getElementById('templateSelect').value = templateId;
+            showNewProjectModal();
+        }
+
+        // ═══════ TIMELINE RULER ═══════
+        function renderTimelineRuler() {
+            const ruler = document.getElementById('timelineRuler');
+            let html = '';
+            for (let i = 0; i <= 30; i++) {
+                const left = (i / 30) * 100;
+                html += `<div class="timeline-tick ${i % 5 === 0 ? 'major' : ''}" style="left:${left}%"></div>`;
+                if (i % 5 === 0) {
+                    html += `<div class="timeline-label" style="left:${left}%">${i}s</div>`;
+                }
+            }
+            ruler.innerHTML = html;
+        }
+
+        // ═══════ TOAST NOTIFICATIONS ═══════
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('hidden');
+            toast.style.borderColor = type === 'error' ? 'var(--danger)' : 
+                                     type === 'warning' ? 'var(--warning)' : 'var(--border)';
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => toast.classList.add('hidden'), 4000);
+        }
+
+        // ═══════ UTILITY ACTIONS ═══════
+        function openRemotionDocs() {
+            window.open('https://remotion.dev/docs', '_blank');
+        }
+
+        function openTerminal() {
+            if (window.__TAURI__) {
+                window.__TAURI__.core.invoke('open_terminal', { path: state.activeProject?.path || 'D:\\' });
+            }
+            showToast('💡 Opening terminal...');
+        }
+
+        function openInExplorer() {
+            if (window.__TAURI__) {
+                window.__TAURI__.core.invoke('open_folder', { path: state.activeProject?.path || 'D:\\' });
+            }
+            showToast('📂 Opening folder...');
+        }
+
+        // ═══════ KEYBOARD SHORTCUTS ═══════
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key) {
+                    case 'n': e.preventDefault(); showNewProjectModal(); break;
+                    case '1': e.preventDefault(); switchTab('projects'); break;
+                    case '2': e.preventDefault(); switchTab('templates'); break;
+                    case '3': e.preventDefault(); switchTab('render'); break;
+                    case '4': e.preventDefault(); switchTab('settings'); break;
+                }
+            }
+        });
+
+        // ═══════ STARTUP ═══════
+        init();
+        console.log('🎬 Remotion Studio initialized');
+        console.log('💡 Shortcuts: Ctrl+N = New Project, Ctrl+1-4 = Switch tabs');
+        console.log('📦 Remotion packages available at:', 'D:\\repos\\remotion\\packages');
+   

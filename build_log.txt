@@ -1,0 +1,4603 @@
+        Info Looking up installed tauri packages to check mismatched versions...
+     Running beforeBuildCommand `npm run build`
+
+> claude-desktop-tauri@3.0.0 build
+> vite build
+
+[36mvite v6.4.2 [32mbuilding for production...[36m[39m
+transforming...
+[32m✓[39m 3822 modules transformed.
+rendering chunks...
+[33m[plugin vite:reporter] 
+(!) D:/tauri-dev/claude-desktop-tauri/src/api.ts is dynamically imported by D:/tauri-dev/claude-desktop-tauri/src/components/Sidebar.tsx, D:/tauri-dev/claude-desktop-tauri/src/features/slash-commands/registry.ts, D:/tauri-dev/claude-desktop-tauri/src/services/config.ts but also statically imported by D:/tauri-dev/claude-desktop-tauri/src/App.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/AddFromGithubModal.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/AgentExecutionView.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/AgentPanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/AnalyticsPanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/ArtifactsPage.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/Auth.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/ChatHeader.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/ChatsPage.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/CodePanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/CodeWorkspace.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/CustomizePage.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/FileExplorer.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/GitBashRequiredModal.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/H5AccessPanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/H5ConnectionView.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/IMIntegrationPanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/MainContent.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/McpManagementPanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/MemoryPanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/MessageAttachments.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/Onboarding.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/ProjectsPage.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/ProviderSettings.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/SettingsPage.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/Sidebar.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/SwarmCollaboration.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/TerminalPanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/UpgradePlan.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/admin/AdminLayout.tsx, D:/tauri-dev/claude-desktop-tauri/src/features/compact/CompactDialog.tsx, D:/tauri-dev/claude-desktop-tauri/src/features/file-upload/useFileUpload.ts, D:/tauri-dev/claude-desktop-tauri/src/features/model-catalog/useModelCatalog.ts, D:/tauri-dev/claude-desktop-tauri/src/features/slash-commands/registry.ts, D:/tauri-dev/claude-desktop-tauri/src/features/streaming/createStreamCallbacks.ts, D:/tauri-dev/claude-desktop-tauri/src/features/streaming/useStreamSession.ts, D:/tauri-dev/claude-desktop-tauri/src/hooks/useAnalytics.ts, D:/tauri-dev/claude-desktop-tauri/src/services/designGenerationService.ts, D:/tauri-dev/claude-desktop-tauri/src/services/remotionService.ts, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin vite:reporter] 
+(!) D:/tauri-dev/claude-desktop-tauri/node_modules/@tauri-apps/api/core.js is dynamically imported by D:/tauri-dev/claude-desktop-tauri/src/api.ts, D:/tauri-dev/claude-desktop-tauri/src/components/CostTracker.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/RemotionMotionPanel.tsx but also statically imported by D:/tauri-dev/claude-desktop-tauri/node_modules/@tauri-apps/api/event.js, D:/tauri-dev/claude-desktop-tauri/node_modules/@tauri-apps/api/path.js, D:/tauri-dev/claude-desktop-tauri/node_modules/@tauri-apps/plugin-fs/dist-js/index.js, D:/tauri-dev/claude-desktop-tauri/src/components/AppStudioPanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/GitHubHubPanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/KnowledgePanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/McpSettingsPage.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/MemoryPanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/PermissionModeSelector.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/SlashCommandPalette.tsx, D:/tauri-dev/claude-desktop-tauri/src/features/message-list/MessageList.tsx, D:/tauri-dev/claude-desktop-tauri/src/services/remotionService.ts, D:/tauri-dev/claude-desktop-tauri/src/utils/tauriAPI.ts, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin vite:reporter] 
+(!) D:/tauri-dev/claude-desktop-tauri/src/utils/tauriAPI.ts is dynamically imported by D:/tauri-dev/claude-desktop-tauri/src/api.ts, D:/tauri-dev/claude-desktop-tauri/src/components/AddFromGithubModal.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/Auth.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/CustomizePage.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/GitBashRequiredModal.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/MessageAttachments.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/MessageAttachments.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/Onboarding.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/Onboarding.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/Onboarding.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/Onboarding.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/Sidebar.tsx but also statically imported by D:/tauri-dev/claude-desktop-tauri/src/App.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/ChatHeader.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/ComputerUsePanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/H5AccessPanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/H5ConnectionView.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/IMIntegrationPanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/MainContent.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/SettingsPage.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/Sidebar.tsx, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin vite:reporter] 
+(!) D:/tauri-dev/claude-desktop-tauri/src/utils/clipboard.ts is dynamically imported by D:/tauri-dev/claude-desktop-tauri/src/components/MarkdownRenderer.tsx but also statically imported by D:/tauri-dev/claude-desktop-tauri/src/components/CodePanel.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/DiffViewer.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/MainContent.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/ToolDiffView.tsx, D:/tauri-dev/claude-desktop-tauri/src/components/admin/AdminRedemption.tsx, dynamic import will not move module into another chunk.
+[39m
+[2mdist/[22m[32mindex.html                                                     [39m[1m[2m    0.59 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-ext-400-normal--n_iQ4wr.woff          [39m[1m[2m    4.34 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Size3-Regular-CTq5MqoE.woff                       [39m[1m[2m    4.42 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-ext-800-normal-CdzdKkop.woff          [39m[1m[2m    4.47 kB[22m[1m[22m
+[2mdist/[22m[32massets/create-skills-ByvcuMHY.png                              [39m[1m[2m    4.56 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-ext-500-normal-B5u3KHyE.woff          [39m[1m[2m    4.56 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-ext-600-normal-BVATWin6.woff          [39m[1m[2m    4.59 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-ext-700-normal-kYc0MMRW.woff          [39m[1m[2m    4.60 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Size4-Regular-Dl5lxZxV.woff2                      [39m[1m[2m    4.93 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-ext-400-italic-C6Gmo4JY.woff          [39m[1m[2m    5.08 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Size2-Regular-Dy4dx90m.woff2                      [39m[1m[2m    5.21 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Size1-Regular-mCD8mA8B.woff2                      [39m[1m[2m    5.47 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-vietnamese-400-normal-CWkMWCzb.woff            [39m[1m[2m    5.71 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-vietnamese-800-normal-7dVzqE0F.woff            [39m[1m[2m    5.71 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-vietnamese-500-normal-BfZg6KYt.woff            [39m[1m[2m    5.74 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-vietnamese-600-normal-esmjhrFa.woff            [39m[1m[2m    5.75 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-vietnamese-700-normal-BDOV0CSH.woff            [39m[1m[2m    5.79 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-vietnamese-400-italic-D8dhja4j.woff            [39m[1m[2m    5.93 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Size4-Regular-BF-4gkZK.woff                       [39m[1m[2m    5.98 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Size2-Regular-oD1tc_U0.woff                       [39m[1m[2m    6.19 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Size1-Regular-C195tn64.woff                       [39m[1m[2m    6.50 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-ext-400-normal-B4-YHs9i.woff2         [39m[1m[2m    6.52 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-ext-800-normal-BCIo78k_.woff2         [39m[1m[2m    6.66 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-ext-500-normal-bcG1qx3J.woff2         [39m[1m[2m    6.72 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-ext-600-normal-CvRHnPuy.woff2         [39m[1m[2m    6.79 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-ext-700-normal-Lb1Clouz.woff2         [39m[1m[2m    6.81 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2                [39m[1m[2m    6.91 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2                   [39m[1m[2m    6.91 kB[22m[1m[22m
+[2mdist/[22m[32massets/claude-cmO8D098.png                                     [39m[1m[2m    6.97 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-ext-400-italic-CZOVIkJA.woff2         [39m[1m[2m    7.29 kB[22m[1m[22m
+[2mdist/[22m[32massets/customize-main-833Mk9n-.png                             [39m[1m[2m    7.39 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Size3-Regular-DgpXs0kz.ttf                        [39m[1m[2m    7.59 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Caligraphic-Regular-CTRA-rTL.woff                 [39m[1m[2m    7.66 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-vietnamese-800-normal-Cp95X76W.woff2           [39m[1m[2m    7.67 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-vietnamese-400-normal-C7CRHYqk.woff2           [39m[1m[2m    7.68 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Caligraphic-Bold-BEiXGLvX.woff                    [39m[1m[2m    7.72 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-vietnamese-500-normal-qnENts6X.woff2           [39m[1m[2m    7.73 kB[22m[1m[22m
+[2mdist/[22m[32massets/search-icon-CKGwnWTl.png                                [39m[1m[2m    7.75 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-vietnamese-400-italic-DO3bsfcj.woff2           [39m[1m[2m    7.82 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-vietnamese-600-normal-ZNiwCzjU.woff2           [39m[1m[2m    7.87 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-vietnamese-700-normal-c8nu78US.woff2           [39m[1m[2m    7.89 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Script-Regular-D3wIWfF6.woff2                     [39m[1m[2m    9.64 kB[22m[1m[22m
+[2mdist/[22m[32massets/figtree-latin-ext-wght-normal-DCwSJGxG.woff2            [39m[1m[2m   10.28 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2                  [39m[1m[2m   10.34 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Size4-Regular-DWFBv043.ttf                        [39m[1m[2m   10.36 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Script-Regular-D5yQViql.woff                      [39m[1m[2m   10.59 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Fraktur-Regular-CTYiF6lA.woff2                    [39m[1m[2m   11.32 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Fraktur-Bold-CL6g_b3V.woff2                       [39m[1m[2m   11.35 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Size2-Regular-B7gKUWhC.ttf                        [39m[1m[2m   11.51 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-400-normal-X3p2PSzL.woff              [39m[1m[2m   11.70 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_SansSerif-Italic-C3H0VqGB.woff2                   [39m[1m[2m   12.03 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_SansSerif-Bold-D1sUS0GD.woff2                     [39m[1m[2m   12.22 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Size1-Regular-Dbsnue_I.ttf                        [39m[1m[2m   12.23 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff                   [39m[1m[2m   12.32 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-800-normal-CXE64UEj.woff              [39m[1m[2m   12.34 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf                  [39m[1m[2m   12.34 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf                     [39m[1m[2m   12.37 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-500-normal-CNC_J6mt.woff              [39m[1m[2m   13.12 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-600-normal-veT-ELBO.woff              [39m[1m[2m   13.20 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff                     [39m[1m[2m   13.21 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-700-normal-BA12_5wD.woff              [39m[1m[2m   13.26 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Fraktur-Bold-BsDP51OF.woff                        [39m[1m[2m   13.30 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-400-italic-C95RxGpc.woff              [39m[1m[2m   13.44 kB[22m[1m[22m
+[2mdist/[22m[32massets/source-serif-4-vietnamese-wght-normal-D-yuW59g.woff2    [39m[1m[2m   13.45 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2                 [39m[1m[2m   13.57 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_SansSerif-Italic-DN2j7dab.woff                    [39m[1m[2m   14.11 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_SansSerif-Bold-DbIhKOiC.woff                      [39m[1m[2m   14.41 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-400-normal-Bx9Tn3WZ.woff2             [39m[1m[2m   15.37 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-800-normal-BxWAqEXZ.woff2             [39m[1m[2m   15.92 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Typewriter-Regular-C0xS9mPB.woff                  [39m[1m[2m   16.03 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-400-italic-C6o5RXh-.woff2             [39m[1m[2m   16.28 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2                    [39m[1m[2m   16.40 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Math-Italic-t53AETM-.woff2                        [39m[1m[2m   16.44 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-ext-800-normal-C7Ex2WKk.woff             [39m[1m[2m   16.45 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-ext-400-normal-BHbqXr-7.woff             [39m[1m[2m   16.59 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-500-normal-medSbGbm.woff2             [39m[1m[2m   16.62 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Script-Regular-C5JkGWo-.ttf                       [39m[1m[2m   16.65 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-700-normal-CTtWp6WV.woff2             [39m[1m[2m   16.78 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2                    [39m[1m[2m   16.78 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-cyrillic-600-normal-Dl75bDKp.woff2             [39m[1m[2m   16.91 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Main-Italic-NWA7e6Wa.woff2                        [39m[1m[2m   16.99 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-ext-500-normal-Bmnp8FUT.woff             [39m[1m[2m   17.08 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-ext-600-normal-DnKmvInL.woff             [39m[1m[2m   17.10 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-ext-700-normal-C0LrIr7q.woff             [39m[1m[2m   17.14 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-400-normal-D34IWA1h.woff                 [39m[1m[2m   17.34 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-800-normal-Rel2qaTu.woff                 [39m[1m[2m   17.62 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-ext-400-italic-BcKU4A_a.woff             [39m[1m[2m   17.62 kB[22m[1m[22m
+[2mdist/[22m[32massets/source-serif-4-cyrillic-ext-wght-normal-cHuGMAiY.woff2  [39m[1m[2m   18.06 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-500-normal-PrYyf_gG.woff                 [39m[1m[2m   18.45 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-600-normal-DXnQJnYb.woff                 [39m[1m[2m   18.52 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-700-normal-Cxe-XGuy.woff                 [39m[1m[2m   18.61 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-400-italic-Ds-NcNVC.woff                 [39m[1m[2m   18.66 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff                     [39m[1m[2m   18.67 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Math-Italic-DA0__PXp.woff                         [39m[1m[2m   18.75 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Main-BoldItalic-SpSLRI95.woff                     [39m[1m[2m   19.41 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf                    [39m[1m[2m   19.44 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Fraktur-Regular-CB_wures.ttf                      [39m[1m[2m   19.57 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Fraktur-Bold-BdnERNNW.ttf                         [39m[1m[2m   19.58 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Main-Italic-BMLOBm91.woff                         [39m[1m[2m   19.68 kB[22m[1m[22m
+[2mdist/[22m[32massets/figtree-latin-wght-normal-D_ZTVpCC.woff2                [39m[1m[2m   20.16 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-ext-800-normal-QYL6Z6xT.woff2            [39m[1m[2m   20.16 kB[22m[1m[22m
+[2mdist/[22m[32massets/source-serif-4-greek-wght-normal-ece1310W.woff2         [39m[1m[2m   20.23 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-ext-400-normal-XDLFwhqg.woff2            [39m[1m[2m   20.24 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-ext-500-normal-CC9VEg_t.woff2            [39m[1m[2m   20.64 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-ext-400-italic-BgTM1Mst.woff2            [39m[1m[2m   20.64 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-ext-600-normal-DKlDBbgb.woff2            [39m[1m[2m   20.82 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-ext-700-normal-D5Qg6-LF.woff2            [39m[1m[2m   20.82 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-400-normal-CTVgUekv.woff2                [39m[1m[2m   21.70 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-800-normal-DKUtXtHF.woff2                [39m[1m[2m   22.12 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf                     [39m[1m[2m   22.36 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-400-italic-CDO25mTW.woff2                [39m[1m[2m   22.71 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-500-normal-nNjq7_Cd.woff2                [39m[1m[2m   22.84 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-600-normal-DE3OxvnQ.woff2                [39m[1m[2m   22.94 kB[22m[1m[22m
+[2mdist/[22m[32massets/spectral-latin-700-normal-Cd2m0ohD.woff2                [39m[1m[2m   23.04 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_SansSerif-Bold-CFMepnvq.ttf                       [39m[1m[2m   24.50 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Main-Bold-Cx986IdX.woff2                          [39m[1m[2m   25.32 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Main-Regular-B22Nviop.woff2                       [39m[1m[2m   26.27 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf                   [39m[1m[2m   27.56 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_AMS-Regular-BQhdFMY1.woff2                        [39m[1m[2m   28.08 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Main-Bold-Jm3AIy58.woff                           [39m[1m[2m   29.91 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Main-Regular-Dr94JaBh.woff                        [39m[1m[2m   30.77 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf                      [39m[1m[2m   31.20 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Math-Italic-flOr_0UB.ttf                          [39m[1m[2m   31.31 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf                      [39m[1m[2m   32.97 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_AMS-Regular-DMm9YOAa.woff                         [39m[1m[2m   33.52 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Main-Italic-3WenGoN9.ttf                          [39m[1m[2m   33.58 kB[22m[1m[22m
+[2mdist/[22m[32massets/source-serif-4-cyrillic-wght-normal-DwHjdM4S.woff2      [39m[1m[2m   36.47 kB[22m[1m[22m
+[2mdist/[22m[32massets/source-serif-4-latin-ext-wght-normal-CxNHBx-q.woff2     [39m[1m[2m   42.04 kB[22m[1m[22m
+[2mdist/[22m[32massets/source-serif-4-latin-wght-normal-D9elroTD.woff2         [39m[1m[2m   50.82 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Main-Bold-waoOVXN0.ttf                            [39m[1m[2m   51.34 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_Main-Regular-ypZvNtVU.ttf                         [39m[1m[2m   53.58 kB[22m[1m[22m
+[2mdist/[22m[32massets/KaTeX_AMS-Regular-DRggAlZN.ttf                          [39m[1m[2m   63.63 kB[22m[1m[22m
+[2mdist/[22m[35massets/index-BGkqS62y.css                                      [39m[1m[2m  181.82 kB[22m[1m[22m
+[2mdist/[22m[36massets/index-BeEYmvNs.js                                       [39m[1m[2m    7.45 kB[22m[1m[22m
+[2mdist/[22m[36massets/recharts-CRveN7m2.js                                    [39m[1m[2m  393.03 kB[22m[1m[22m
+[2mdist/[22m[36massets/index-bf6z9jmY.js                                       [39m[1m[33m2,713.46 kB[39m[22m
+[33m
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 9.46s[39m
+    Blocking waiting for file lock on artifact directory
+warning: named argument `name` is not used by name
+   --> src\app_studio\mod.rs:248:5
+    |
+221 |   res.json({{ status: 'ok', project: '{}' }});
+    |                                       -- this formatting argument uses named argument `name` by position
+...
+248 | "#, name = spec.name, api_routes = self.generate_api_routes(spec))
+    |     ^^^^ this named argument is referred to by position in formatting string
+    |
+    = note: `#[warn(named_arguments_used_positionally)]` on by default
+help: use the named argument by name to avoid ambiguity
+    |
+221 |   res.json({{ status: 'ok', project: '{name}' }});
+    |                                        ++++
+
+warning: unused import: `futures::StreamExt`
+ --> src\orchestration\mod.rs:9:5
+  |
+9 | use futures::StreamExt;
+  |     ^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: type `McpManagedProfile` is more private than the item `McpManagedConnector::get_profile_for_connector`
+   --> src\mcp\composio.rs:415:5
+    |
+415 |     pub fn get_profile_for_connector(&self, connector_id: &str) -> Option<&McpManagedProfile> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ method `McpManagedConnector::get_profile_for_connector` is reachable at visibility `pub`
+    |
+note: but type `McpManagedProfile` is only usable at visibility `pub(self)`
+   --> src\mcp\composio.rs:378:1
+    |
+378 | struct McpManagedProfile {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: `#[warn(private_interfaces)]` on by default
+
+warning: type `McpManagedProfile` is more private than the item `McpManagedConnector::list_profiles`
+   --> src\mcp\composio.rs:419:5
+    |
+419 |     pub fn list_profiles(&self) -> &HashMap<&'static str, McpManagedProfile> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ method `McpManagedConnector::list_profiles` is reachable at visibility `pub`
+    |
+note: but type `McpManagedProfile` is only usable at visibility `pub(self)`
+   --> src\mcp\composio.rs:378:1
+    |
+378 | struct McpManagedProfile {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: type `TelegramUserInfo` is more private than the item `TelegramAdapter::validate_token`
+   --> src\im_integration\adapters\telegram_adapter.rs:141:5
+    |
+141 |     pub async fn validate_token(&self) -> Result<TelegramUserInfo> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ method `TelegramAdapter::validate_token` is reachable at visibility `pub`
+    |
+note: but type `TelegramUserInfo` is only usable at visibility `pub(self)`
+   --> src\im_integration\adapters\telegram_adapter.rs:102:1
+    |
+102 | struct TelegramUserInfo {
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `research_mode` is never read
+  --> src\bridge\routes\conversations.rs:19:5
+   |
+16 | struct CreateConversationBody {
+   |        ---------------------- field in this struct
+...
+19 |     research_mode: Option<bool>,
+   |     ^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: struct `UpdateProviderRequest` is never constructed
+   --> src\bridge\routes\providers.rs:123:8
+    |
+123 | struct UpdateProviderRequest {
+    |        ^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `sync_provider_manager` is never used
+   --> src\bridge\routes\providers.rs:289:10
+    |
+289 | async fn sync_provider_manager(state: &AppState) {
+    |          ^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `run_registration_wizard` is never used
+   --> src\commands\bridge.rs:159:10
+    |
+159 | async fn run_registration_wizard() -> Result<String, String> {
+    |          ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `find_executable_in_path` is never used
+  --> src\engine\mod.rs:12:4
+   |
+12 | fn find_executable_in_path(name: &str) -> Option<PathBuf> {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `returned` is never read
+   --> src\engine\mod.rs:100:5
+    |
+ 97 | pub struct ReceiverGuard {
+    |            ------------- field in this struct
+...
+100 |     returned: bool,
+    |     ^^^^^^^^
+
+warning: function `tool_computer_use_async` is never used
+   --> src\tools\mod.rs:787:10
+    |
+787 | async fn tool_computer_use_async(input: serde_json::Value) -> Result<serde_json::Value> {
+    |          ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `server_name` is never read
+   --> src\mcp\composio.rs:380:5
+    |
+378 | struct McpManagedProfile {
+    |        ----------------- field in this struct
+379 |     connector_ids: Vec<String>,
+380 |     server_name: String,
+    |     ^^^^^^^^^^^
+    |
+    = note: `McpManagedProfile` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `db_manager` is never read
+  --> src\task\mod.rs:43:5
+   |
+41 | pub struct TaskExecutor {
+   |            ------------ field in this struct
+42 |     provider_manager: Arc<Mutex<ProviderManager>>,
+43 |     db_manager: Arc<DbManager>,
+   |     ^^^^^^^^^^
+
+warning: struct `MemoryLimitedJob` is never constructed
+  --> src\sandbox\mod.rs:68:8
+   |
+68 | struct MemoryLimitedJob {
+   |        ^^^^^^^^^^^^^^^^
+
+warning: associated functions `create_job_object_with_memory_limit` and `assign_process_to_job_object` are never used
+   --> src\sandbox\mod.rs:536:8
+    |
+ 84 | impl CodeSandbox {
+    | ---------------- associated functions in this implementation
+...
+536 |     fn create_job_object_with_memory_limit(memory_limit_mb: u64) -> Result<*mut std::ffi::c_void, String> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+614 |     fn assign_process_to_job_object(job: *mut std::ffi::c_void, pid: u32) -> Result<(), String> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `CloseHandle` is never used
+  --> src\sandbox\mod.rs:77:20
+   |
+77 |                 fn CloseHandle(h_object: *mut std::ffi::c_void) -> i32;
+   |                    ^^^^^^^^^^^
+
+warning: function `CreateJobObjectW` is never used
+   --> src\sandbox\mod.rs:575:16
+    |
+575 |             fn CreateJobObjectW(
+    |                ^^^^^^^^^^^^^^^^
+
+warning: function `SetInformationJobObject` is never used
+   --> src\sandbox\mod.rs:580:16
+    |
+580 |             fn SetInformationJobObject(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `OpenProcess` is never used
+   --> src\sandbox\mod.rs:620:16
+    |
+620 |             fn OpenProcess(
+    |                ^^^^^^^^^^^
+
+warning: function `AssignProcessToJobObject` is never used
+   --> src\sandbox\mod.rs:626:16
+    |
+626 |             fn AssignProcessToJobObject(
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `CloseHandle` is never used
+   --> src\sandbox\mod.rs:631:16
+    |
+631 |             fn CloseHandle(h_object: *mut std::ffi::c_void) -> i32;
+    |                ^^^^^^^^^^^
+
+warning: field `http_client` is never read
+   --> src\multiagent\mod.rs:134:5
+    |
+129 | pub struct MultiAgentOrchestrator {
+    |            ---------------------- field in this struct
+...
+134 |     http_client: reqwest::Client,
+    |     ^^^^^^^^^^^
+
+warning: field `config` is never read
+  --> src\computer_use\mod.rs:55:5
+   |
+54 | pub struct UnifiedComputerUseManager {
+   |            ------------------------- field in this struct
+55 |     config: ComputerUseConfig,
+   |     ^^^^^^
+
+warning: constant `SOCKET_PATH` is never used
+  --> src\computer_use\sidecar.rs:10:7
+   |
+10 | const SOCKET_PATH: &str = "/tmp/agent-worker.sock";
+   |       ^^^^^^^^^^^
+
+warning: fields `run_id` and `started_at` are never read
+  --> src\scheduler\mod.rs:28:5
+   |
+27 | struct TaskState {
+   |        --------- fields in this struct
+28 |     run_id: String,
+   |     ^^^^^^
+29 |     started_at: std::time::Instant,
+   |     ^^^^^^^^^^
+
+warning: constant `DINGTALK_WS_URL` is never used
+  --> src\im_integration\adapters\dingtalk_adapter.rs:18:7
+   |
+18 | const DINGTALK_WS_URL: &str = "wss://wss-open-connection.dingtalk.com";
+   |       ^^^^^^^^^^^^^^^
+
+warning: fields `sender_nick`, `msgtype`, `create_at`, `chatbot_corp_id`, `chatbot_user_id`, and `msg_id` are never read
+  --> src\im_integration\adapters\dingtalk_adapter.rs:43:5
+   |
+36 | struct DingTalkBotMessage {
+   |        ------------------ fields in this struct
+...
+43 |     sender_nick: Option<String>,
+   |     ^^^^^^^^^^^
+44 |     msgtype: Option<String>,
+   |     ^^^^^^^
+...
+48 |     create_at: Option<String>,
+   |     ^^^^^^^^^
+49 |     #[serde(rename = "chatbotCorpId")]
+50 |     chatbot_corp_id: Option<String>,
+   |     ^^^^^^^^^^^^^^^
+51 |     #[serde(rename = "chatbotUserId")]
+52 |     chatbot_user_id: Option<String>,
+   |     ^^^^^^^^^^^^^^^
+53 |     #[serde(rename = "msgId")]
+54 |     msg_id: Option<String>,
+   |     ^^^^^^
+   |
+   = note: `DingTalkBotMessage` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: field `title` is never read
+  --> src\im_integration\adapters\dingtalk_adapter.rs:64:5
+   |
+63 | struct DingTalkMarkdownContent {
+   |        ----------------------- field in this struct
+64 |     title: Option<String>,
+   |     ^^^^^
+   |
+   = note: `DingTalkMarkdownContent` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: field `headers` is never read
+  --> src\im_integration\adapters\dingtalk_adapter.rs:73:5
+   |
+70 | struct StreamFrame {
+   |        ----------- field in this struct
+...
+73 |     headers: Option<serde_json::Value>,
+   |     ^^^^^^^
+   |
+   = note: `StreamFrame` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: constant `MAX_RETRY_DELAY` is never used
+   --> src\im_integration\adapters\dingtalk_adapter.rs:320:15
+    |
+320 |         const MAX_RETRY_DELAY: Duration = Duration::from_secs(60);
+    |               ^^^^^^^^^^^^^^^
+
+warning: fields `sid` and `schema` are never read
+  --> src\im_integration\adapters\feishu_adapter.rs:48:5
+   |
+46 | struct WsEventEnvelope {
+   |        --------------- fields in this struct
+47 |     #[serde(default)]
+48 |     sid: Option<String>,
+   |     ^^^
+...
+53 |     schema: Option<String>,
+   |     ^^^^^^
+   |
+   = note: `WsEventEnvelope` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: struct `EventHeader` is never constructed
+  --> src\im_integration\adapters\feishu_adapter.rs:64:8
+   |
+64 | struct EventHeader {
+   |        ^^^^^^^^^^^
+
+warning: struct `MessageEvent` is never constructed
+  --> src\im_integration\adapters\feishu_adapter.rs:77:8
+   |
+77 | struct MessageEvent {
+   |        ^^^^^^^^^^^^
+
+warning: struct `CardCallbackEvent` is never constructed
+  --> src\im_integration\adapters\feishu_adapter.rs:86:8
+   |
+86 | struct CardCallbackEvent {
+   |        ^^^^^^^^^^^^^^^^^
+
+warning: field `ws_stream` is never read
+   --> src\im_integration\adapters\feishu_adapter.rs:127:5
+    |
+118 | pub struct FeishuAdapter {
+    |            ------------- field in this struct
+...
+127 |     ws_stream: Mutex<Option<WebSocketStream<MaybeTlsStream<TcpStream>>>>,
+    |     ^^^^^^^^^
+
+warning: constant `WECOM_WS_URL` is never used
+  --> src\im_integration\adapters\wecom_adapter.rs:17:7
+   |
+17 | const WECOM_WS_URL: &str = "wss://openws.work.weixin.qq.com";
+   |       ^^^^^^^^^^^^
+
+warning: struct `WeComMessage` is never constructed
+  --> src\im_integration\adapters\wecom_adapter.rs:28:8
+   |
+28 | struct WeComMessage {
+   |        ^^^^^^^^^^^^
+
+warning: field `message_count` is never read
+  --> src\im_integration\adapters\wecom_adapter.rs:58:5
+   |
+47 | pub struct WeComAdapter {
+   |            ------------ field in this struct
+...
+58 |     message_count: AtomicBool,
+   |     ^^^^^^^^^^^^^
+
+warning: method `parse_message` is never used
+   --> src\im_integration\adapters\wecom_adapter.rs:135:8
+    |
+ 61 | impl WeComAdapter {
+    | ----------------- method in this implementation
+...
+135 |     fn parse_message(&self, raw: serde_json::Value) -> Option<UnifiedMessage> {
+    |        ^^^^^^^^^^^^^
+
+warning: field `kb` is never read
+  --> src\knowledge\intel.rs:48:5
+   |
+46 | pub struct ProjectIntel {
+   |            ------------ field in this struct
+47 |     client: reqwest::Client,
+48 |     kb: Arc<KnowledgeBase>,
+   |     ^^
+
+warning: `claude-desktop-tauri` (lib) generated 41 warnings
+   Compiling claude-desktop-tauri v3.0.0 (D:\tauri-dev\claude-desktop-tauri\src-tauri)
+warning: unused import: `bridge::*`
+  --> src\commands\mod.rs:23:9
+   |
+23 | pub use bridge::*;
+   |         ^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `OpenDesignSkill`
+  --> src\skills\mod.rs:12:43
+   |
+12 | pub use open_design::{OpenDesignMetadata, OpenDesignSkill};
+   |                                           ^^^^^^^^^^^^^^^
+
+warning: unused imports: `RTKConfig` and `TokenImportance`
+  --> src\memory\mod.rs:10:58
+   |
+10 | pub use caveman_rtk::{CavemanRTKStats, CavemanRTKSystem, RTKConfig, TokenImportance};
+   |                                                          ^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+warning: unused import: `flow::*`
+ --> src\knowledge\mod.rs:4:9
+  |
+4 | pub use flow::*;
+  |         ^^^^^^^
+
+warning: unused import: `sleep`
+   --> src\main.rs:356:51
+    |
+356 | ...                   use tokio::time::{sleep, Duration};
+    |                                         ^^^^^
+
+warning: unused import: `futures::StreamExt`
+ --> src\orchestration\mod.rs:9:5
+  |
+9 | use futures::StreamExt;
+  |     ^^^^^^^^^^^^^^^^^^
+
+warning: type `McpManagedProfile` is more private than the item `McpManagedConnector::get_profile_for_connector`
+   --> src\mcp\composio.rs:415:5
+    |
+415 |     pub fn get_profile_for_connector(&self, connector_id: &str) -> Option<&McpManagedProfile> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ method `McpManagedConnector::get_profile_for_connector` is reachable at visibility `pub(crate)`
+    |
+note: but type `McpManagedProfile` is only usable at visibility `pub(self)`
+   --> src\mcp\composio.rs:378:1
+    |
+378 | struct McpManagedProfile {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: `#[warn(private_interfaces)]` on by default
+
+warning: type `McpManagedProfile` is more private than the item `McpManagedConnector::list_profiles`
+   --> src\mcp\composio.rs:419:5
+    |
+419 |     pub fn list_profiles(&self) -> &HashMap<&'static str, McpManagedProfile> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ method `McpManagedConnector::list_profiles` is reachable at visibility `pub(crate)`
+    |
+note: but type `McpManagedProfile` is only usable at visibility `pub(self)`
+   --> src\mcp\composio.rs:378:1
+    |
+378 | struct McpManagedProfile {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: type `TelegramUserInfo` is more private than the item `TelegramAdapter::validate_token`
+   --> src\im_integration\adapters\telegram_adapter.rs:141:5
+    |
+141 |     pub async fn validate_token(&self) -> Result<TelegramUserInfo> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ method `TelegramAdapter::validate_token` is reachable at visibility `pub(crate)`
+    |
+note: but type `TelegramUserInfo` is only usable at visibility `pub(self)`
+   --> src\im_integration\adapters\telegram_adapter.rs:102:1
+    |
+102 | struct TelegramUserInfo {
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `GitBashStatus` is never constructed
+   --> src\bridge\mod.rs:107:12
+    |
+107 | pub struct GitBashStatus {
+    |            ^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: fields `model`, `user_mode`, `env_token`, `env_base_url`, `research_mode`, and `messages` are never read
+   --> src\bridge\mod.rs:116:9
+    |
+114 | pub struct StreamQuery {
+    |            ----------- fields in this struct
+115 |     pub conversation_id: String,
+116 |     pub model: String,
+    |         ^^^^^
+117 |     pub user_mode: Option<String>,
+    |         ^^^^^^^^^
+118 |     pub env_token: Option<String>,
+    |         ^^^^^^^^^
+119 |     pub env_base_url: Option<String>,
+    |         ^^^^^^^^^^^^
+120 |     pub research_mode: Option<bool>,
+    |         ^^^^^^^^^^^^^
+121 |     pub messages: Option<String>,
+    |         ^^^^^^^^
+
+warning: field `research_mode` is never read
+  --> src\bridge\routes\conversations.rs:19:5
+   |
+16 | struct CreateConversationBody {
+   |        ---------------------- field in this struct
+...
+19 |     research_mode: Option<bool>,
+   |     ^^^^^^^^^^^^^
+
+warning: field `enabled` is never read
+  --> src\bridge\routes\skills.rs:61:9
+   |
+60 | pub struct SkillEnableRequest {
+   |            ------------------ field in this struct
+61 |     pub enabled: bool,
+   |         ^^^^^^^
+
+warning: enum `ApiError` is never used
+  --> src\api\error.rs:14:10
+   |
+14 | pub enum ApiError {
+   |          ^^^^^^^^
+
+warning: associated functions `bad_request`, `not_found`, `internal`, and `unavailable` are never used
+  --> src\api\error.rs:64:12
+   |
+63 | impl ApiError {
+   | ------------- associated functions in this implementation
+64 |     pub fn bad_request(msg: impl Into<String>) -> Self {
+   |            ^^^^^^^^^^^
+...
+68 |     pub fn not_found(msg: impl Into<String>) -> Self {
+   |            ^^^^^^^^^
+...
+72 |     pub fn internal(msg: impl Into<String>) -> Self {
+   |            ^^^^^^^^
+...
+76 |     pub fn unavailable(msg: impl Into<String>) -> Self {
+   |            ^^^^^^^^^^^
+
+warning: function `build_router` is never used
+  --> src\api\routes\mod.rs:24:8
+   |
+24 | pub fn build_router() -> Router<AppState> {
+   |        ^^^^^^^^^^^^
+
+warning: function `config_get` is never used
+ --> src\api\routes\config.rs:8:10
+  |
+8 | async fn config_get(State(state): State<AppState>) -> Json<serde_json::Value> {
+  |          ^^^^^^^^^^
+
+warning: function `config_update` is never used
+  --> src\api\routes\config.rs:16:10
+   |
+16 | async fn config_update(State(state): State<AppState>, Json(config): Json<AppConfig>) -> Json<serde_json::Value> {
+   |          ^^^^^^^^^^^^^
+
+warning: function `routes` is never used
+  --> src\api\routes\config.rs:24:8
+   |
+24 | pub fn routes() -> Router<AppState> {
+   |        ^^^^^^
+
+warning: struct `FsPathQuery` is never constructed
+  --> src\api\routes\filesystem.rs:11:8
+   |
+11 | struct FsPathQuery {
+   |        ^^^^^^^^^^^
+
+warning: struct `FsWriteRequest` is never constructed
+  --> src\api\routes\filesystem.rs:16:8
+   |
+16 | struct FsWriteRequest {
+   |        ^^^^^^^^^^^^^^
+
+warning: struct `FsCreateRequest` is never constructed
+  --> src\api\routes\filesystem.rs:22:8
+   |
+22 | struct FsCreateRequest {
+   |        ^^^^^^^^^^^^^^^
+
+warning: function `build_tree` is never used
+  --> src\api\routes\filesystem.rs:29:4
+   |
+29 | fn build_tree(dir_path: &str, max_depth: u32, visited: &mut Vec<String>) -> Result<serde_json::Value, ApiError> {
+   |    ^^^^^^^^^^
+
+warning: function `fs_tree` is never used
+  --> src\api\routes\filesystem.rs:66:10
+   |
+66 | async fn fs_tree(Query(query): Query<FsPathQuery>) -> Result<Json<serde_json::Value>, ApiError> {
+   |          ^^^^^^^
+
+warning: function `fs_read` is never used
+  --> src\api\routes\filesystem.rs:78:10
+   |
+78 | async fn fs_read(Query(query): Query<FsPathQuery>) -> Result<Json<serde_json::Value>, ApiError> {
+   |          ^^^^^^^
+
+warning: function `fs_write` is never used
+  --> src\api\routes\filesystem.rs:84:10
+   |
+84 | async fn fs_write(Json(req): Json<FsWriteRequest>) -> Result<Json<serde_json::Value>, ApiError> {
+   |          ^^^^^^^^
+
+warning: function `fs_create` is never used
+  --> src\api\routes\filesystem.rs:89:10
+   |
+89 | async fn fs_create(Json(req): Json<FsCreateRequest>) -> Result<Json<serde_json::Value>, ApiError> {
+   |          ^^^^^^^^^
+
+warning: function `fs_delete` is never used
+  --> src\api\routes\filesystem.rs:98:10
+   |
+98 | async fn fs_delete(Json(req): Json<FsCreateRequest>) -> Result<Json<serde_json::Value>, ApiError> {
+   |          ^^^^^^^^^
+
+warning: function `routes` is never used
+   --> src\api\routes\filesystem.rs:103:8
+    |
+103 | pub fn routes() -> Router<AppState> {
+    |        ^^^^^^
+
+warning: function `health` is never used
+ --> src\api\routes\health.rs:8:10
+  |
+8 | async fn health(State(state): State<AppState>) -> impl IntoResponse {
+  |          ^^^^^^
+
+warning: function `metrics` is never used
+  --> src\api\routes\health.rs:25:10
+   |
+25 | async fn metrics() -> Result<String, ApiError> {
+   |          ^^^^^^^
+
+warning: function `routes` is never used
+  --> src\api\routes\health.rs:30:8
+   |
+30 | pub fn routes() -> Router<AppState> {
+   |        ^^^^^^
+
+warning: struct `WorkspaceConfig` is never constructed
+  --> src\api\routes\system.rs:10:8
+   |
+10 | struct WorkspaceConfig {
+   |        ^^^^^^^^^^^^^^^
+
+warning: function `system_status` is never used
+  --> src\api\routes\system.rs:14:10
+   |
+14 | async fn system_status() -> Json<SystemStatus> {
+   |          ^^^^^^^^^^^^^
+
+warning: function `workspace_config_get` is never used
+  --> src\api\routes\system.rs:22:10
+   |
+22 | async fn workspace_config_get() -> Json<WorkspaceConfig> {
+   |          ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `workspace_config_set` is never used
+  --> src\api\routes\system.rs:29:10
+   |
+29 | async fn workspace_config_set(Json(body): Json<serde_json::Value>) -> impl IntoResponse {
+   |          ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `routes` is never used
+  --> src\api\routes\system.rs:34:8
+   |
+34 | pub fn routes() -> Router<AppState> {
+   |        ^^^^^^
+
+warning: function `tools_list` is never used
+ --> src\api\routes\tools.rs:9:10
+  |
+9 | async fn tools_list() -> Json<Vec<ToolDefinition>> {
+  |          ^^^^^^^^^^
+
+warning: function `tool_execute` is never used
+  --> src\api\routes\tools.rs:13:10
+   |
+13 | async fn tool_execute(
+   |          ^^^^^^^^^^^^
+
+warning: function `routes` is never used
+  --> src\api\routes\tools.rs:52:8
+   |
+52 | pub fn routes() -> Router<AppState> {
+   |        ^^^^^^
+
+warning: fields `research_mode`, `api_key`, `git_integration`, and `permission_manager` are never read
+  --> src\api\state.rs:40:9
+   |
+36 | pub struct AppState {
+   |            -------- fields in this struct
+...
+40 |     pub research_mode: Arc<Mutex<HashMap<String, bool>>>,
+   |         ^^^^^^^^^^^^^
+...
+55 |     pub api_key: String,
+   |         ^^^^^^^
+...
+61 |     pub git_integration: Arc<GitIntegration>,
+   |         ^^^^^^^^^^^^^^^
+62 |     pub permission_manager: Arc<PermissionManager>,
+   |         ^^^^^^^^^^^^^^^^^^
+   |
+   = note: `AppState` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+warning: field `device_code` is never read
+   --> src\commands\bridge.rs:150:9
+    |
+148 | pub struct AuthFlow {
+    |            -------- field in this struct
+149 |     pub verification_url: String,
+150 |     pub device_code: String,
+    |         ^^^^^^^^^^^
+
+warning: method `get_expo_url` is never used
+   --> src\app_studio\mod.rs:266:12
+    |
+ 61 | impl AppStudio {
+    | -------------- method in this implementation
+...
+266 |     pub fn get_expo_url(&self, port: u16) -> String {
+    |            ^^^^^^^^^^^^
+
+warning: fields `msg_type`, `content`, `tool_name`, `tool_input`, `tool_use_id`, and `stop_reason` are never read
+  --> src\engine\mod.rs:60:9
+   |
+59 | pub struct EngineOutput {
+   |            ------------ fields in this struct
+60 |     pub msg_type: String,
+   |         ^^^^^^^^
+61 |     pub content: String,
+   |         ^^^^^^^
+62 |     pub tool_name: Option<String>,
+   |         ^^^^^^^^^
+63 |     pub tool_input: Option<serde_json::Value>,
+   |         ^^^^^^^^^^
+64 |     pub tool_use_id: Option<String>,
+   |         ^^^^^^^^^^^
+65 |     pub stop_reason: Option<String>,
+   |         ^^^^^^^^^^^
+   |
+   = note: `EngineOutput` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: method `with_stop_reason` is never used
+  --> src\engine\mod.rs:82:12
+   |
+69 | impl EngineOutput {
+   | ----------------- method in this implementation
+...
+82 |     pub fn with_stop_reason(mut self, reason: Option<String>) -> Self {
+   |            ^^^^^^^^^^^^^^^^
+
+warning: struct `ReceiverGuard` is never constructed
+  --> src\engine\mod.rs:97:12
+   |
+97 | pub struct ReceiverGuard {
+   |            ^^^^^^^^^^^^^
+
+warning: method `take_rx` is never used
+   --> src\engine\mod.rs:106:12
+    |
+103 | impl ReceiverGuard {
+    | ------------------ method in this implementation
+...
+106 |     pub fn take_rx(&mut self) -> Option<mpsc::Receiver<EngineOutput>> {
+    |            ^^^^^^^
+
+warning: fields `api_key`, `base_url`, `model`, `format`, and `conversation_id` are never read
+   --> src\engine\mod.rs:125:9
+    |
+124 | pub struct ProxyTarget {
+    |            ----------- fields in this struct
+125 |     pub api_key: String,
+    |         ^^^^^^^
+126 |     pub base_url: String,
+    |         ^^^^^^^^
+127 |     pub model: String,
+    |         ^^^^^
+128 |     pub format: String,
+    |         ^^^^^^
+129 |     pub conversation_id: String,
+    |         ^^^^^^^^^^^^^^^
+    |
+    = note: `ProxyTarget` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: multiple methods are never used
+   --> src\engine\mod.rs:443:18
+    |
+132 | impl EnginePool {
+    | --------------- methods in this implementation
+...
+443 |     pub async fn send_message(
+    |                  ^^^^^^^^^^^^
+...
+494 |     pub async fn send_message_stream(
+    |                  ^^^^^^^^^^^^^^^^^^^
+...
+526 |     pub fn take_message_receiver(&mut self, conv_id: &str) -> Option<ReceiverGuard> {
+    |            ^^^^^^^^^^^^^^^^^^^^^
+...
+535 |     pub fn return_message_receiver(&mut self, conv_id: &str, rx: mpsc::Receiver<EngineOutput>) {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+...
+539 |     pub fn get_engine(&self, conv_id: &str) -> Option<&EngineHandle> {
+    |            ^^^^^^^^^^
+...
+543 |     pub fn get_engine_mut(&mut self, conv_id: &str) -> Option<&mut EngineHandle> {
+    |            ^^^^^^^^^^^^^^
+...
+562 |     pub async fn check_engine_health(&mut self, conv_id: &str) -> bool {
+    |                  ^^^^^^^^^^^^^^^^^^^
+...
+584 |     pub async fn restart_engine(&mut self, conv_id: &str) -> Result<EngineHandle> {
+    |                  ^^^^^^^^^^^^^^
+...
+588 |     async fn restart_engine_with_retry(&mut self, conv_id: &str, attempt: u32) -> Result<EngineHandle> {
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+619 |     pub fn update_engine_state(&mut self, conv_id: &str, state: EngineState) {
+    |            ^^^^^^^^^^^^^^^^^^^
+...
+625 |     pub fn set_proxy_target(&mut self, conv_id: &str, target: ProxyTarget) {
+    |            ^^^^^^^^^^^^^^^^
+...
+629 |     pub fn get_proxy_target(&self, conv_id: &str) -> Option<&ProxyTarget> {
+    |            ^^^^^^^^^^^^^^^^
+...
+633 |     pub fn add_pending_images(&mut self, conv_id: &str, images: Vec<serde_json::Value>) {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+637 |     pub fn get_pending_images(&mut self, conv_id: &str) -> Vec<serde_json::Value> {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+641 |     pub fn set_ask_user_pending(&mut self, conv_id: &str, input: serde_json::Value) {
+    |            ^^^^^^^^^^^^^^^^^^^^
+...
+678 |     pub fn set_tool_permission_pending(&mut self, conv_id: &str, info: serde_json::Value) {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `find_git_bash` is never used
+    --> src\tools\mod.rs:1006:8
+     |
+1006 | pub fn find_git_bash() -> Option<String> {
+     |        ^^^^^^^^^^^^^
+
+warning: enum `ToolExecutionStatus` is never used
+    --> src\tools\mod.rs:1499:10
+     |
+1499 | pub enum ToolExecutionStatus {
+     |          ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ToolExecutionInfo` is never constructed
+    --> src\tools\mod.rs:1507:12
+     |
+1507 | pub struct ToolExecutionInfo {
+     |            ^^^^^^^^^^^^^^^^^
+
+warning: struct `ToolExecutionManager` is never constructed
+    --> src\tools\mod.rs:1515:12
+     |
+1515 | pub struct ToolExecutionManager {
+     |            ^^^^^^^^^^^^^^^^^^^^
+
+warning: associated items `new`, `execute_with_cancel`, `cancel_execution`, `is_running`, and `get_running_tasks` are never used
+    --> src\tools\mod.rs:1520:12
+     |
+1519 | impl ToolExecutionManager {
+     | ------------------------- associated items in this implementation
+1520 |     pub fn new() -> Self {
+     |            ^^^
+...
+1526 |     pub async fn execute_with_cancel(
+     |                  ^^^^^^^^^^^^^^^^^^^
+...
+1551 |     pub async fn cancel_execution(&self, task_id: &str) -> bool {
+     |                  ^^^^^^^^^^^^^^^^
+...
+1560 |     pub async fn is_running(&self, task_id: &str) -> bool {
+     |                  ^^^^^^^^^^
+...
+1564 |     pub async fn get_running_tasks(&self) -> Vec<String> {
+     |                  ^^^^^^^^^^^^^^^^^
+
+warning: variant `ResearchError` is never constructed
+  --> src\research\mod.rs:55:5
+   |
+45 | pub enum ResearchEvent {
+   |          ------------- variant in this enum
+...
+55 |     ResearchError { error: String },
+   |     ^^^^^^^^^^^^^
+   |
+   = note: `ResearchEvent` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: constant `SELF_HOSTED_IDENTITY_BLOCK` is never used
+ --> src\prompt\mod.rs:9:7
+  |
+9 | const SELF_HOSTED_IDENTITY_BLOCK: &str = r#"<identity>
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: static `RE_OVERRIDE` is never used
+  --> src\prompt\mod.rs:21:8
+   |
+21 | static RE_OVERRIDE: LazyLock<Regex> =
+   |        ^^^^^^^^^^^
+
+warning: static `RE_IDENTITY` is never used
+  --> src\prompt\mod.rs:23:8
+   |
+23 | static RE_IDENTITY: LazyLock<Regex> =
+   |        ^^^^^^^^^^^
+
+warning: static `RE_IDENTITY_WITH_WS` is never used
+  --> src\prompt\mod.rs:25:8
+   |
+25 | static RE_IDENTITY_WITH_WS: LazyLock<Regex> =
+   |        ^^^^^^^^^^^^^^^^^^^
+
+warning: static `RE_CLAUDE_PREFIX` is never used
+  --> src\prompt\mod.rs:27:8
+   |
+27 | static RE_CLAUDE_PREFIX: LazyLock<Regex> =
+   |        ^^^^^^^^^^^^^^^^
+
+warning: struct `SystemPromptConfig` is never constructed
+  --> src\prompt\mod.rs:31:12
+   |
+31 | pub struct SystemPromptConfig {
+   |            ^^^^^^^^^^^^^^^^^^
+
+warning: method `identity_block` is never used
+  --> src\prompt\mod.rs:50:12
+   |
+49 | impl SystemPromptConfig {
+   | ----------------------- method in this implementation
+50 |     pub fn identity_block(&self) -> &str {
+   |            ^^^^^^^^^^^^^^
+
+warning: function `build_self_hosted_system_prompt` is never used
+  --> src\prompt\mod.rs:55:8
+   |
+55 | pub fn build_self_hosted_system_prompt(full_prompt: &str) -> String {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `build_self_hosted_system_prompt_with_config` is never used
+  --> src\prompt\mod.rs:59:8
+   |
+59 | pub fn build_self_hosted_system_prompt_with_config(full_prompt: &str, config: &SystemPromptConfig) -> String {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `remove_override_sections` is never used
+  --> src\prompt\mod.rs:73:4
+   |
+73 | fn remove_override_sections(prompt: &str) -> String {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `contains_identity_block` is never used
+  --> src\prompt\mod.rs:77:4
+   |
+77 | fn contains_identity_block(prompt: &str) -> bool {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `is_claude_family_model` is never used
+  --> src\prompt\mod.rs:81:8
+   |
+81 | pub fn is_claude_family_model(model_id: &str) -> bool {
+   |        ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ResolvedModel` is never constructed
+  --> src\prompt\mod.rs:86:12
+   |
+86 | pub struct ResolvedModel {
+   |            ^^^^^^^^^^^^^
+
+warning: function `resolve_requested_model_for_mode` is never used
+  --> src\prompt\mod.rs:92:8
+   |
+92 | pub fn resolve_requested_model_for_mode(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `build_system_prompt_for_chat` is never used
+   --> src\prompt\mod.rs:135:8
+    |
+135 | pub fn build_system_prompt_for_chat(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `PromptTemplate` is never constructed
+   --> src\prompt\mod.rs:154:12
+    |
+154 | pub struct PromptTemplate {
+    |            ^^^^^^^^^^^^^^
+
+warning: struct `TemplateManager` is never constructed
+   --> src\prompt\mod.rs:166:12
+    |
+166 | pub struct TemplateManager {
+    |            ^^^^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\prompt\mod.rs:171:12
+    |
+170 | impl TemplateManager {
+    | -------------------- associated items in this implementation
+171 |     pub fn new(base_dir: &Path) -> Self {
+    |            ^^^
+...
+179 |     pub fn create_template(&self, template: &PromptTemplate) -> Result<(), anyhow::Error> {
+    |            ^^^^^^^^^^^^^^^
+...
+187 |     pub fn get_template(&self, id: &str) -> Result<Option<PromptTemplate>, anyhow::Error> {
+    |            ^^^^^^^^^^^^
+...
+197 |     pub fn update_template(&self, template: &PromptTemplate) -> Result<(), anyhow::Error> {
+    |            ^^^^^^^^^^^^^^^
+...
+201 |     pub fn delete_template(&self, id: &str) -> Result<bool, anyhow::Error> {
+    |            ^^^^^^^^^^^^^^^
+...
+210 |     pub fn list_templates(&self) -> Result<Vec<PromptTemplate>, anyhow::Error> {
+    |            ^^^^^^^^^^^^^^
+...
+232 |     pub fn render_template(&self, id: &str, variables: &HashMap<String, String>) -> Result<String, anyhow::Error> {
+    |            ^^^^^^^^^^^^^^^
+...
+239 |     pub fn render_content(content: &str, variables: &HashMap<String, String>) -> Result<String, anyhow::Error> {
+    |            ^^^^^^^^^^^^^^
+...
+250 |     pub fn extract_variables(content: &str) -> Vec<String> {
+    |            ^^^^^^^^^^^^^^^^^
+
+warning: struct `McpResourceChange` is never constructed
+  --> src\mcp\mod.rs:48:12
+   |
+48 | pub struct McpResourceChange {
+   |            ^^^^^^^^^^^^^^^^^
+
+warning: methods `with_retry_config` and `check_health` are never used
+   --> src\mcp\mod.rs:659:12
+    |
+645 | impl McpConnector {
+    | ----------------- methods in this implementation
+...
+659 |     pub fn with_retry_config(mut self, retry_config: RetryConfig) -> Self {
+    |            ^^^^^^^^^^^^^^^^^
+...
+928 |     pub async fn check_health(&self) -> bool {
+    |                  ^^^^^^^^^^^^
+
+warning: struct `McpConfigManager` is never constructed
+   --> src\mcp\mod.rs:979:12
+    |
+979 | pub struct McpConfigManager {
+    |            ^^^^^^^^^^^^^^^^
+
+warning: associated items `new`, `add_server`, `remove_server`, `get_server`, and `list_servers` are never used
+    --> src\mcp\mod.rs:984:12
+     |
+ 983 | impl McpConfigManager {
+     | --------------------- associated items in this implementation
+ 984 |     pub fn new() -> Self {
+     |            ^^^
+...
+ 988 |     pub fn add_server(&mut self, name: String, server: McpServerConfig) {
+     |            ^^^^^^^^^^
+...
+ 992 |     pub fn remove_server(&mut self, name: &str) -> Option<McpServerConfig> {
+     |            ^^^^^^^^^^^^^
+...
+ 996 |     pub fn get_server(&self, name: &str) -> Option<&McpServerConfig> {
+     |            ^^^^^^^^^^
+...
+1000 |     pub fn list_servers(&self) -> Vec<&McpServerConfig> {
+     |            ^^^^^^^^^^^^
+
+warning: associated function `new` is never used
+  --> src\mcp\tool_executor.rs:23:12
+   |
+22 | impl McpToolRegistry {
+   | -------------------- associated function in this implementation
+23 |     pub fn new(manager: Arc<Mutex<McpServerManager>>) -> Self {
+   |            ^^^
+
+warning: constant `COMPOSIO_API_BASE` is never used
+ --> src\mcp\composio.rs:7:7
+  |
+7 | const COMPOSIO_API_BASE: &str = "https://backend.composio.dev";
+  |       ^^^^^^^^^^^^^^^^^
+
+warning: constant `COMPOSIO_SERVER_NAME` is never used
+ --> src\mcp\composio.rs:8:7
+  |
+8 | const COMPOSIO_SERVER_NAME: &str = "composio";
+  |       ^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ComposioConnectorProfile` is never constructed
+  --> src\mcp\composio.rs:11:12
+   |
+11 | pub struct ComposioConnectorProfile {
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ComposioConfig` is never constructed
+  --> src\mcp\composio.rs:17:12
+   |
+17 | pub struct ComposioConfig {
+   |            ^^^^^^^^^^^^^^
+
+warning: function `composio_connector_profiles` is never used
+  --> src\mcp\composio.rs:29:4
+   |
+29 | fn composio_connector_profiles() -> HashMap<&'static str, ComposioConnectorProfile> {
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `default_connector_ids` is never used
+  --> src\mcp\composio.rs:69:8
+   |
+69 | pub fn default_connector_ids() -> Vec<&'static str> {
+   |        ^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ComposioSession` is never constructed
+  --> src\mcp\composio.rs:81:12
+   |
+81 | pub struct ComposioSession {
+   |            ^^^^^^^^^^^^^^^
+
+warning: struct `ComposioConnectorStatus` is never constructed
+  --> src\mcp\composio.rs:89:12
+   |
+89 | pub struct ComposioConnectorStatus {
+   |            ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ComposioSessionStore` is never constructed
+  --> src\mcp\composio.rs:99:12
+   |
+99 | pub struct ComposioSessionStore(HashMap<String, ComposioSession>);
+   |            ^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ComposioManager` is never constructed
+   --> src\mcp\composio.rs:107:12
+    |
+107 | pub struct ComposioManager {
+    |            ^^^^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\mcp\composio.rs:116:12
+    |
+115 | impl ComposioManager {
+    | -------------------- associated items in this implementation
+116 |     pub fn new(data_dir: PathBuf) -> Self {
+    |            ^^^
+...
+136 |     fn load_config(&mut self) {
+    |        ^^^^^^^^^^^
+...
+146 |     fn save_config(&self) -> Result<()> {
+    |        ^^^^^^^^^^^
+...
+155 |     fn load_session_store(&mut self) {
+    |        ^^^^^^^^^^^^^^^^^^
+...
+165 |     fn save_session_store(&self) -> Result<()> {
+    |        ^^^^^^^^^^^^^^^^^^
+...
+174 |     pub fn get_resolved_api_key(&self) -> String {
+    |            ^^^^^^^^^^^^^^^^^^^^
+...
+183 |     pub fn set_api_key(&mut self, api_key: String) -> Result<()> {
+    |            ^^^^^^^^^^^
+...
+188 |     pub fn get_config(&self) -> &ComposioConfig {
+    |            ^^^^^^^^^^
+...
+192 |     pub fn get_session(&self, user_id: &str) -> Option<&ComposioSession> {
+    |            ^^^^^^^^^^^
+...
+196 |     pub fn list_connector_ids(&self) -> Vec<String> {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+200 |     pub fn get_connector_profile(&self, connector_id: &str) -> Option<ComposioConnectorProfile> {
+    |            ^^^^^^^^^^^^^^^^^^^^^
+...
+204 |     pub async fn create_session(&mut self, user_id: &str, toolkit_slugs: Vec<String>) -> Result<ComposioSession> {
+    |                  ^^^^^^^^^^^^^^
+...
+248 |     pub async fn get_session_info(&self, session_id: &str) -> Result<ComposioSession> {
+    |                  ^^^^^^^^^^^^^^^^
+...
+278 |     pub async fn get_toolkits(&self, session_id: &str, toolkit_slugs: Option<Vec<String>>) -> Result<Vec<serde_json::Value>> {
+    |                  ^^^^^^^^^^^^
+...
+308 |     pub async fn create_connection_link(&self, session_id: &str, toolkit_slug: &str, callback_url: Option<&str>) -> Result<serde_json::Va...
+    |                  ^^^^^^^^^^^^^^^^^^^^^^
+...
+340 |     pub fn build_mcp_server_config(&self, session: &ComposioSession) -> Option<serde_json::Value> {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+...
+353 |     pub fn get_connector_statuses(&self, connector_ids: &[&str]) -> HashMap<String, ComposioConnectorStatus> {
+    |            ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `McpManagedConnector` is never constructed
+   --> src\mcp\composio.rs:373:12
+    |
+373 | pub struct McpManagedConnector {
+    |            ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `McpManagedProfile` is never constructed
+   --> src\mcp\composio.rs:378:8
+    |
+378 | struct McpManagedProfile {
+    |        ^^^^^^^^^^^^^^^^^
+
+warning: associated items `new`, `get_profile_for_connector`, `list_profiles`, and `build_server_config` are never used
+   --> src\mcp\composio.rs:385:12
+    |
+384 | impl McpManagedConnector {
+    | ------------------------ associated items in this implementation
+385 |     pub fn new() -> Self {
+    |            ^^^
+...
+415 |     pub fn get_profile_for_connector(&self, connector_id: &str) -> Option<&McpManagedProfile> {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+419 |     pub fn list_profiles(&self) -> &HashMap<&'static str, McpManagedProfile> {
+    |            ^^^^^^^^^^^^^
+...
+423 |     pub fn build_server_config(&self, profile_key: &str) -> Option<serde_json::Value> {
+    |            ^^^^^^^^^^^^^^^^^^^
+
+warning: fields `conversation_id`, `events`, and `done` are never read
+  --> src\streaming\mod.rs:25:9
+   |
+24 | pub struct ActiveStream {
+   |            ------------ fields in this struct
+25 |     pub conversation_id: String,
+   |         ^^^^^^^^^^^^^^^
+26 |     pub events: Vec<StreamEvent>,
+   |         ^^^^^^
+27 |     pub listeners: Vec<broadcast::Sender<StreamEvent>>,
+28 |     pub done: bool,
+   |         ^^^^
+   |
+   = note: `ActiveStream` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: multiple methods are never used
+   --> src\streaming\mod.rs:42:12
+    |
+ 35 | impl StreamManager {
+    | ------------------ methods in this implementation
+...
+ 42 |     pub fn create_stream(&mut self, conversation_id: &str) -> broadcast::Sender<StreamEvent> {
+    |            ^^^^^^^^^^^^^
+...
+ 58 |     pub fn broadcast(&mut self, conversation_id: &str, event: StreamEvent) {
+    |            ^^^^^^^^^
+...
+ 73 |     pub fn end_stream(&mut self, conversation_id: &str) {
+    |            ^^^^^^^^^^
+...
+ 97 |     pub fn remove_listener(&mut self, conversation_id: &str, sender: &broadcast::Sender<StreamEvent>) {
+    |            ^^^^^^^^^^^^^^^
+...
+103 |     pub fn get_events(&self, conversation_id: &str) -> Option<Vec<StreamEvent>> {
+    |            ^^^^^^^^^^
+...
+107 |     pub fn is_done(&self, conversation_id: &str) -> bool {
+    |            ^^^^^^^
+...
+111 |     pub fn cleanup(&mut self, conversation_id: &str) {
+    |            ^^^^^^^
+...
+115 |     pub fn cleanup_done_streams(&mut self) {
+    |            ^^^^^^^^^^^^^^^^^^^^
+...
+119 |     pub fn list_active_streams(&self) -> Vec<String> {
+    |            ^^^^^^^^^^^^^^^^^^^
+...
+126 |     pub fn has_listeners(&self, conversation_id: &str) -> bool {
+    |            ^^^^^^^^^^^^^
+...
+132 |     pub fn is_active(&self, conversation_id: &str) -> bool {
+    |            ^^^^^^^^^
+...
+138 |     pub fn get_historical_events(&self, conversation_id: &str) -> Vec<StreamEvent> {
+    |            ^^^^^^^^^^^^^^^^^^^^^
+...
+144 |     pub fn add_listener_with_replay(&mut self, conversation_id: &str) -> Option<(broadcast::Receiver<StreamEvent>, Vec<StreamEvent>)> {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+153 |     pub fn remove_all_listeners(&mut self, conversation_id: &str) {
+    |            ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `create_sse_event` is never used
+   --> src\streaming\mod.rs:166:8
+    |
+166 | pub fn create_sse_event(event_type: &str, data: serde_json::Value) -> String {
+    |        ^^^^^^^^^^^^^^^^
+
+warning: function `create_sse_data` is never used
+   --> src\streaming\mod.rs:170:8
+    |
+170 | pub fn create_sse_data(data: serde_json::Value) -> String {
+    |        ^^^^^^^^^^^^^^^
+
+warning: struct `PendingToolCall` is never constructed
+   --> src\streaming\sse_parser.rs:280:12
+    |
+280 | pub struct PendingToolCall {
+    |            ^^^^^^^^^^^^^^^
+
+warning: struct `ToolCallAnalysis` is never constructed
+   --> src\streaming\sse_parser.rs:288:12
+    |
+288 | pub struct ToolCallAnalysis {
+    |            ^^^^^^^^^^^^^^^^
+
+warning: function `analyze_pending_tool_calls` is never used
+   --> src\streaming\sse_parser.rs:310:8
+    |
+310 | pub fn analyze_pending_tool_calls(tool_calls: &HashMap<String, PendingToolCall>) -> ToolCallAnalysis {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `TaskEvent` is never constructed
+  --> src\task\mod.rs:35:12
+   |
+35 | pub struct TaskEvent {
+   |            ^^^^^^^^^
+
+warning: methods `execute_task_streaming`, `execute_anthropic_streaming`, `execute_openai_streaming`, `get_task_result`, `list_tasks`, and `cleanup_completed` are never used
+   --> src\task\mod.rs:317:18
+    |
+ 67 | impl TaskExecutor {
+    | ----------------- methods in this implementation
+...
+317 |     pub async fn execute_task_streaming(
+    |                  ^^^^^^^^^^^^^^^^^^^^^^
+...
+408 |     async fn execute_anthropic_streaming(
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+476 |     async fn execute_openai_streaming(
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+553 |     pub async fn get_task_result(&self, task_id: &str) -> Option<TaskResult> {
+    |                  ^^^^^^^^^^^^^^^
+...
+569 |     pub async fn list_tasks(&self) -> Vec<(String, TaskStatus)> {
+    |                  ^^^^^^^^^^
+...
+576 |     pub async fn cleanup_completed(&self) {
+    |                  ^^^^^^^^^^^^^^^^^
+
+warning: methods `get_skill_content`, `install_skill_from_url`, and `list_enabled_skills` are never used
+   --> src\skills\mod.rs:441:12
+    |
+ 86 | impl SkillsManager {
+    | ------------------ methods in this implementation
+...
+441 |     pub fn get_skill_content(&self, skill_id: &str, file_path: &str) -> Result<String> {
+    |            ^^^^^^^^^^^^^^^^^
+...
+544 |     pub async fn install_skill_from_url(&self, url: &str) -> Result<Skill> {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^
+...
+575 |     pub async fn list_enabled_skills(&self) -> Result<Vec<Skill>> {
+    |                  ^^^^^^^^^^^^^^^^^^^
+
+warning: method `with_variable` is never used
+  --> src\skills\engine.rs:39:12
+   |
+38 | impl SkillExecutionContext {
+   | -------------------------- method in this implementation
+39 |     pub fn with_variable(mut self, key: &str, value: &str) -> Self {
+   |            ^^^^^^^^^^^^^
+
+warning: struct `OpenDesignSkill` is never constructed
+  --> src\skills\open_design.rs:48:12
+   |
+48 | pub struct OpenDesignSkill {
+   |            ^^^^^^^^^^^^^^^
+
+warning: methods `is_design_system_mode`, `has_preview`, `get_preview_entry`, and `get_reload_strategy` are never used
+  --> src\skills\open_design.rs:57:12
+   |
+56 | impl OpenDesignMetadata {
+   | ----------------------- methods in this implementation
+57 |     pub fn is_design_system_mode(&self) -> bool {
+   |            ^^^^^^^^^^^^^^^^^^^^^
+...
+61 |     pub fn has_preview(&self) -> bool {
+   |            ^^^^^^^^^^^
+...
+65 |     pub fn get_preview_entry(&self) -> Option<String> {
+   |            ^^^^^^^^^^^^^^^^^
+...
+69 |     pub fn get_reload_strategy(&self) -> String {
+   |            ^^^^^^^^^^^^^^^^^^^
+
+warning: methods `preview_exists`, `get_preview_path`, `get_output_files`, and `requires_capability` are never used
+   --> src\skills\open_design.rs:77:12
+    |
+ 76 | impl OpenDesignSkill {
+    | -------------------- methods in this implementation
+ 77 |     pub fn preview_exists(&self) -> bool {
+    |            ^^^^^^^^^^^^^^
+...
+ 86 |     pub fn get_preview_path(&self) -> Option<PathBuf> {
+    |            ^^^^^^^^^^^^^^^^
+...
+ 91 |     pub fn get_output_files(&self) -> Vec<String> {
+    |            ^^^^^^^^^^^^^^^^
+...
+104 |     pub fn requires_capability(&self, capability: &str) -> bool {
+    |            ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `GitBranch` is never constructed
+  --> src\git\mod.rs:28:12
+   |
+28 | pub struct GitBranch {
+   |            ^^^^^^^^^
+
+warning: multiple methods are never used
+   --> src\git\mod.rs:104:12
+    |
+ 63 | impl GitIntegration {
+    | ------------------- methods in this implementation
+...
+104 |     pub fn is_repo(&self) -> bool {
+    |            ^^^^^^^
+...
+172 |     pub fn get_branches(&self, include_remote: bool) -> Result<Vec<GitBranch>> {
+    |            ^^^^^^^^^^^^
+...
+202 |     pub fn create_branch(&self, name: &str, checkout: bool) -> Result<()> {
+    |            ^^^^^^^^^^^^^
+...
+212 |     pub fn checkout_branch(&self, name: &str) -> Result<()> {
+    |            ^^^^^^^^^^^^^^^
+...
+246 |     pub fn get_commit_diff(&self, commit_hash: &str) -> Result<Vec<GitDiff>> {
+    |            ^^^^^^^^^^^^^^^
+...
+361 |     pub fn stage(&self, files: &[&str]) -> Result<()> {
+    |            ^^^^^
+...
+369 |     pub fn unstage(&self, files: &[&str]) -> Result<()> {
+    |            ^^^^^^^
+...
+382 |     pub fn amend(&self, message: Option<&str>) -> Result<()> {
+    |            ^^^^^
+...
+427 |     pub fn fetch(&self, remote: Option<&str>) -> Result<String> {
+    |            ^^^^^
+...
+438 |     pub fn merge(&self, branch: &str) -> Result<String> {
+    |            ^^^^^
+...
+443 |     pub fn rebase(&self, branch: Option<&str>) -> Result<String> {
+    |            ^^^^^^
+...
+454 |     pub fn get_file_history(&self, file: &str, limit: Option<usize>) -> Result<Vec<GitCommit>> {
+    |            ^^^^^^^^^^^^^^^^
+...
+484 |     pub fn blame(&self, file: &str) -> Result<String> {
+    |            ^^^^^
+...
+489 |     pub fn stash(&self, message: Option<&str>) -> Result<String> {
+    |            ^^^^^
+...
+501 |     pub fn stash_pop(&self) -> Result<String> {
+    |            ^^^^^^^^^
+...
+506 |     pub fn stash_list(&self) -> Result<Vec<(String, String)>> {
+    |            ^^^^^^^^^^
+...
+523 |     pub fn get_remote_url(&self, remote: Option<&str>) -> Result<String> {
+    |            ^^^^^^^^^^^^^^
+...
+529 |     pub fn list_remotes(&self) -> Result<Vec<String>> {
+    |            ^^^^^^^^^^^^
+
+warning: fields `memory`, `bridge`, `logging`, and `telemetry` are never read
+  --> src\config\mod.rs:19:9
+   |
+16 | pub struct OrchestrationConfig {
+   |            ------------------- fields in this struct
+...
+19 |     pub memory: MemoryConfig,
+   |         ^^^^^^
+20 |     pub bridge: BridgeConfig,
+   |         ^^^^^^
+21 |     pub http: HttpConfig,
+22 |     pub logging: LoggingConfig,
+   |         ^^^^^^^
+23 |     pub telemetry: TelemetryConfig,
+   |         ^^^^^^^^^
+   |
+   = note: `OrchestrationConfig` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `recent_messages_to_keep` and `default_max_tokens` are never read
+  --> src\config\mod.rs:33:9
+   |
+27 | pub struct ToolLoopConfig {
+   |            -------------- fields in this struct
+...
+33 |     pub recent_messages_to_keep: usize,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^
+34 |     #[serde(default = "default_max_tokens")]
+35 |     pub default_max_tokens: u32,
+   |         ^^^^^^^^^^^^^^^^^^
+   |
+   = note: `ToolLoopConfig` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `computer_use` is never read
+  --> src\config\mod.rs:45:9
+   |
+39 | pub struct ToolsConfig {
+   |            ----------- field in this struct
+...
+45 |     pub computer_use: ComputerUseConfig,
+   |         ^^^^^^^^^^^^
+   |
+   = note: `ToolsConfig` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `display_width` and `display_height` are never read
+  --> src\config\mod.rs:51:9
+   |
+49 | pub struct ComputerUseConfig {
+   |            ----------------- fields in this struct
+50 |     #[serde(default = "default_display_width")]
+51 |     pub display_width: u32,
+   |         ^^^^^^^^^^^^^
+52 |     #[serde(default = "default_display_height")]
+53 |     pub display_height: u32,
+   |         ^^^^^^^^^^^^^^
+   |
+   = note: `ComputerUseConfig` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `memex_backend_url`, `auto_ingest_importance_threshold`, `enabled`, `auto_search`, and `auto_ingest` are never read
+  --> src\config\mod.rs:59:9
+   |
+57 | pub struct MemoryConfig {
+   |            ------------ fields in this struct
+58 |     #[serde(default = "default_memex_url")]
+59 |     pub memex_backend_url: String,
+   |         ^^^^^^^^^^^^^^^^^
+60 |     #[serde(default = "default_importance_threshold")]
+61 |     pub auto_ingest_importance_threshold: f64,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+62 |     #[serde(default = "default_true")]
+63 |     pub enabled: bool,
+   |         ^^^^^^^
+64 |     #[serde(default = "default_true")]
+65 |     pub auto_search: bool,
+   |         ^^^^^^^^^^^
+66 |     #[serde(default = "default_true")]
+67 |     pub auto_ingest: bool,
+   |         ^^^^^^^^^^^
+   |
+   = note: `MemoryConfig` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `port` is never read
+  --> src\config\mod.rs:73:9
+   |
+71 | pub struct BridgeConfig {
+   |            ------------ field in this struct
+72 |     #[serde(default = "default_bridge_port")]
+73 |     pub port: u16,
+   |         ^^^^
+   |
+   = note: `BridgeConfig` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `request_timeout_secs` is never read
+  --> src\config\mod.rs:79:9
+   |
+77 | pub struct HttpConfig {
+   |            ---------- field in this struct
+78 |     #[serde(default = "default_request_timeout_secs")]
+79 |     pub request_timeout_secs: u64,
+   |         ^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `HttpConfig` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `level` and `log_dir` are never read
+  --> src\config\mod.rs:89:9
+   |
+87 | pub struct LoggingConfig {
+   |            ------------- fields in this struct
+88 |     #[serde(default = "default_log_level")]
+89 |     pub level: String,
+   |         ^^^^^
+90 |     #[serde(default)]
+91 |     pub log_dir: String,
+   |         ^^^^^^^
+   |
+   = note: `LoggingConfig` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `otlp_endpoint` is never read
+  --> src\config\mod.rs:97:9
+   |
+95 | pub struct TelemetryConfig {
+   |            --------------- field in this struct
+96 |     #[serde(default)]
+97 |     pub otlp_endpoint: String,
+   |         ^^^^^^^^^^^^^
+   |
+   = note: `TelemetryConfig` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: associated functions `recent_messages_to_keep`, `default_max_tokens`, `request_timeout_secs`, `bridge_port`, and `memex_backend_url` are never used
+   --> src\config\mod.rs:204:12
+    |
+168 | impl OrchestrationConfig {
+    | ------------------------ associated functions in this implementation
+...
+204 |     pub fn recent_messages_to_keep() -> usize { Self::get().tool_loop.recent_messages_to_keep }
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+205 |     pub fn default_max_tokens() -> u32 { Self::get().tool_loop.default_max_tokens }
+    |            ^^^^^^^^^^^^^^^^^^
+...
+210 |     pub fn request_timeout_secs() -> u64 { Self::get().http.request_timeout_secs }
+    |            ^^^^^^^^^^^^^^^^^^^^
+211 |     pub fn bridge_port() -> u16 { Self::get().bridge.port }
+    |            ^^^^^^^^^^^
+212 |     pub fn memex_backend_url() -> &'static str { &Self::get().memory.memex_backend_url }
+    |            ^^^^^^^^^^^^^^^^^
+
+warning: struct `SearchResult` is never constructed
+  --> src\fs\mod.rs:19:12
+   |
+19 | pub struct SearchResult {
+   |            ^^^^^^^^^^^^
+
+warning: struct `FileStats` is never constructed
+  --> src\fs\mod.rs:28:12
+   |
+28 | pub struct FileStats {
+   |            ^^^^^^^^^
+
+warning: multiple associated functions are never used
+   --> src\fs\mod.rs:153:12
+    |
+120 | impl FileOperations {
+    | ------------------- associated functions in this implementation
+...
+153 |     pub fn edit_file(path: &str, old_string: &str, new_string: &str, replace_all: bool) -> Result<()> {
+    |            ^^^^^^^^^
+...
+171 |     pub fn multi_edit_file(path: &str, edits: Vec<(String, String)>) -> Result<()> {
+    |            ^^^^^^^^^^^^^^^
+...
+234 |     pub fn glob(pattern: &str, path: Option<&str>) -> Result<Vec<String>> {
+    |            ^^^^
+...
+253 |     pub fn grep(pattern: &str, path: &str, include: Option<&str>, context: Option<usize>) -> Result<Vec<SearchResult>> {
+    |            ^^^^
+...
+311 |     pub fn get_file_stats(path: &str) -> Result<FileStats> {
+    |            ^^^^^^^^^^^^^^
+...
+364 |     pub fn file_size(path: &str) -> Result<u64> {
+    |            ^^^^^^^^^
+...
+370 |     pub fn get_modified_time(path: &str) -> Result<String> {
+    |            ^^^^^^^^^^^^^^^^^
+...
+377 |     pub fn get_extension(path: &str) -> Option<String> {
+    |            ^^^^^^^^^^^^^
+...
+383 |     pub fn read_binary(path: &str) -> Result<Vec<u8>> {
+    |            ^^^^^^^^^^^
+...
+388 |     pub fn write_binary(path: &str, data: &[u8]) -> Result<()> {
+    |            ^^^^^^^^^^^^
+...
+397 |     pub fn copy_file(from: &str, to: &str) -> Result<()> {
+    |            ^^^^^^^^^
+...
+407 |     pub fn move_file(from: &str, to: &str) -> Result<()> {
+    |            ^^^^^^^^^
+...
+417 |     pub fn get_relative_path(path: &str, base: &str) -> Result<String> {
+    |            ^^^^^^^^^^^^^^^^^
+...
+426 |     pub fn get_absolute_path(path: &str) -> Result<String> {
+    |            ^^^^^^^^^^^^^^^^^
+...
+431 |     pub fn find_files_by_extension(dir: &str, extension: &str) -> Result<Vec<String>> {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+...
+445 |     pub fn get_directory_size(path: &str) -> Result<u64> {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+458 |     pub fn get_line_count(path: &str) -> Result<usize> {
+    |            ^^^^^^^^^^^^^^
+...
+464 |     pub fn get_language_from_extension(path: &str) -> Option<String> {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `execute_bash_command` is never used
+   --> src\terminal\mod.rs:105:14
+    |
+105 | pub async fn execute_bash_command(
+    |              ^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ProcessOutput` is never constructed
+  --> src\process\mod.rs:40:12
+   |
+40 | pub struct ProcessOutput {
+   |            ^^^^^^^^^^^^^
+
+warning: methods `wait`, `get_process`, and `subscribe_output` are never used
+   --> src\process\mod.rs:118:18
+    |
+ 53 | impl ProcessManager {
+    | ------------------- methods in this implementation
+...
+118 |     pub async fn wait(&self, pid: u32, timeout_secs: u64) -> Result<ProcessOutput> {
+    |                  ^^^^
+...
+183 |     pub async fn get_process(&self, pid: u32) -> Option<ProcessInfo> {
+    |                  ^^^^^^^^^^^
+...
+187 |     pub async fn subscribe_output(&self, pid: u32) -> Option<broadcast::Receiver<String>> {
+    |                  ^^^^^^^^^^^^^^^^
+
+warning: methods `subscribe` and `unsubscribe` are never used
+  --> src\watcher\mod.rs:86:18
+   |
+21 | impl FileWatcher {
+   | ---------------- methods in this implementation
+...
+86 |     pub async fn subscribe(&self, id: &str) -> broadcast::Receiver<FileChange> {
+   |                  ^^^^^^^^^
+...
+92 |     pub async fn unsubscribe(&self, id: &str) {
+   |                  ^^^^^^^^^^^
+
+warning: method `clear` is never used
+  --> src\clipboard\mod.rs:71:12
+   |
+13 | impl ClipboardManager {
+   | --------------------- method in this implementation
+...
+71 |     pub fn clear(&self) -> Result<()> {
+   |            ^^^^^
+
+warning: method `show_simple` is never used
+  --> src\notification\mod.rs:83:12
+   |
+16 | impl NotificationManager {
+   | ------------------------ method in this implementation
+...
+83 |     pub fn show_simple(&self, title: &str, body: &str) -> Result<()> {
+   |            ^^^^^^^^^^^
+
+warning: fields `max_file_size` and `max_files` are never read
+  --> src\logger\mod.rs:25:5
+   |
+23 | pub struct Logger {
+   |            ------ fields in this struct
+24 |     log_dir: PathBuf,
+25 |     max_file_size: u64,
+   |     ^^^^^^^^^^^^^
+26 |     max_files: usize,
+   |     ^^^^^^^^^
+
+warning: multiple methods are never used
+   --> src\logger\mod.rs:38:12
+    |
+ 29 | impl Logger {
+    | ----------- methods in this implementation
+...
+ 38 |     pub fn init(&self) -> Result<()> {
+    |            ^^^^
+...
+ 48 |     fn rotate_if_needed(&self, path: &PathBuf) -> Result<()> {
+    |        ^^^^^^^^^^^^^^^^
+...
+ 73 |     pub fn log(&self, level: &str, message: &str, source: Option<&str>, details: Option<serde_json::Value>) -> Result<()> {
+    |            ^^^
+...
+ 97 |     pub fn info(&self, message: &str) -> Result<()> {
+    |            ^^^^
+...
+101 |     pub fn warn(&self, message: &str) -> Result<()> {
+    |            ^^^^
+...
+105 |     pub fn error(&self, message: &str) -> Result<()> {
+    |            ^^^^^
+...
+109 |     pub fn debug(&self, message: &str) -> Result<()> {
+    |            ^^^^^
+
+warning: struct `UpdateProgress` is never constructed
+  --> src\updater\mod.rs:20:12
+   |
+20 | pub struct UpdateProgress {
+   |            ^^^^^^^^^^^^^^
+
+warning: struct `UpdateStatus` is never constructed
+  --> src\updater\mod.rs:27:12
+   |
+27 | pub struct UpdateStatus {
+   |            ^^^^^^^^^^^^
+
+warning: method `install_update` is never used
+   --> src\updater\mod.rs:162:12
+    |
+ 41 | impl AutoUpdater {
+    | ---------------- method in this implementation
+...
+162 |     pub fn install_update(&self, file_path: &PathBuf) -> Result<()> {
+    |            ^^^^^^^^^^^^^^
+
+warning: associated items `new`, `update_agent_status`, and `set_agent_result` are never used
+   --> src\worktree\mod.rs:70:12
+    |
+ 69 | impl WorktreeManager {
+    | -------------------- associated items in this implementation
+ 70 |     pub fn new(repo_root: PathBuf) -> Self {
+    |            ^^^
+...
+223 |     pub async fn update_agent_status(&self, id: &str, status: AgentStatus) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^^^^^^
+...
+233 |     pub async fn set_agent_result(&self, id: &str, result: String) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^^^
+
+warning: struct `OpenFilePayload` is never constructed
+  --> src\ide\mod.rs:60:12
+   |
+60 | pub struct OpenFilePayload {
+   |            ^^^^^^^^^^^^^^^
+
+warning: struct `DiagnosticsPayload` is never constructed
+  --> src\ide\mod.rs:68:12
+   |
+68 | pub struct DiagnosticsPayload {
+   |            ^^^^^^^^^^^^^^^^^^
+
+warning: struct `DiagnosticItem` is never constructed
+  --> src\ide\mod.rs:74:12
+   |
+74 | pub struct DiagnosticItem {
+   |            ^^^^^^^^^^^^^^
+
+warning: struct `CursorPositionPayload` is never constructed
+  --> src\ide\mod.rs:84:12
+   |
+84 | pub struct CursorPositionPayload {
+   |            ^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `CommandPayload` is never constructed
+  --> src\ide\mod.rs:91:12
+   |
+91 | pub struct CommandPayload {
+   |            ^^^^^^^^^^^^^^
+
+warning: associated items `with_default`, `get_connection`, and `send_to_ide` are never used
+   --> src\ide\mod.rs:146:12
+    |
+135 | impl IdeBridge {
+    | -------------- associated items in this implementation
+...
+146 |     pub fn with_default() -> Self {
+    |            ^^^^^^^^^^^^
+...
+323 |     pub async fn get_connection(&self, id: &str) -> Option<IdeConnection> {
+    |                  ^^^^^^^^^^^^^^
+...
+350 |     pub async fn send_to_ide(&self, conn_id: &str, _message: IdeMessage) -> Result<()> {
+    |                  ^^^^^^^^^^^
+
+warning: struct `ModelUsage` is never constructed
+  --> src\analytics\mod.rs:59:12
+   |
+59 | pub struct ModelUsage {
+   |            ^^^^^^^^^^
+
+warning: struct `SlashCommandResult` is never constructed
+  --> src\slash_commands\mod.rs:13:12
+   |
+13 | pub struct SlashCommandResult {
+   |            ^^^^^^^^^^^^^^^^^^
+
+warning: methods `get_command` and `get_commands_by_category` are never used
+   --> src\slash_commands\mod.rs:177:12
+    |
+ 23 | impl SlashCommandRegistry {
+    | ------------------------- methods in this implementation
+...
+177 |     pub fn get_command(&self, name: &str) -> Option<&SlashCommand> {
+    |            ^^^^^^^^^^^
+...
+192 |     pub fn get_commands_by_category(&self, category: &str) -> Vec<&SlashCommand> {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: multiple methods are never used
+   --> src\cost_tracker\mod.rs:201:18
+    |
+ 71 | impl CostTracker {
+    | ---------------- methods in this implementation
+...
+201 |     pub async fn record_usage(&self, tokens: u64) {
+    |                  ^^^^^^^^^^^^
+...
+213 |     async fn update_daily_record(&self, tokens: u64) {
+    |              ^^^^^^^^^^^^^^^^^^^
+...
+269 |     pub fn calculate_cost(&self, model: &str, input_tokens: u64, output_tokens: u64) -> f64 {
+    |            ^^^^^^^^^^^^^^
+...
+280 |     pub async fn create_session(&self, conversation_id: &str, model: &str) -> String {
+    |                  ^^^^^^^^^^^^^^
+...
+300 |     pub async fn add_usage(&self, session_id: &str, input_tokens: u64, output_tokens: u64) -> Result<f64> {
+    |                  ^^^^^^^^^
+...
+328 |     pub async fn get_session_cost(&self, session_id: &str) -> Option<SessionCost> {
+    |                  ^^^^^^^^^^^^^^^^
+...
+374 |     fn save_session(&self, session: &SessionCost) -> Result<()> {
+    |        ^^^^^^^^^^^^
+...
+381 |     pub fn load_saved_sessions(&mut self) {
+    |            ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `StreamEvent` is never constructed
+  --> src\native_engine\anthropic_client.rs:89:12
+   |
+89 | pub struct StreamEvent {
+   |            ^^^^^^^^^^^
+
+warning: struct `StreamDelta` is never constructed
+  --> src\native_engine\anthropic_client.rs:99:12
+   |
+99 | pub struct StreamDelta {
+   |            ^^^^^^^^^^^
+
+warning: struct `StreamMessage` is never constructed
+   --> src\native_engine\anthropic_client.rs:107:12
+    |
+107 | pub struct StreamMessage {
+    |            ^^^^^^^^^^^^^
+
+warning: method `send_message_stream` is never used
+   --> src\native_engine\anthropic_client.rs:221:18
+    |
+154 | impl AnthropicClient {
+    | -------------------- method in this implementation
+...
+221 |     pub async fn send_message_stream(
+    |                  ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `OpenAIStreamChunk` is never constructed
+  --> src\native_engine\openai_client.rs:83:12
+   |
+83 | pub struct OpenAIStreamChunk {
+   |            ^^^^^^^^^^^^^^^^^
+
+warning: struct `OpenAIStreamChoice` is never constructed
+  --> src\native_engine\openai_client.rs:92:12
+   |
+92 | pub struct OpenAIStreamChoice {
+   |            ^^^^^^^^^^^^^^^^^^
+
+warning: struct `OpenAIDelta` is never constructed
+  --> src\native_engine\openai_client.rs:99:12
+   |
+99 | pub struct OpenAIDelta {
+   |            ^^^^^^^^^^^
+
+warning: struct `OpenAIToolCallDelta` is never constructed
+   --> src\native_engine\openai_client.rs:107:12
+    |
+107 | pub struct OpenAIToolCallDelta {
+    |            ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `FunctionCallDelta` is never constructed
+   --> src\native_engine\openai_client.rs:116:12
+    |
+116 | pub struct FunctionCallDelta {
+    |            ^^^^^^^^^^^^^^^^^
+
+warning: fields `event_tx` and `executor_handle` are never read
+  --> src\native_engine\engine_core.rs:60:9
+   |
+59 | pub struct ActiveTurn {
+   |            ---------- fields in this struct
+60 |     pub event_tx: mpsc::Sender<EngineEvent>,
+   |         ^^^^^^^^
+61 |     pub executor_handle: Option<tokio::task::JoinHandle<()>>,
+   |         ^^^^^^^^^^^^^^^
+   |
+   = note: `ActiveTurn` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: fields `conversation_id`, `messages`, and `system_prompt` are never read
+  --> src\native_engine\engine_core.rs:67:9
+   |
+66 | pub struct ConversationState {
+   |            ----------------- fields in this struct
+67 |     pub conversation_id: String,
+   |         ^^^^^^^^^^^^^^^
+68 |     pub model: String,
+69 |     pub messages: Vec<Value>,
+   |         ^^^^^^^^
+70 |     pub system_prompt: Option<String>,
+   |         ^^^^^^^^^^^^^
+   |
+   = note: `ConversationState` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: variants `Idle` and `WaitingForUser` are never constructed
+  --> src\native_engine\engine_core.rs:78:5
+   |
+77 | pub enum ConversationStatus {
+   |          ------------------ variants in this enum
+78 |     Idle,
+   |     ^^^^
+79 |     Active,
+80 |     WaitingForUser,
+   |     ^^^^^^^^^^^^^^
+   |
+   = note: `ConversationStatus` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `tool_use_id`, `tool_name`, `tool_input`, `output`, `is_error`, and `timestamp` are never read
+  --> src\native_engine\engine_core.rs:87:9
+   |
+86 | pub struct ToolCallRecord {
+   |            -------------- fields in this struct
+87 |     pub tool_use_id: String,
+   |         ^^^^^^^^^^^
+88 |     pub tool_name: String,
+   |         ^^^^^^^^^
+89 |     pub tool_input: Value,
+   |         ^^^^^^^^^^
+90 |     pub output: String,
+   |         ^^^^^^
+91 |     pub is_error: bool,
+   |         ^^^^^^^^
+92 |     pub timestamp: String,
+   |         ^^^^^^^^^
+   |
+   = note: `ToolCallRecord` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: fields `workspaces_dir` and `skills_manager` are never read
+   --> src\native_engine\engine_core.rs:100:5
+    |
+ 95 | pub struct QueryEngine {
+    |            ----------- fields in this struct
+...
+100 |     workspaces_dir: PathBuf,
+    |     ^^^^^^^^^^^^^^
+...
+105 |     skills_manager: Option<Arc<Mutex<SkillsManager>>>,
+    |     ^^^^^^^^^^^^^^
+
+warning: multiple methods are never used
+   --> src\native_engine\engine_core.rs:134:12
+    |
+110 | impl QueryEngine {
+    | ---------------- methods in this implementation
+...
+134 |     pub fn with_mcp_registry(mut self, registry: Arc<McpToolRegistry>) -> Self {
+    |            ^^^^^^^^^^^^^^^^^
+...
+139 |     pub fn with_skills_manager(mut self, manager: Arc<Mutex<SkillsManager>>) -> Self {
+    |            ^^^^^^^^^^^^^^^^^^^
+...
+144 |     pub fn with_cost_tracker(mut self, tracker: Arc<CostTracker>) -> Self {
+    |            ^^^^^^^^^^^^^^^^^
+...
+149 |     pub async fn check_tool_permission(
+    |                  ^^^^^^^^^^^^^^^^^^^^^
+...
+166 |     pub async fn execute_skill(
+    |                  ^^^^^^^^^^^^^
+...
+192 |     pub async fn confirm_tool_permission(&self, conversation_id: &str, tool_name: &str) {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^
+...
+213 |     pub async fn get_conversation_state(&self, conv_id: &str) -> Option<ConversationState> {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^
+...
+223 |     pub async fn load_conversation_state(&self, conv_id: &str) -> Result<Option<ConversationState>> {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^
+...
+264 |     pub async fn save_conversation_state(&self, conv_id: &str) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^
+...
+654 |     pub async fn cancel_turn(&self, conv_id: &str) {
+    |                  ^^^^^^^^^^^
+...
+681 |     pub async fn record_tool_call(
+    |                  ^^^^^^^^^^^^^^^^
+...
+728 |     pub async fn get_tool_call_history(&self, conv_id: &str) -> Vec<ToolCallRecord> {
+    |                  ^^^^^^^^^^^^^^^^^^^^^
+...
+733 |     pub fn get_workspaces_dir(&self) -> &PathBuf {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+737 |     pub async fn list_active_conversations(&self) -> Vec<String> {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+745 |     pub async fn cleanup_inactive_conversations(&self, max_idle_minutes: u64) -> usize {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `RETRY_BASE_DELAY` is never used
+  --> src\native_engine\provider_manager.rs:11:7
+   |
+11 | const RETRY_BASE_DELAY: Duration = Duration::from_millis(500);
+   |       ^^^^^^^^^^^^^^^^
+
+warning: fields `request_timeout` and `max_retries` are never read
+  --> src\native_engine\provider_manager.rs:62:5
+   |
+57 | pub struct ProviderManager {
+   |            --------------- fields in this struct
+...
+62 |     request_timeout: Duration,
+   |     ^^^^^^^^^^^^^^^
+63 |     max_retries: u32,
+   |     ^^^^^^^^^^^
+   |
+   = note: `ProviderManager` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: multiple associated items are never used
+   --> src\native_engine\provider_manager.rs:80:12
+    |
+ 66 | impl ProviderManager {
+    | -------------------- associated items in this implementation
+...
+ 80 |     pub fn from_providers(providers: Vec<Provider>, config_path: PathBuf) -> Self {
+    |            ^^^^^^^^^^^^^^
+...
+ 95 |     pub fn with_cache_ttl(mut self, ttl: Duration) -> Self {
+    |            ^^^^^^^^^^^^^^
+...
+100 |     pub fn with_request_timeout(mut self, timeout: Duration) -> Self {
+    |            ^^^^^^^^^^^^^^^^^^^^
+...
+105 |     pub fn with_max_retries(mut self, retries: u32) -> Self {
+    |            ^^^^^^^^^^^^^^^^
+...
+110 |     pub fn config_path(&self) -> &PathBuf {
+    |            ^^^^^^^^^^^
+...
+114 |     pub fn get_request_timeout(&self) -> Duration {
+    |            ^^^^^^^^^^^^^^^^^^^
+...
+143 |     pub async fn invalidate_cache_async(&self) {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^
+...
+252 |     pub async fn execute_with_retry<F, Fut, T>(&self, operation: F) -> Result<T>
+    |                  ^^^^^^^^^^^^^^^^^^
+...
+342 |     pub async fn get_cache_stats(&self) -> HashMap<String, String> {
+    |                  ^^^^^^^^^^^^^^^
+
+warning: multiple methods are never used
+   --> src\native_engine\session_manager.rs:141:12
+    |
+105 | impl SessionManager {
+    | ------------------- methods in this implementation
+...
+141 |     pub fn get_workspaces_dir(&self) -> &PathBuf {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+172 |     pub fn get_conversation(&self, id: &str) -> Option<&Conversation> {
+    |            ^^^^^^^^^^^^^^^^
+...
+176 |     pub fn get_conversation_mut(&mut self, id: &str) -> Option<&mut Conversation> {
+    |            ^^^^^^^^^^^^^^^^^^^^
+...
+196 |     pub fn update_conversation(&mut self, id: &str, updates: ConversationUpdates) {
+    |            ^^^^^^^^^^^^^^^^^^^
+...
+215 |     pub fn add_message(&mut self, conversation_id: &str, role: &str, content: &str) -> String {
+    |            ^^^^^^^^^^^
+...
+240 |     pub fn add_message_with_tool_calls(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+281 |     pub fn delete_message(&mut self, conversation_id: &str, message_id: &str) {
+    |            ^^^^^^^^^^^^^^
+...
+299 |     pub fn delete_messages_tail(&mut self, conversation_id: &str, count: usize) {
+    |            ^^^^^^^^^^^^^^^^^^^^
+...
+320 |     pub fn create_project(&mut self, name: &str, description: &str) -> Project {
+    |            ^^^^^^^^^^^^^^
+...
+340 |     pub fn list_projects(&self) -> &[Project] {
+    |            ^^^^^^^^^^^^^
+...
+344 |     pub fn delete_project(&mut self, id: &str) {
+    |            ^^^^^^^^^^^^^^
+...
+350 |     pub fn add_project_file(&mut self, _project_id: &str, file: ProjectFile) {
+    |            ^^^^^^^^^^^^^^^^
+...
+355 |     pub fn get_project_files(&self, project_id: &str) -> Vec<&ProjectFile> {
+    |            ^^^^^^^^^^^^^^^^^
+...
+362 |     pub fn delete_project_file(&mut self, project_id: &str, file_id: &str) {
+    |            ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ConversationUpdates` is never constructed
+   --> src\native_engine\session_manager.rs:368:12
+    |
+368 | pub struct ConversationUpdates {
+    |            ^^^^^^^^^^^^^^^^^^^
+
+warning: methods `get_answer_waiters` and `with_memex` are never used
+   --> src\native_engine\tool_loop.rs:306:12
+    |
+264 | impl ToolLoopExecutor {
+    | --------------------- methods in this implementation
+...
+306 |     pub fn get_answer_waiters(&self) -> Arc<Mutex<HashMap<String, oneshot::Sender<String>>>> {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+320 |     pub fn with_memex(mut self, client: MemExClient) -> Self {
+    |            ^^^^^^^^^^
+
+warning: associated functions `estimate_message` and `exceeds_model_limit` are never used
+  --> src\native_engine\token_counter.rs:30:12
+   |
+ 6 | impl TokenCounter {
+   | ----------------- associated functions in this implementation
+...
+30 |     pub fn estimate_message(msg: &Value) -> usize {
+   |            ^^^^^^^^^^^^^^^^
+...
+90 |     pub fn exceeds_model_limit(messages: &[Value], model_id: &str, safety_margin: f64) -> bool {
+   |            ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `TaskExecutionEntry` is never constructed
+ --> src\native_engine\task_context.rs:9:12
+  |
+9 | pub struct TaskExecutionEntry {
+  |            ^^^^^^^^^^^^^^^^^^
+
+warning: struct `TaskContext` is never constructed
+  --> src\native_engine\task_context.rs:19:12
+   |
+19 | pub struct TaskContext {
+   |            ^^^^^^^^^^^
+
+warning: multiple associated items are never used
+  --> src\native_engine\task_context.rs:30:12
+   |
+29 | impl TaskContext {
+   | ---------------- associated items in this implementation
+30 |     pub fn new(conversation_id: &str, task_id: &str, workspace_path: &str) -> Self {
+   |            ^^^
+...
+43 |     pub fn with_env_vars(mut self, vars: HashMap<String, String>) -> Self {
+   |            ^^^^^^^^^^^^^
+...
+48 |     pub fn push_execution(&mut self, entry: TaskExecutionEntry) {
+   |            ^^^^^^^^^^^^^^
+...
+53 |     pub fn update_task_id(&mut self, new_task_id: &str) {
+   |            ^^^^^^^^^^^^^^
+...
+58 |     pub fn update_workspace(&mut self, new_workspace: &str) {
+   |            ^^^^^^^^^^^^^^^^
+...
+63 |     pub fn set_env_var(&mut self, key: &str, value: &str) {
+   |            ^^^^^^^^^^^
+...
+68 |     pub fn get_env_var(&self, key: &str) -> Option<&String> {
+   |            ^^^^^^^^^^^
+...
+72 |     pub fn last_execution(&self) -> Option<&TaskExecutionEntry> {
+   |            ^^^^^^^^^^^^^^
+
+warning: struct `TaskContextManager` is never constructed
+  --> src\native_engine\task_context.rs:77:12
+   |
+77 | pub struct TaskContextManager {
+   |            ^^^^^^^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\native_engine\task_context.rs:82:12
+    |
+ 81 | impl TaskContextManager {
+    | ----------------------- associated items in this implementation
+ 82 |     pub fn new() -> Self {
+    |            ^^^
+...
+ 88 |     pub async fn create_context(
+    |                  ^^^^^^^^^^^^^^
+...
+109 |     pub async fn get_context(&self, context_id: &str) -> Option<TaskContext> {
+    |                  ^^^^^^^^^^^
+...
+114 |     pub async fn get_context_by_conversation(&self, conversation_id: &str) -> Option<TaskContext> {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+121 |     pub async fn update_context<F>(&self, context_id: &str, updater: F) -> Result<()>
+    |                  ^^^^^^^^^^^^^^
+...
+135 |     pub async fn push_execution(
+    |                  ^^^^^^^^^^^^^^
+...
+145 |     pub async fn remove_context(&self, context_id: &str) -> bool {
+    |                  ^^^^^^^^^^^^^^
+...
+150 |     pub async fn list_contexts(&self) -> Vec<TaskContext> {
+    |                  ^^^^^^^^^^^^^
+...
+155 |     pub async fn clear_inactive_contexts(&self, max_age_minutes: u64) -> usize {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: type alias `TaskContextManagerRef` is never used
+   --> src\native_engine\task_context.rs:173:10
+    |
+173 | pub type TaskContextManagerRef = Arc<TaskContextManager>;
+    |          ^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `UploadResult` is never constructed
+  --> src\upload\mod.rs:11:12
+   |
+11 | pub struct UploadResult {
+   |            ^^^^^^^^^^^^
+
+warning: struct `FileMetadata` is never constructed
+  --> src\upload\mod.rs:26:12
+   |
+26 | pub struct FileMetadata {
+   |            ^^^^^^^^^^^^
+
+warning: struct `UploadManager` is never constructed
+  --> src\upload\mod.rs:37:12
+   |
+37 | pub struct UploadManager {
+   |            ^^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\upload\mod.rs:43:12
+    |
+ 42 | impl UploadManager {
+    | ------------------ associated items in this implementation
+ 43 |     pub fn new(upload_dir: PathBuf) -> Self {
+    |            ^^^
+...
+ 50 |     pub fn init(&self) -> Result<()> {
+    |            ^^^^
+...
+ 55 |     pub fn get_upload_dir(&self) -> &Path {
+    |            ^^^^^^^^^^^^^^
+...
+ 59 |     fn detect_file_type(mime_type: &str, file_name: &str) -> String {
+    |        ^^^^^^^^^^^^^^^^
+...
+ 84 |     fn count_lines(file_path: &Path) -> Option<usize> {
+    |        ^^^^^^^^^^^
+...
+ 92 |     pub async fn save_file(
+    |                  ^^^^^^^^^
+...
+136 |     pub async fn get_file(&self, file_id: &str) -> Result<Vec<u8>> {
+    |                  ^^^^^^^^
+...
+144 |     pub async fn get_metadata(&self, file_id: &str) -> Result<FileMetadata> {
+    |                  ^^^^^^^^^^^^
+...
+152 |     pub fn get_file_path(&self, file_id: &str) -> String {
+    |            ^^^^^^^^^^^^^
+...
+156 |     pub async fn delete_file(&self, file_id: &str) -> Result<()> {
+    |                  ^^^^^^^^^^^
+...
+168 |     pub async fn list_files(&self) -> Vec<FileMetadata> {
+    |                  ^^^^^^^^^^
+
+warning: struct `Project` is never constructed
+  --> src\project\mod.rs:11:12
+   |
+11 | pub struct Project {
+   |            ^^^^^^^
+
+warning: struct `ProjectFile` is never constructed
+  --> src\project\mod.rs:23:12
+   |
+23 | pub struct ProjectFile {
+   |            ^^^^^^^^^^^
+
+warning: struct `ProjectMetadata` is never constructed
+  --> src\project\mod.rs:34:12
+   |
+34 | pub struct ProjectMetadata {
+   |            ^^^^^^^^^^^^^^^
+
+warning: struct `ProjectManager` is never constructed
+  --> src\project\mod.rs:45:12
+   |
+45 | pub struct ProjectManager {
+   |            ^^^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\project\mod.rs:51:12
+    |
+ 50 | impl ProjectManager {
+    | ------------------- associated items in this implementation
+ 51 |     pub fn new(projects_dir: PathBuf) -> Self {
+    |            ^^^
+...
+ 58 |     pub fn init(&self) -> Result<()> {
+    |            ^^^^
+...
+ 63 |     pub fn get_projects_dir(&self) -> &Path {
+    |            ^^^^^^^^^^^^^^^^
+...
+ 67 |     pub async fn create_project(&self, name: &str, description: Option<&str>) -> Result<Project> {
+    |                  ^^^^^^^^^^^^^^
+...
+101 |     pub async fn get_project(&self, id: &str) -> Result<Project> {
+    |                  ^^^^^^^^^^^
+...
+119 |     pub async fn list_projects(&self) -> Vec<Project> {
+    |                  ^^^^^^^^^^^^^
+...
+136 |     pub async fn update_project(
+    |                  ^^^^^^^^^^^^^^
+...
+175 |     pub async fn delete_project(&self, id: &str) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^
+...
+187 |     pub async fn upload_file(
+    |                  ^^^^^^^^^^^
+...
+221 |     pub async fn get_project_files(&self, project_id: &str) -> Result<Vec<ProjectFile>> {
+    |                  ^^^^^^^^^^^^^^^^^
+...
+230 |     pub async fn delete_project_file(
+    |                  ^^^^^^^^^^^^^^^^^^^
+...
+253 |     pub async fn get_file_content(&self, project_id: &str, file_id: &str) -> Result<Vec<u8>> {
+    |                  ^^^^^^^^^^^^^^^^
+
+warning: enum `ComputerUseBackend` is never used
+  --> src\computer_use\mod.rs:22:10
+   |
+22 | pub enum ComputerUseBackend {
+   |          ^^^^^^^^^^^^^^^^^^
+
+warning: struct `ComputerUseBackendConfig` is never constructed
+  --> src\computer_use\mod.rs:36:12
+   |
+36 | pub struct ComputerUseBackendConfig {
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `UnifiedComputerUseManager` is never constructed
+  --> src\computer_use\mod.rs:54:12
+   |
+54 | pub struct UnifiedComputerUseManager {
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\computer_use\mod.rs:64:12
+    |
+ 63 | impl UnifiedComputerUseManager {
+    | ------------------------------ associated items in this implementation
+ 64 |     pub fn new(config: ComputerUseConfig, backend_config: Option<ComputerUseBackendConfig>) -> Self {
+    |            ^^^
+...
+ 80 |     pub fn get_screen_info(&self) -> ScreenInfo {
+    |            ^^^^^^^^^^^^^^^
+...
+ 84 |     pub fn get_mouse_position(&self) -> ScreenCoordinate {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+ 88 |     pub fn get_action_history(&self, limit: Option<usize>) -> Vec<ComputerActionResult> {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+ 92 |     pub async fn execute_action(&self, action: ComputerAction) -> Result<ComputerActionResult> {
+    |                  ^^^^^^^^^^^^^^
+...
+107 |     async fn execute_via_sidecar(
+    |              ^^^^^^^^^^^^^^^^^^^
+...
+135 |     async fn execute_via_http_bridge(
+    |              ^^^^^^^^^^^^^^^^^^^^^^^
+...
+165 |     async fn execute_via_browserless(
+    |              ^^^^^^^^^^^^^^^^^^^^^^^
+...
+194 |     pub async fn take_screenshot(&self) -> Result<String> {
+    |                  ^^^^^^^^^^^^^^^
+
+warning: function `action_type_str` is never used
+   --> src\computer_use\mod.rs:217:4
+    |
+217 | fn action_type_str(t: &ComputerActionType) -> String {
+    |    ^^^^^^^^^^^^^^^
+
+warning: function `button_str` is never used
+   --> src\computer_use\mod.rs:234:4
+    |
+234 | fn button_str(b: &MouseButton) -> String {
+    |    ^^^^^^^^^^
+
+warning: methods `get_mouse_position`, `get_action_history`, and `execute_actions` are never used
+   --> src\computer_use\mod.rs:359:12
+    |
+337 | impl ComputerUseManager {
+    | ----------------------- methods in this implementation
+...
+359 |     pub fn get_mouse_position(&self) -> ScreenCoordinate {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+363 |     pub fn get_action_history(&self, limit: Option<usize>) -> Vec<ComputerActionResult> {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+408 |     pub async fn execute_actions(&self, actions: Vec<ComputerAction>) -> Vec<ComputerActionResult> {
+    |                  ^^^^^^^^^^^^^^^
+
+warning: constant `PIPE_NAME` is never used
+  --> src\computer_use\sidecar.rs:11:7
+   |
+11 | const PIPE_NAME: &str = r"\\.\pipe\agent-worker";
+   |       ^^^^^^^^^
+
+warning: struct `SidecarCommand` is never constructed
+  --> src\computer_use\sidecar.rs:14:12
+   |
+14 | pub struct SidecarCommand {
+   |            ^^^^^^^^^^^^^^
+
+warning: enum `SidecarCommandType` is never used
+  --> src\computer_use\sidecar.rs:21:10
+   |
+21 | pub enum SidecarCommandType {
+   |          ^^^^^^^^^^^^^^^^^^
+
+warning: struct `SidecarResponse` is never constructed
+  --> src\computer_use\sidecar.rs:42:12
+   |
+42 | pub struct SidecarResponse {
+   |            ^^^^^^^^^^^^^^^
+
+warning: struct `SidecarClient` is never constructed
+  --> src\computer_use\sidecar.rs:50:12
+   |
+50 | pub struct SidecarClient;
+   |            ^^^^^^^^^^^^^
+
+warning: associated items `new`, `send_command`, `ping`, `execute_action`, `open_browser`, and `take_screenshot` are never used
+   --> src\computer_use\sidecar.rs:53:12
+    |
+ 52 | impl SidecarClient {
+    | ------------------ associated items in this implementation
+ 53 |     pub fn new() -> Self {
+    |            ^^^
+...
+ 57 |     pub async fn send_command(&self, command: SidecarCommand) -> Result<SidecarResponse> {
+    |                  ^^^^^^^^^^^^
+...
+ 94 |     pub async fn ping(&self) -> Result<bool> {
+    |                  ^^^^
+...
+105 |     pub async fn execute_action(
+    |                  ^^^^^^^^^^^^^^
+...
+132 |     pub async fn open_browser(&self, url: Option<&str>) -> Result<SidecarResponse> {
+    |                  ^^^^^^^^^^^^
+...
+142 |     pub async fn take_screenshot(&self) -> Result<SidecarResponse> {
+    |                  ^^^^^^^^^^^^^^^
+
+warning: constant `DEFAULT_WORKER_URL` is never used
+ --> src\computer_use\http_bridge.rs:5:7
+  |
+5 | const DEFAULT_WORKER_URL: &str = "http://127.0.0.1:9527";
+  |       ^^^^^^^^^^^^^^^^^^
+
+warning: struct `BridgeActionRequest` is never constructed
+ --> src\computer_use\http_bridge.rs:8:12
+  |
+8 | pub struct BridgeActionRequest {
+  |            ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `BridgeActionResponse` is never constructed
+  --> src\computer_use\http_bridge.rs:20:12
+   |
+20 | pub struct BridgeActionResponse {
+   |            ^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `BridgeOpenUrlRequest` is never constructed
+  --> src\computer_use\http_bridge.rs:28:12
+   |
+28 | pub struct BridgeOpenUrlRequest {
+   |            ^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `BridgeScreenshotResponse` is never constructed
+  --> src\computer_use\http_bridge.rs:34:12
+   |
+34 | pub struct BridgeScreenshotResponse {
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `HttpBridgeClient` is never constructed
+  --> src\computer_use\http_bridge.rs:40:12
+   |
+40 | pub struct HttpBridgeClient {
+   |            ^^^^^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\computer_use\http_bridge.rs:46:12
+    |
+ 45 | impl HttpBridgeClient {
+    | --------------------- associated items in this implementation
+ 46 |     pub fn new(base_url: Option<&str>) -> Self {
+    |            ^^^
+...
+ 53 |     pub async fn ping(&self) -> Result<bool> {
+    |                  ^^^^
+...
+ 66 |     pub async fn execute_action(&self, action: BridgeActionRequest) -> Result<BridgeActionResponse> {
+    |                  ^^^^^^^^^^^^^^
+...
+ 81 |     pub async fn mouse_click(
+    |                  ^^^^^^^^^^^
+...
+100 |     pub async fn mouse_move(&self, x: i32, y: i32) -> Result<BridgeActionResponse> {
+    |                  ^^^^^^^^^^
+...
+114 |     pub async fn type_text(&self, text: &str) -> Result<BridgeActionResponse> {
+    |                  ^^^^^^^^^
+...
+128 |     pub async fn key_press(&self, key: &str) -> Result<BridgeActionResponse> {
+    |                  ^^^^^^^^^
+...
+142 |     pub async fn take_screenshot(&self) -> Result<BridgeScreenshotResponse> {
+    |                  ^^^^^^^^^^^^^^^
+...
+156 |     pub async fn open_url(&self, url: &str) -> Result<BridgeActionResponse> {
+    |                  ^^^^^^^^
+
+warning: constant `DEFAULT_BROWSERLESS_URL` is never used
+ --> src\computer_use\browserless.rs:5:7
+  |
+5 | const DEFAULT_BROWSERLESS_URL: &str = "http://127.0.0.1:3000";
+  |       ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `BrowserlessAction` is never constructed
+ --> src\computer_use\browserless.rs:8:12
+  |
+8 | pub struct BrowserlessAction {
+  |            ^^^^^^^^^^^^^^^^^
+
+warning: struct `BrowserlessScript` is never constructed
+  --> src\computer_use\browserless.rs:19:12
+   |
+19 | pub struct BrowserlessScript {
+   |            ^^^^^^^^^^^^^^^^^
+
+warning: struct `BrowserlessViewport` is never constructed
+  --> src\computer_use\browserless.rs:28:12
+   |
+28 | pub struct BrowserlessViewport {
+   |            ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `BrowserlessResponse` is never constructed
+  --> src\computer_use\browserless.rs:34:12
+   |
+34 | pub struct BrowserlessResponse {
+   |            ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `BrowserlessClient` is never constructed
+  --> src\computer_use\browserless.rs:42:12
+   |
+42 | pub struct BrowserlessClient {
+   |            ^^^^^^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\computer_use\browserless.rs:48:12
+    |
+ 47 | impl BrowserlessClient {
+    | ---------------------- associated items in this implementation
+ 48 |     pub fn new(base_url: Option<&str>) -> Self {
+    |            ^^^
+...
+ 55 |     pub async fn ping(&self) -> Result<bool> {
+    |                  ^^^^
+...
+ 68 |     pub async fn execute_puppeteer(
+    |                  ^^^^^^^^^^^^^^^^^
+...
+111 |     pub async fn execute_playwright(
+    |                  ^^^^^^^^^^^^^^^^^^
+...
+129 |     pub async fn take_screenshot(
+    |                  ^^^^^^^^^^^^^^^
+...
+166 |     pub async fn navigate(&self, url: &str) -> Result<BrowserlessResponse> {
+    |                  ^^^^^^^^
+...
+183 |     pub async fn click(
+    |                  ^^^^^
+...
+203 |     pub async fn type_into(
+    |                  ^^^^^^^^^
+
+warning: function `mouse_move` is never used
+   --> src\computer_use\mod.rs:743:12
+    |
+743 |     pub fn mouse_move(x: i32, y: i32) -> ComputerAction {
+    |            ^^^^^^^^^^
+
+warning: function `left_click` is never used
+   --> src\computer_use\mod.rs:769:12
+    |
+769 |     pub fn left_click(x: i32, y: i32) -> ComputerAction {
+    |            ^^^^^^^^^^
+
+warning: function `right_click` is never used
+   --> src\computer_use\mod.rs:773:12
+    |
+773 |     pub fn right_click(x: i32, y: i32) -> ComputerAction {
+    |            ^^^^^^^^^^^
+
+warning: function `wait` is never used
+   --> src\computer_use\mod.rs:803:12
+    |
+803 |     pub fn wait(duration_ms: u64) -> ComputerAction {
+    |            ^^^^
+
+warning: function `screenshot` is never used
+   --> src\computer_use\mod.rs:816:12
+    |
+816 |     pub fn screenshot() -> ComputerAction {
+    |            ^^^^^^^^^^
+
+warning: struct `AskUserQuestion` is never constructed
+ --> src\ask_user\mod.rs:7:12
+  |
+7 | pub struct AskUserQuestion {
+  |            ^^^^^^^^^^^^^^^
+
+warning: struct `QuestionOption` is never constructed
+  --> src\ask_user\mod.rs:15:12
+   |
+15 | pub struct QuestionOption {
+   |            ^^^^^^^^^^^^^^
+
+warning: struct `AskUserAnswer` is never constructed
+  --> src\ask_user\mod.rs:21:12
+   |
+21 | pub struct AskUserAnswer {
+   |            ^^^^^^^^^^^^^
+
+warning: struct `PendingQuestion` is never constructed
+  --> src\ask_user\mod.rs:27:12
+   |
+27 | pub struct PendingQuestion {
+   |            ^^^^^^^^^^^^^^^
+
+warning: struct `AskUserManager` is never constructed
+  --> src\ask_user\mod.rs:36:12
+   |
+36 | pub struct AskUserManager {
+   |            ^^^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\ask_user\mod.rs:42:12
+    |
+ 41 | impl AskUserManager {
+    | ------------------- associated items in this implementation
+ 42 |     pub fn new() -> Self {
+    |            ^^^
+...
+ 49 |     pub async fn add_pending_question(
+    |                  ^^^^^^^^^^^^^^^^^^^^
+...
+ 72 |     pub async fn get_pending_question(
+    |                  ^^^^^^^^^^^^^^^^^^^^
+...
+ 79 |     pub async fn submit_answer(
+    |                  ^^^^^^^^^^^^^
+...
+104 |     pub async fn remove_pending_question(&self, conversation_id: &str) {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^
+...
+108 |     pub async fn register_answer_waiter(
+    |                  ^^^^^^^^^^^^^^^^^^^^^^
+...
+119 |     pub async fn notify_answer_received(&self, conversation_id: &str, answer: AskUserAnswer) {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^
+...
+126 |     pub async fn wait_for_answer(
+    |                  ^^^^^^^^^^^^^^^
+
+warning: struct `SlideInfo` is never constructed
+ --> src\document\mod.rs:8:12
+  |
+8 | pub struct SlideInfo {
+  |            ^^^^^^^^^
+
+warning: struct `SheetInfo` is never constructed
+  --> src\document\mod.rs:18:12
+   |
+18 | pub struct SheetInfo {
+   |            ^^^^^^^^^
+
+warning: struct `PdfSection` is never constructed
+  --> src\document\mod.rs:25:12
+   |
+25 | pub struct PdfSection {
+   |            ^^^^^^^^^^
+
+warning: struct `DocumentInfo` is never constructed
+  --> src\document\mod.rs:36:12
+   |
+36 | pub struct DocumentInfo {
+   |            ^^^^^^^^^^^^
+
+warning: struct `DocumentManager` is never constructed
+  --> src\document\mod.rs:51:12
+   |
+51 | pub struct DocumentManager {
+   |            ^^^^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\document\mod.rs:57:12
+    |
+ 56 | impl DocumentManager {
+    | -------------------- associated items in this implementation
+ 57 |     pub fn new(storage_path: PathBuf) -> Self {
+    |            ^^^
+...
+ 65 |     pub async fn create_document(&self, doc: DocumentInfo) -> String {
+    |                  ^^^^^^^^^^^^^^^
+...
+ 72 |     pub async fn get_document(&self, id: &str) -> Option<DocumentInfo> {
+    |                  ^^^^^^^^^^^^
+...
+ 89 |     pub async fn list_documents(&self) -> Vec<DocumentInfo> {
+    |                  ^^^^^^^^^^^^^^
+...
+ 96 |     pub async fn delete_document(&self, id: &str) -> bool {
+    |                  ^^^^^^^^^^^^^^^
+...
+106 |     pub async fn update_document(&self, id: &str, updates: DocumentUpdate) -> Option<DocumentInfo> {
+    |                  ^^^^^^^^^^^^^^^
+...
+136 |     async fn save_document(&self, id: &str, doc: &DocumentInfo) {
+    |              ^^^^^^^^^^^^^
+
+warning: struct `DocumentUpdate` is never constructed
+   --> src\document\mod.rs:145:12
+    |
+145 | pub struct DocumentUpdate {
+    |            ^^^^^^^^^^^^^^
+
+warning: struct `SandboxConfig` is never constructed
+ --> src\sandbox\mod.rs:9:12
+  |
+9 | pub struct SandboxConfig {
+  |            ^^^^^^^^^^^^^
+
+warning: struct `ExecutionRequest` is never constructed
+  --> src\sandbox\mod.rs:41:12
+   |
+41 | pub struct ExecutionRequest {
+   |            ^^^^^^^^^^^^^^^^
+
+warning: struct `ExecutionResult` is never constructed
+  --> src\sandbox\mod.rs:50:12
+   |
+50 | pub struct ExecutionResult {
+   |            ^^^^^^^^^^^^^^^
+
+warning: struct `CodeSandbox` is never constructed
+  --> src\sandbox\mod.rs:60:12
+   |
+60 | pub struct CodeSandbox {
+   |            ^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\sandbox\mod.rs:85:12
+    |
+ 84 | impl CodeSandbox {
+    | ---------------- associated items in this implementation
+ 85 |     pub fn new(temp_dir: PathBuf) -> Self {
+    |            ^^^
+...
+ 94 |     pub async fn execute(&self, req: ExecutionRequest) -> ExecutionResult {
+    |                  ^^^^^^^
+...
+138 |     async fn run_with_timeout(
+    |              ^^^^^^^^^^^^^^^^
+...
+186 |     async fn execute_python(
+    |              ^^^^^^^^^^^^^^
+...
+241 |     async fn execute_javascript(
+    |              ^^^^^^^^^^^^^^^^^^
+...
+296 |     async fn execute_bash(
+    |              ^^^^^^^^^^^^
+...
+337 |     async fn execute_powershell(
+    |              ^^^^^^^^^^^^^^^^^^
+...
+378 |     async fn execute_rust(
+    |              ^^^^^^^^^^^^
+...
+479 |     async fn execute_go(
+    |              ^^^^^^^^^^
+...
+536 |     fn create_job_object_with_memory_limit(memory_limit_mb: u64) -> Result<*mut std::ffi::c_void, String> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+614 |     fn assign_process_to_job_object(job: *mut std::ffi::c_void, pid: u32) -> Result<(), String> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+651 |     pub async fn get_history(&self) -> Vec<ExecutionResult> {
+    |                  ^^^^^^^^^^^
+...
+655 |     pub async fn clear_history(&self) {
+    |                  ^^^^^^^^^^^^^
+
+warning: struct `GitHubConfig` is never constructed
+ --> src\github\mod.rs:9:12
+  |
+9 | pub struct GitHubConfig {
+  |            ^^^^^^^^^^^^
+
+warning: struct `GitHubRepo` is never constructed
+  --> src\github\mod.rs:24:12
+   |
+24 | pub struct GitHubRepo {
+   |            ^^^^^^^^^^
+
+warning: struct `GitHubUser` is never constructed
+  --> src\github\mod.rs:43:12
+   |
+43 | pub struct GitHubUser {
+   |            ^^^^^^^^^^
+
+warning: struct `GitHubPullRequest` is never constructed
+  --> src\github\mod.rs:53:12
+   |
+53 | pub struct GitHubPullRequest {
+   |            ^^^^^^^^^^^^^^^^^
+
+warning: struct `GitHubIssue` is never constructed
+  --> src\github\mod.rs:72:12
+   |
+72 | pub struct GitHubIssue {
+   |            ^^^^^^^^^^^
+
+warning: struct `GitHubCommit` is never constructed
+  --> src\github\mod.rs:88:12
+   |
+88 | pub struct GitHubCommit {
+   |            ^^^^^^^^^^^^
+
+warning: struct `GitHubComment` is never constructed
+  --> src\github\mod.rs:98:12
+   |
+98 | pub struct GitHubComment {
+   |            ^^^^^^^^^^^^^
+
+warning: struct `CreatePullRequestRequest` is never constructed
+   --> src\github\mod.rs:107:12
+    |
+107 | pub struct CreatePullRequestRequest {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `CreateIssueRequest` is never constructed
+   --> src\github\mod.rs:119:12
+    |
+119 | pub struct CreateIssueRequest {
+    |            ^^^^^^^^^^^^^^^^^^
+
+warning: struct `GitHubReviewRequest` is never constructed
+   --> src\github\mod.rs:129:12
+    |
+129 | pub struct GitHubReviewRequest {
+    |            ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ReviewComment` is never constructed
+   --> src\github\mod.rs:136:12
+    |
+136 | pub struct ReviewComment {
+    |            ^^^^^^^^^^^^^
+
+warning: struct `GitHubIntegration` is never constructed
+   --> src\github\mod.rs:142:12
+    |
+142 | pub struct GitHubIntegration {
+    |            ^^^^^^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\github\mod.rs:148:12
+    |
+147 | impl GitHubIntegration {
+    | ---------------------- associated items in this implementation
+148 |     pub fn new() -> Self {
+    |            ^^^
+...
+158 |     pub async fn set_token(&self, token: String) {
+    |                  ^^^^^^^^^
+...
+163 |     pub async fn get_token(&self) -> Option<String> {
+    |                  ^^^^^^^^^
+...
+167 |     fn auth_headers(&self, token: &str) -> HeaderMap {
+    |        ^^^^^^^^^^^^
+...
+177 |     pub async fn get_current_user(&self) -> Result<GitHubUser> {
+    |                  ^^^^^^^^^^^^^^^^
+...
+202 |     pub async fn get_repo(&self, owner: &str, repo: &str) -> Result<GitHubRepo> {
+    |                  ^^^^^^^^
+...
+236 |     pub async fn list_repos(&self, page: Option<i32>, per_page: Option<i32>) -> Result<Vec<GitHubRepo>> {
+    |                  ^^^^^^^^^^
+...
+274 |     pub async fn create_pull_request(&self, req: CreatePullRequestRequest) -> Result<GitHubPullRequest> {
+    |                  ^^^^^^^^^^^^^^^^^^^
+...
+323 |     pub async fn get_pull_request(&self, owner: &str, repo: &str, number: i64) -> Result<GitHubPullRequest> {
+    |                  ^^^^^^^^^^^^^^^^
+...
+357 |     pub async fn list_pull_requests(&self, owner: &str, repo: &str, state: Option<&str>) -> Result<Vec<GitHubPullRequest>> {
+    |                  ^^^^^^^^^^^^^^^^^^
+...
+392 |     pub async fn merge_pull_request(&self, owner: &str, repo: &str, number: i64, commit_title: Option<&str>, commit_message: Option<&str>...
+    |                  ^^^^^^^^^^^^^^^^^^
+...
+416 |     pub async fn create_issue(&self, req: CreateIssueRequest) -> Result<GitHubIssue> {
+    |                  ^^^^^^^^^^^^
+...
+473 |     pub async fn list_issues(&self, owner: &str, repo: &str, state: Option<&str>, labels: Option<&str>) -> Result<Vec<GitHubIssue>> {
+    |                  ^^^^^^^^^^^
+...
+518 |     pub async fn get_issue_comments(&self, owner: &str, repo: &str, number: i64) -> Result<Vec<GitHubComment>> {
+    |                  ^^^^^^^^^^^^^^^^^^
+...
+542 |     pub async fn create_issue_comment(&self, owner: &str, repo: &str, number: i64, body: &str) -> Result<GitHubComment> {
+    |                  ^^^^^^^^^^^^^^^^^^^^
+...
+570 |     pub async fn search_repos(&self, query: &str, page: Option<i32>, per_page: Option<i32>) -> Result<Vec<GitHubRepo>> {
+    |                  ^^^^^^^^^^^^
+...
+611 |     pub async fn get_file_content(&self, owner: &str, repo: &str, path: &str, ref_: Option<&str>) -> Result<String> {
+    |                  ^^^^^^^^^^^^^^^^
+...
+635 |     pub async fn fork_repo(&self, owner: &str, repo: &str) -> Result<GitHubRepo> {
+    |                  ^^^^^^^^^
+...
+669 |     pub async fn is_connected(&self) -> bool {
+    |                  ^^^^^^^^^^^^
+...
+673 |     pub fn get_auth_url(&self) -> String {
+    |            ^^^^^^^^^^^^
+...
+677 |     pub async fn handle_callback(&self, code: &str, _state: &str) -> Result<String> {
+    |                  ^^^^^^^^^^^^^^^
+...
+699 |     pub async fn disconnect(&self) {
+    |                  ^^^^^^^^^^
+...
+704 |     pub async fn get_tree(&self, owner: &str, repo: &str, ref_: Option<&str>) -> Result<Vec<serde_json::Value>> {
+    |                  ^^^^^^^^
+...
+734 |     pub async fn get_contents(&self, owner: &str, repo: &str, path: &str, ref_: Option<&str>) -> Result<Vec<serde_json::Value>> {
+    |                  ^^^^^^^^^^^^
+
+warning: function `base64_decode` is never used
+   --> src\github\mod.rs:778:4
+    |
+778 | fn base64_decode(input: &str) -> Vec<u8> {
+    |    ^^^^^^^^^^^^^
+
+warning: function `update_conversation_title` is never used
+  --> src\db\conversation_repo.rs:96:8
+   |
+96 | pub fn update_conversation_title(conn: &Connection, id: &str, title: &str) -> Result<()> {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `update_conversation_model` is never used
+   --> src\db\conversation_repo.rs:114:8
+    |
+114 | pub fn update_conversation_model(conn: &Connection, id: &str, model: &str) -> Result<()> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `update_conversation_timestamp` is never used
+   --> src\db\conversation_repo.rs:123:8
+    |
+123 | pub fn update_conversation_timestamp(conn: &Connection, id: &str, updated_at: &str) -> Result<()> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `pin_conversation` is never used
+   --> src\db\conversation_repo.rs:146:8
+    |
+146 | pub fn pin_conversation(conn: &Connection, id: &str, pinned: bool) -> Result<()> {
+    |        ^^^^^^^^^^^^^^^^
+
+warning: function `archive_conversation` is never used
+   --> src\db\conversation_repo.rs:155:8
+    |
+155 | pub fn archive_conversation(conn: &Connection, id: &str, archived: bool) -> Result<()> {
+    |        ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `update_conversation` is never used
+   --> src\db\conversation_repo.rs:164:8
+    |
+164 | pub fn update_conversation(
+    |        ^^^^^^^^^^^^^^^^^^^
+
+warning: function `delete_message` is never used
+  --> src\db\message_repo.rs:80:8
+   |
+80 | pub fn delete_message(conn: &Connection, id: &str) -> Result<()> {
+   |        ^^^^^^^^^^^^^^
+
+warning: function `update_message_content` is never used
+   --> src\db\message_repo.rs:102:8
+    |
+102 | pub fn update_message_content(conn: &Connection, id: &str, content: &str) -> Result<()> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `ProjectFileRow` is never constructed
+  --> src\db\project_repo.rs:18:12
+   |
+18 | pub struct ProjectFileRow {
+   |            ^^^^^^^^^^^^^^
+
+warning: function `row_to_project_file` is never used
+  --> src\db\project_repo.rs:40:4
+   |
+40 | fn row_to_project_file(row: &rusqlite::Row<'_>) -> rusqlite::Result<ProjectFileRow> {
+   |    ^^^^^^^^^^^^^^^^^^^
+
+warning: function `update_project` is never used
+   --> src\db\project_repo.rs:101:8
+    |
+101 | pub fn update_project(
+    |        ^^^^^^^^^^^^^^
+
+warning: function `delete_project` is never used
+   --> src\db\project_repo.rs:135:8
+    |
+135 | pub fn delete_project(conn: &Connection, id: &str) -> Result<()> {
+    |        ^^^^^^^^^^^^^^
+
+warning: function `list_project_files` is never used
+   --> src\db\project_repo.rs:157:8
+    |
+157 | pub fn list_project_files(conn: &Connection, project_id: &str) -> Result<Vec<ProjectFileRow>> {
+    |        ^^^^^^^^^^^^^^^^^^
+
+warning: function `delete_project_file` is never used
+   --> src\db\project_repo.rs:169:8
+    |
+169 | pub fn delete_project_file(conn: &Connection, id: &str) -> Result<()> {
+    |        ^^^^^^^^^^^^^^^^^^^
+
+warning: function `get_enabled_tasks` is never used
+   --> src\db\task_repo.rs:206:8
+    |
+206 | pub fn get_enabled_tasks(conn: &Connection) -> Result<Vec<ScheduledTaskRow>> {
+    |        ^^^^^^^^^^^^^^^^^
+
+warning: function `list_task_runs` is never used
+   --> src\db\task_repo.rs:284:8
+    |
+284 | pub fn list_task_runs(conn: &Connection, limit: usize) -> Result<Vec<TaskRunRow>> {
+    |        ^^^^^^^^^^^^^^
+
+warning: function `insert_code_diff` is never used
+  --> src\db\diff_repo.rs:34:8
+   |
+34 | pub fn insert_code_diff(
+   |        ^^^^^^^^^^^^^^^^
+
+warning: function `get_diffs_by_message` is never used
+  --> src\db\diff_repo.rs:75:8
+   |
+75 | pub fn get_diffs_by_message(conn: &Connection, message_id: &str) -> Result<Vec<CodeDiffRow>> {
+   |        ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `get_approval_by_id` is never used
+  --> src\db\permission_repo.rs:99:8
+   |
+99 | pub fn get_approval_by_id(
+   |        ^^^^^^^^^^^^^^^^^^
+
+warning: function `get_h5_token_by_id` is never used
+  --> src\db\h5_repo.rs:55:8
+   |
+55 | pub fn get_h5_token_by_id(conn: &Connection, id: &str) -> Result<Option<H5TokenRow>> {
+   |        ^^^^^^^^^^^^^^^^^^
+
+warning: function `get_im_config_by_id` is never used
+  --> src\db\im_config_repo.rs:56:8
+   |
+56 | pub fn get_im_config_by_id(
+   |        ^^^^^^^^^^^^^^^^^^^
+
+warning: function `delete_im_config` is never used
+   --> src\db\im_config_repo.rs:109:8
+    |
+109 | pub fn delete_im_config(conn: &Connection, id: &str) -> Result<()> {
+    |        ^^^^^^^^^^^^^^^^
+
+warning: function `update_im_user_permission_by_platform_user` is never used
+  --> src\db\im_permission_repo.rs:78:8
+   |
+78 | pub fn update_im_user_permission_by_platform_user(
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `delete_im_user_permission` is never used
+   --> src\db\im_permission_repo.rs:101:8
+    |
+101 | pub fn delete_im_user_permission(conn: &Connection, id: &str) -> Result<()> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `get_im_user_permission_by_id` is never used
+   --> src\db\im_permission_repo.rs:134:8
+    |
+134 | pub fn get_im_user_permission_by_id(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `list_all_im_user_permissions` is never used
+   --> src\db\im_permission_repo.rs:163:8
+    |
+163 | pub fn list_all_im_user_permissions(conn: &Connection) -> Result<Vec<ImUserPermissionRow>> {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `get_im_user_permission_by_paired_code` is never used
+   --> src\db\im_permission_repo.rs:190:8
+    |
+190 | pub fn get_im_user_permission_by_paired_code(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: enum `AgentState` is never used
+  --> src\multiagent\mod.rs:13:10
+   |
+13 | pub enum AgentState {
+   |          ^^^^^^^^^^
+
+warning: enum `AgentType` is never used
+  --> src\multiagent\mod.rs:23:10
+   |
+23 | pub enum AgentType {
+   |          ^^^^^^^^^
+
+warning: struct `AgentConfig` is never constructed
+  --> src\multiagent\mod.rs:32:12
+   |
+32 | pub struct AgentConfig {
+   |            ^^^^^^^^^^^
+
+warning: struct `AgentTask` is never constructed
+  --> src\multiagent\mod.rs:42:12
+   |
+42 | pub struct AgentTask {
+   |            ^^^^^^^^^
+
+warning: struct `AgentResult` is never constructed
+  --> src\multiagent\mod.rs:51:12
+   |
+51 | pub struct AgentResult {
+   |            ^^^^^^^^^^^
+
+warning: struct `ResearchPlan` is never constructed
+  --> src\multiagent\mod.rs:61:12
+   |
+61 | pub struct ResearchPlan {
+   |            ^^^^^^^^^^^^
+
+warning: enum `OrchestratorEvent` is never used
+  --> src\multiagent\mod.rs:67:10
+   |
+67 | pub enum OrchestratorEvent {
+   |          ^^^^^^^^^^^^^^^^^
+
+warning: struct `OrchestratorConfig` is never constructed
+   --> src\multiagent\mod.rs:113:12
+    |
+113 | pub struct OrchestratorConfig {
+    |            ^^^^^^^^^^^^^^^^^^
+
+warning: struct `MultiAgentOrchestrator` is never constructed
+   --> src\multiagent\mod.rs:129:12
+    |
+129 | pub struct MultiAgentOrchestrator {
+    |            ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\multiagent\mod.rs:139:12
+    |
+138 | impl MultiAgentOrchestrator {
+    | --------------------------- associated items in this implementation
+139 |     pub fn new(config: OrchestratorConfig) -> Self {
+    |            ^^^
+...
+155 |     pub async fn register_agent(&self, config: AgentConfig) {
+    |                  ^^^^^^^^^^^^^^
+...
+162 |     pub fn subscribe(&self) -> broadcast::Receiver<OrchestratorEvent> {
+    |            ^^^^^^^^^
+...
+166 |     pub async fn get_state(&self) -> AgentState {
+    |                  ^^^^^^^^^
+...
+170 |     fn emit_event(&self, event: OrchestratorEvent) {
+    |        ^^^^^^^^^^
+...
+174 |     pub async fn execute_research(
+    |                  ^^^^^^^^^^^^^^^^
+...
+237 |     async fn set_state(&self, new_state: AgentState) {
+    |              ^^^^^^^^^
+...
+242 |     async fn call_llm_non_streaming(
+    |              ^^^^^^^^^^^^^^^^^^^^^^
+...
+305 |     async fn generate_research_plan(
+    |              ^^^^^^^^^^^^^^^^^^^^^^
+...
+349 |     async fn execute_sub_researchers(
+    |              ^^^^^^^^^^^^^^^^^^^^^^^
+...
+544 |     async fn synthesize_report(
+    |              ^^^^^^^^^^^^^^^^^
+
+warning: function `fallback_plan` is never used
+   --> src\multiagent\mod.rs:694:4
+    |
+694 | fn fallback_plan(query: &str) -> ResearchPlan {
+    |    ^^^^^^^^^^^^^
+
+warning: enum `WorkflowPhase` is never used
+  --> src\orchestration\mod.rs:28:10
+   |
+28 | pub enum WorkflowPhase {
+   |          ^^^^^^^^^^^^^
+
+warning: struct `WorkflowTask` is never constructed
+  --> src\orchestration\mod.rs:39:12
+   |
+39 | pub struct WorkflowTask {
+   |            ^^^^^^^^^^^^
+
+warning: enum `TaskStatus` is never used
+  --> src\orchestration\mod.rs:51:10
+   |
+51 | pub enum TaskStatus {
+   |          ^^^^^^^^^^
+
+warning: fields `default_model` and `timeout_ms` are never read
+   --> src\orchestration\mod.rs:180:9
+    |
+178 | pub struct OrchestratorConfig {
+    |            ------------------ fields in this struct
+179 |     pub max_concurrent_agents: usize,
+180 |     pub default_model: String,
+    |         ^^^^^^^^^^^^^
+181 |     pub timeout_ms: u64,
+    |         ^^^^^^^^^^
+    |
+    = note: `OrchestratorConfig` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: methods `with_shared_memory`, `subscribe`, `list_workflows`, and `get_workflow` are never used
+   --> src\orchestration\mod.rs:244:12
+    |
+217 | impl MultiAgentOrchestrator {
+    | --------------------------- methods in this implementation
+...
+244 |     pub fn with_shared_memory(mut self, memex: MemExClient) -> Self {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+249 |     pub fn subscribe(&self) -> broadcast::Receiver<WorkflowEvent> {
+    |            ^^^^^^^^^
+...
+800 |     pub async fn list_workflows(&self) -> Vec<WorkPlan> {
+    |                  ^^^^^^^^^^^^^^
+...
+804 |     pub async fn get_workflow(&self, plan_id: &str) -> Option<WorkPlan> {
+    |                  ^^^^^^^^^^^^
+
+warning: field `requirements_store` is never read
+  --> src\orchestration\openspace.rs:61:5
+   |
+60 | pub struct OpenSpaceManager {
+   |            ---------------- field in this struct
+61 |     requirements_store: HashMap<String, RequirementsAnalysis>,
+   |     ^^^^^^^^^^^^^^^^^^
+   |
+   = note: `OpenSpaceManager` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+warning: methods `save_analysis` and `get_analysis` are never used
+   --> src\orchestration\openspace.rs:273:12
+    |
+ 64 | impl OpenSpaceManager {
+    | --------------------- methods in this implementation
+...
+273 |     pub fn save_analysis(&mut self, analysis: RequirementsAnalysis) {
+    |            ^^^^^^^^^^^^^
+...
+278 |     pub fn get_analysis(&self, goal: &str) -> Option<&RequirementsAnalysis> {
+    |            ^^^^^^^^^^^^
+
+warning: method `get_rules` is never used
+   --> src\orchestration\superpowers.rs:381:12
+    |
+ 51 | impl SuperpowersEngine {
+    | ---------------------- method in this implementation
+...
+381 |     pub fn get_rules(&self) -> &[EngineeringRule] {
+    |            ^^^^^^^^^
+
+warning: struct `Sprint` is never constructed
+  --> src\orchestration\gstack.rs:36:12
+   |
+36 | pub struct Sprint {
+   |            ^^^^^^
+
+warning: methods `save_workplan`, `get_workplan`, `list_workplans`, `delete_workplan`, and `create_sprint` are never used
+   --> src\orchestration\gstack.rs:304:12
+    |
+ 51 | impl GStackManager {
+    | ------------------ methods in this implementation
+...
+304 |     pub fn save_workplan(&mut self, plan: &WorkPlan) -> Result<()> {
+    |            ^^^^^^^^^^^^^
+...
+313 |     pub async fn get_workplan(&self, id: &str) -> Option<WorkPlan> {
+    |                  ^^^^^^^^^^^^
+...
+317 |     pub async fn list_workplans(&self) -> Vec<WorkPlan> {
+    |                  ^^^^^^^^^^^^^^
+...
+321 |     pub fn delete_workplan(&mut self, id: &str) -> bool {
+    |            ^^^^^^^^^^^^^^^
+...
+331 |     pub fn create_sprint(&self, name: &str, start_date: &str, end_date: &str, tasks: Vec<String>) -> Sprint {
+    |            ^^^^^^^^^^^^^
+
+warning: function `create_mock_provider` is never used
+ --> src\orchestration\test_scenario.rs:5:4
+  |
+5 | fn create_mock_provider() -> ResolvedProvider {
+  |    ^^^^^^^^^^^^^^^^^^^^
+
+warning: function `run_complex_workflow_test` is never used
+  --> src\orchestration\test_scenario.rs:37:14
+   |
+37 | pub async fn run_complex_workflow_test() {
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `run_priority_scheduling_test` is never used
+   --> src\orchestration\test_scenario.rs:105:14
+    |
+105 | pub async fn run_priority_scheduling_test() {
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `run_dependency_test` is never used
+   --> src\orchestration\test_scenario.rs:137:14
+    |
+137 | pub async fn run_dependency_test() {
+    |              ^^^^^^^^^^^^^^^^^^^
+
+warning: trait `PermissionChecker` is never used
+  --> src\permissions\mod.rs:37:11
+   |
+37 | pub trait PermissionChecker {
+   |           ^^^^^^^^^^^^^^^^^
+
+warning: type alias `PermissionCheckerRef` is never used
+  --> src\permissions\mod.rs:41:10
+   |
+41 | pub type PermissionCheckerRef = Arc<dyn PermissionChecker + Send + Sync>;
+   |          ^^^^^^^^^^^^^^^^^^^^
+
+warning: multiple methods are never used
+   --> src\permissions\manager.rs:90:12
+    |
+ 54 | impl PermissionManager {
+    | ---------------------- methods in this implementation
+...
+ 90 |     pub fn add_rule(&self, rule: PermissionRule) {
+    |            ^^^^^^^^
+...
+ 95 |     pub fn remove_rule(&self, rule_id: &str) {
+    |            ^^^^^^^^^^^
+...
+100 |     pub fn get_rules(&self) -> Vec<PermissionRule> {
+    |            ^^^^^^^^^
+...
+321 |     pub fn clear_confirmation(&self, conversation_id: &str, tool_name: &str) {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+327 |     pub fn clear_all_confirmations(&self) {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+...
+332 |     pub fn log_tool_execution(&self, context: &PermissionContext, success: bool) {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+344 |     pub fn is_tool_dangerous(&self, tool_name: &str) -> bool {
+    |            ^^^^^^^^^^^^^^^^^
+
+warning: type alias `PermissionManagerRef` is never used
+   --> src\permissions\manager.rs:355:10
+    |
+355 | pub type PermissionManagerRef = Arc<PermissionManager>;
+    |          ^^^^^^^^^^^^^^^^^^^^
+
+warning: methods `with_tool_name` and `with_conditions` are never used
+  --> src\permissions\rules.rs:53:12
+   |
+39 | impl PermissionRule {
+   | ------------------- methods in this implementation
+...
+53 |     pub fn with_tool_name(mut self, tool_name: &str) -> Self {
+   |            ^^^^^^^^^^^^^^
+...
+58 |     pub fn with_conditions(mut self, conditions: serde_json::Value) -> Self {
+   |            ^^^^^^^^^^^^^^^
+
+warning: methods `with_message_id`, `with_details`, and `with_duration_ms` are never used
+  --> src\permissions\audit.rs:48:12
+   |
+32 | impl AuditEntry {
+   | --------------- methods in this implementation
+...
+48 |     pub fn with_message_id(mut self, message_id: &str) -> Self {
+   |            ^^^^^^^^^^^^^^^
+...
+63 |     pub fn with_details(mut self, details: serde_json::Value) -> Self {
+   |            ^^^^^^^^^^^^
+...
+68 |     pub fn with_duration_ms(mut self, duration_ms: u64) -> Self {
+   |            ^^^^^^^^^^^^^^^^
+
+warning: methods `log_tool_execution`, `get_entries`, `get_entries_by_conversation`, `get_entries_by_tool`, and `clear` are never used
+   --> src\permissions\audit.rs:95:12
+    |
+ 79 | impl AuditLogger {
+    | ---------------- methods in this implementation
+...
+ 95 |     pub fn log_tool_execution(
+    |            ^^^^^^^^^^^^^^^^^^
+...
+137 |     pub fn get_entries(&self) -> Vec<AuditEntry> {
+    |            ^^^^^^^^^^^
+...
+142 |     pub fn get_entries_by_conversation(&self, conversation_id: &str) -> Vec<AuditEntry> {
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+151 |     pub fn get_entries_by_tool(&self, tool_name: &str) -> Vec<AuditEntry> {
+    |            ^^^^^^^^^^^^^^^^^^^
+...
+160 |     pub fn clear(&self) {
+    |            ^^^^^
+
+warning: methods `get_config_blocking` and `health_check` are never used
+   --> src\memory\mod.rs:117:12
+    |
+ 97 | impl MemExClient {
+    | ---------------- methods in this implementation
+...
+117 |     pub fn get_config_blocking(&self) -> MemoryConfig {
+    |            ^^^^^^^^^^^^^^^^^^^
+...
+128 |     pub async fn health_check(&self) -> Result<bool> {
+    |                  ^^^^^^^^^^^^
+
+warning: fields `content`, `tier`, `summary`, `keywords`, `tool_calls_count`, and `is_subtask_boundary` are never read
+   --> src\memory\mod.rs:214:9
+    |
+212 | pub struct TieredMessage {
+    |            ------------- fields in this struct
+213 |     pub role: String,
+214 |     pub content: String,
+    |         ^^^^^^^
+215 |     pub tier: MemoryTier,
+    |         ^^^^
+216 |     pub summary: Option<String>,
+    |         ^^^^^^^
+217 |     pub keywords: Vec<String>,
+    |         ^^^^^^^^
+218 |     pub tool_calls_count: usize,
+    |         ^^^^^^^^^^^^^^^^
+219 |     pub is_subtask_boundary: bool,
+    |         ^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `TieredMessage` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: associated items `with_thresholds` and `generate_summary_async` are never used
+   --> src\memory\mod.rs:235:12
+    |
+227 | impl TieredCompressor {
+    | --------------------- associated items in this implementation
+...
+235 |     pub fn with_thresholds(mut self, hot: usize, warm: usize) -> Self {
+    |            ^^^^^^^^^^^^^^^
+...
+414 |     pub async fn generate_summary_async(messages: &[Value], memex: &MemExClient) -> String {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: methods `memex`, `needs_compression`, and `compress_context` are never used
+   --> src\memory\mod.rs:641:12
+    |
+633 | impl ContextManager {
+    | ------------------- methods in this implementation
+...
+641 |     pub fn memex(&self) -> &MemExClient { &self.memex }
+    |            ^^^^^
+...
+762 |     pub fn needs_compression(&self, message_count: usize, total_chars: usize) -> bool {
+    |            ^^^^^^^^^^^^^^^^^
+...
+768 |     pub async fn compress_context(&self, conversation_id: &str, old_messages: &[String]) -> Result<String> {
+    |                  ^^^^^^^^^^^^^^^^
+
+warning: method `estimate_tokens` is never used
+  --> src\memory\caveman_rtk.rs:97:12
+   |
+75 | impl CavemanRTKSystem {
+   | --------------------- method in this implementation
+...
+97 |     pub fn estimate_tokens(&self, content: &str) -> u64 {
+   |            ^^^^^^^^^^^^^^^
+
+warning: function `generate_file_diff` is never used
+  --> src\diff\mod.rs:96:8
+   |
+96 | pub fn generate_file_diff(original_path: &str, modified_path: &str) -> Result<DiffResult> {
+   |        ^^^^^^^^^^^^^^^^^^
+
+warning: function `apply_diff_to_file` is never used
+   --> src\diff\mod.rs:107:8
+    |
+107 | pub fn apply_diff_to_file(file_path: &str, diff_text: &str) -> Result<()> {
+    |        ^^^^^^^^^^^^^^^^^^
+
+warning: function `parse_unified_diff` is never used
+   --> src\diff\mod.rs:114:8
+    |
+114 | pub fn parse_unified_diff(diff_text: &str) -> Result<DiffResult> {
+    |        ^^^^^^^^^^^^^^^^^^
+
+warning: field `should_stop` is never read
+  --> src\scheduler\mod.rs:24:5
+   |
+21 | pub struct ScheduledTaskScheduler {
+   |            ---------------------- field in this struct
+...
+24 |     should_stop: Arc<Mutex<bool>>,
+   |     ^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\scheduler\mod.rs:41:18
+    |
+ 32 | impl ScheduledTaskScheduler {
+    | --------------------------- associated items in this implementation
+...
+ 41 |     pub async fn init(&self) -> Result<()> {
+    |                  ^^^^
+...
+ 48 |     pub async fn add_task(&self, task: &ScheduledTaskRow) -> Result<()> {
+    |                  ^^^^^^^^
+...
+ 53 |     pub async fn remove_task(&self, task_id: &str) -> Result<()> {
+    |                  ^^^^^^^^^^^
+...
+291 |     pub async fn start(&self) {
+    |                  ^^^^^
+...
+351 |     pub async fn stop(&self) {
+    |                  ^^^^
+...
+356 |     async fn load_enabled_tasks(&self) -> Result<Vec<ScheduledTaskRow>> {
+    |              ^^^^^^^^^^^^^^^^^^
+...
+363 |     pub fn calc_next_run(cron_expr: &str) -> Result<String> {
+    |            ^^^^^^^^^^^^^
+
+warning: method `as_str` is never used
+  --> src\im_integration\mod.rs:31:12
+   |
+30 | impl ImPlatform {
+   | --------------- method in this implementation
+31 |     pub fn as_str(&self) -> &str {
+   |            ^^^^^^
+
+warning: method `connect_websocket_platform` is never used
+   --> src\im_integration\mod.rs:652:18
+    |
+117 | impl ImIntegrationManager {
+    | ------------------------- method in this implementation
+...
+652 |     pub async fn connect_websocket_platform(
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `DINGTALK_API_BASE` is never used
+  --> src\im_integration\adapters\dingtalk_adapter.rs:17:7
+   |
+17 | const DINGTALK_API_BASE: &str = "https://api.dingtalk.com";
+   |       ^^^^^^^^^^^^^^^^^
+
+warning: struct `StreamConnectionResponse` is never constructed
+  --> src\im_integration\adapters\dingtalk_adapter.rs:22:8
+   |
+22 | struct StreamConnectionResponse {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `AccessTokenResponse` is never constructed
+  --> src\im_integration\adapters\dingtalk_adapter.rs:29:8
+   |
+29 | struct AccessTokenResponse {
+   |        ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `DingTalkBotMessage` is never constructed
+  --> src\im_integration\adapters\dingtalk_adapter.rs:36:8
+   |
+36 | struct DingTalkBotMessage {
+   |        ^^^^^^^^^^^^^^^^^^
+
+warning: struct `DingTalkTextContent` is never constructed
+  --> src\im_integration\adapters\dingtalk_adapter.rs:58:8
+   |
+58 | struct DingTalkTextContent {
+   |        ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `DingTalkMarkdownContent` is never constructed
+  --> src\im_integration\adapters\dingtalk_adapter.rs:63:8
+   |
+63 | struct DingTalkMarkdownContent {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `StreamFrame` is never constructed
+  --> src\im_integration\adapters\dingtalk_adapter.rs:70:8
+   |
+70 | struct StreamFrame {
+   |        ^^^^^^^^^^^
+
+warning: struct `DingTalkAdapter` is never constructed
+  --> src\im_integration\adapters\dingtalk_adapter.rs:79:12
+   |
+79 | pub struct DingTalkAdapter {
+   |            ^^^^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\im_integration\adapters\dingtalk_adapter.rs:92:12
+    |
+ 91 | impl DingTalkAdapter {
+    | -------------------- associated items in this implementation
+ 92 |     pub fn new(client_id: String, client_secret: String) -> Self {
+    |            ^^^
+...
+110 |     async fn get_access_token(&self) -> Result<String> {
+    |              ^^^^^^^^^^^^^^^^
+...
+153 |     async fn get_stream_connection(&self) -> Result<(String, String)> {
+    |              ^^^^^^^^^^^^^^^^^^^^^
+...
+184 |     async fn send_robot_o2o_message(
+    |              ^^^^^^^^^^^^^^^^^^^^^^
+...
+217 |     async fn send_group_robot_message(
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^
+...
+250 |     fn parse_message(&self, raw: serde_json::Value) -> Option<UnifiedMessage> {
+    |        ^^^^^^^^^^^^^
+...
+311 |     async fn ws_message_loop(
+    |              ^^^^^^^^^^^^^^^
+...
+382 |     async fn handle_ws_text(&self, text: &str) -> Result<()> {
+    |              ^^^^^^^^^^^^^^
+...
+419 |     async fn connection_loop(&self) {
+    |              ^^^^^^^^^^^^^^^
+...
+489 |     pub fn generate_auth_url(&self, redirect_uri: &str, state: &str) -> String {
+    |            ^^^^^^^^^^^^^^^^^
+...
+499 |     pub async fn validate_credentials(&self) -> Result<bool> {
+    |                  ^^^^^^^^^^^^^^^^^^^^
+
+warning: method `clone_for_spawn` is never used
+   --> src\im_integration\adapters\dingtalk_adapter.rs:644:8
+    |
+643 | impl DingTalkAdapter {
+    | -------------------- method in this implementation
+644 |     fn clone_for_spawn(&self) -> Self {
+    |        ^^^^^^^^^^^^^^^
+
+warning: struct `WsEventEnvelope` is never constructed
+  --> src\im_integration\adapters\feishu_adapter.rs:46:8
+   |
+46 | struct WsEventEnvelope {
+   |        ^^^^^^^^^^^^^^^
+
+warning: fields `running`, `message_tx`, `handler`, and `ws_stream` are never read
+   --> src\im_integration\adapters\feishu_adapter.rs:121:5
+    |
+118 | pub struct FeishuAdapter {
+    |            ------------- fields in this struct
+...
+121 |     running: AtomicBool,
+    |     ^^^^^^^
+122 |     status: RwLock<ConnectionStatus>,
+123 |     message_tx: mpsc::Sender<UnifiedMessage>,
+    |     ^^^^^^^^^^
+124 |     handler: Mutex<Option<MessageHandler>>,
+    |     ^^^^^^^
+...
+127 |     ws_stream: Mutex<Option<WebSocketStream<MaybeTlsStream<TcpStream>>>>,
+    |     ^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\im_integration\adapters\feishu_adapter.rs:145:8
+    |
+130 | impl FeishuAdapter {
+    | ------------------ associated items in this implementation
+...
+145 |     fn clone_for_spawn(&self) -> Arc<Self> {
+    |        ^^^^^^^^^^^^^^^
+...
+264 |     pub fn get_manual_config_url(&self) -> String {
+    |            ^^^^^^^^^^^^^^^^^^^^^
+...
+269 |     async fn ws_loop(self: Arc<Self>) {
+    |              ^^^^^^^
+...
+367 |     async fn connect_ws(
+    |              ^^^^^^^^^^
+...
+384 |     async fn handle_ws_text(&self, text: &str) -> Result<()> {
+    |              ^^^^^^^^^^^^^^
+...
+426 |     async fn handle_ws_binary(&self, bin: &[u8]) -> Result<()> {
+    |              ^^^^^^^^^^^^^^^^
+...
+434 |     async fn convert_message_event(&self, event: serde_json::Value) -> Option<UnifiedMessage> {
+    |              ^^^^^^^^^^^^^^^^^^^^^
+...
+523 |     async fn convert_card_callback(&self, event: serde_json::Value) -> Option<UnifiedMessage> {
+    |              ^^^^^^^^^^^^^^^^^^^^^
+...
+559 |     async fn dispatch_message(&self, msg: UnifiedMessage) {
+    |              ^^^^^^^^^^^^^^^^
+...
+623 |     async fn update_message_api(
+    |              ^^^^^^^^^^^^^^^^^^
+...
+668 |     fn build_card_json(content: &str) -> String {
+    |        ^^^^^^^^^^^^^^^
+...
+686 |     pub async fn send_streaming_start(&self, chat_id: &str) -> Result<String> {
+    |                  ^^^^^^^^^^^^^^^^^^^^
+...
+692 |     pub async fn send_streaming_update(&self, message_id: &str, text: &str) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^^^^^^^^
+...
+698 |     pub async fn send_streaming_done(&self, message_id: &str, final_text: &str) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^^^^^^
+
+warning: trait `PlatformAdapter` is never used
+  --> src\im_integration\adapters\telegram_adapter.rs:16:11
+   |
+16 | pub trait PlatformAdapter: Send + Sync {
+   |           ^^^^^^^^^^^^^^^
+
+warning: struct `InlineKeyboardButton` is never constructed
+  --> src\im_integration\adapters\telegram_adapter.rs:37:12
+   |
+37 | pub struct InlineKeyboardButton {
+   |            ^^^^^^^^^^^^^^^^^^^^
+
+warning: struct `TelegramResponse` is never constructed
+  --> src\im_integration\adapters\telegram_adapter.rs:44:8
+   |
+44 | struct TelegramResponse<T> {
+   |        ^^^^^^^^^^^^^^^^
+
+warning: struct `Update` is never constructed
+  --> src\im_integration\adapters\telegram_adapter.rs:52:8
+   |
+52 | struct Update {
+   |        ^^^^^^
+
+warning: struct `TelegramMessage` is never constructed
+  --> src\im_integration\adapters\telegram_adapter.rs:59:8
+   |
+59 | struct TelegramMessage {
+   |        ^^^^^^^^^^^^^^^
+
+warning: struct `TelegramUser` is never constructed
+  --> src\im_integration\adapters\telegram_adapter.rs:70:8
+   |
+70 | struct TelegramUser {
+   |        ^^^^^^^^^^^^
+
+warning: struct `TelegramChat` is never constructed
+  --> src\im_integration\adapters\telegram_adapter.rs:78:8
+   |
+78 | struct TelegramChat {
+   |        ^^^^^^^^^^^^
+
+warning: struct `PhotoSize` is never constructed
+  --> src\im_integration\adapters\telegram_adapter.rs:83:8
+   |
+83 | struct PhotoSize {
+   |        ^^^^^^^^^
+
+warning: struct `TelegramDocument` is never constructed
+  --> src\im_integration\adapters\telegram_adapter.rs:88:8
+   |
+88 | struct TelegramDocument {
+   |        ^^^^^^^^^^^^^^^^
+
+warning: struct `CallbackQuery` is never constructed
+  --> src\im_integration\adapters\telegram_adapter.rs:94:8
+   |
+94 | struct CallbackQuery {
+   |        ^^^^^^^^^^^^^
+
+warning: struct `TelegramUserInfo` is never constructed
+   --> src\im_integration\adapters\telegram_adapter.rs:102:8
+    |
+102 | struct TelegramUserInfo {
+    |        ^^^^^^^^^^^^^^^^
+
+warning: struct `TelegramAdapter` is never constructed
+   --> src\im_integration\adapters\telegram_adapter.rs:110:12
+    |
+110 | pub struct TelegramAdapter {
+    |            ^^^^^^^^^^^^^^^
+
+warning: associated items `new`, `clone_for_spawn`, `validate_token`, `polling_loop`, `poll_updates`, and `convert_update` are never used
+   --> src\im_integration\adapters\telegram_adapter.rs:119:12
+    |
+118 | impl TelegramAdapter {
+    | -------------------- associated items in this implementation
+119 |     pub fn new(config: ImPlatformConfig, message_tx: mpsc::Sender<UnifiedMessage>) -> Self {
+    |            ^^^
+...
+130 |     fn clone_for_spawn(&self) -> Self {
+    |        ^^^^^^^^^^^^^^^
+...
+141 |     pub async fn validate_token(&self) -> Result<TelegramUserInfo> {
+    |                  ^^^^^^^^^^^^^^
+...
+174 |     async fn polling_loop(&self, mut shutdown_rx: mpsc::Receiver<()>) {
+    |              ^^^^^^^^^^^^
+...
+216 |     async fn poll_updates(&self, offset: Option<i64>, timeout: u64) -> Result<Vec<Update>> {
+    |              ^^^^^^^^^^^^
+...
+258 |     fn convert_update(&self, update: Update) -> Option<UnifiedMessage> {
+    |        ^^^^^^^^^^^^^^
+
+warning: constant `WECOM_API_BASE` is never used
+  --> src\im_integration\adapters\wecom_adapter.rs:16:7
+   |
+16 | const WECOM_API_BASE: &str = "https://qyapi.weixin.qq.com/cgi-bin";
+   |       ^^^^^^^^^^^^^^
+
+warning: struct `AccessTokenResponse` is never constructed
+  --> src\im_integration\adapters\wecom_adapter.rs:20:8
+   |
+20 | struct AccessTokenResponse {
+   |        ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `WeComAdapter` is never constructed
+  --> src\im_integration\adapters\wecom_adapter.rs:47:12
+   |
+47 | pub struct WeComAdapter {
+   |            ^^^^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\im_integration\adapters\wecom_adapter.rs:62:12
+    |
+ 61 | impl WeComAdapter {
+    | ----------------- associated items in this implementation
+ 62 |     pub fn new(corp_id: String, corp_secret: String, agent_id: Option<String>) -> Self {
+    |            ^^^
+...
+ 81 |     async fn get_access_token(&self) -> Result<String> {
+    |              ^^^^^^^^^^^^^^^^
+...
+135 |     fn parse_message(&self, raw: serde_json::Value) -> Option<UnifiedMessage> {
+    |        ^^^^^^^^^^^^^
+...
+184 |     async fn send_text_message(&self, user_id: &str, content: &str) -> Result<()> {
+    |              ^^^^^^^^^^^^^^^^^
+...
+230 |     async fn send_markdown_message(&self, user_id: &str, content: &str) -> Result<()> {
+    |              ^^^^^^^^^^^^^^^^^^^^^
+...
+260 |     async fn connection_loop(&self) {
+    |              ^^^^^^^^^^^^^^^
+...
+350 |     pub async fn validate_credentials(&self) -> Result<bool> {
+    |                  ^^^^^^^^^^^^^^^^^^^^
+...
+360 |     pub fn generate_auth_url(&self, redirect_uri: &str, state: &str) -> String {
+    |            ^^^^^^^^^^^^^^^^^
+
+warning: method `clone_for_spawn` is never used
+   --> src\im_integration\adapters\wecom_adapter.rs:455:8
+    |
+454 | impl WeComAdapter {
+    | ----------------- method in this implementation
+455 |     fn clone_for_spawn(&self) -> Self {
+    |        ^^^^^^^^^^^^^^^
+
+warning: associated items `as_str` and `from_str` are never used
+  --> src\im_integration\message_router.rs:19:12
+   |
+18 | impl MessageType {
+   | ---------------- associated items in this implementation
+19 |     pub fn as_str(&self) -> &str {
+   |            ^^^^^^
+...
+29 |     pub fn from_str(s: &str) -> Option<Self> {
+   |            ^^^^^^^^
+
+warning: methods `session_key` and `thread_key` are never used
+  --> src\im_integration\message_router.rs:54:12
+   |
+53 | impl UnifiedMessage {
+   | ------------------- methods in this implementation
+54 |     pub fn session_key(&self) -> String {
+   |            ^^^^^^^^^^^
+...
+58 |     pub fn thread_key(&self) -> String {
+   |            ^^^^^^^^^^
+
+warning: methods `connect`, `disconnect`, `on_message`, and `get_platform` are never used
+  --> src\im_integration\message_router.rs:89:14
+   |
+88 | pub trait PlatformAdapter: Send + Sync {
+   |           --------------- methods in this trait
+89 |     async fn connect(&self) -> Result<()>;
+   |              ^^^^^^^
+90 |     async fn disconnect(&self) -> Result<()>;
+   |              ^^^^^^^^^^
+91 |     async fn send_message(&self, chat_id: &str, content: &str, msg_type: MessageType) -> Result<()>;
+92 |     async fn on_message(&self, handler: MessageHandler) -> Result<()>;
+   |              ^^^^^^^^^^
+93 |     fn get_status(&self) -> ConnectionStatus;
+94 |     fn get_platform(&self) -> &str;
+   |        ^^^^^^^^^^^^
+
+warning: fields `inbound_tx` and `handlers` are never read
+   --> src\im_integration\message_router.rs:109:5
+    |
+107 | pub struct MessageRouter {
+    |            ------------- fields in this struct
+108 |     adapters: RwLock<HashMap<String, Arc<dyn PlatformAdapter>>>,
+109 |     inbound_tx: mpsc::Sender<UnifiedMessage>,
+    |     ^^^^^^^^^^
+110 |     pub inbound_rx: Mutex<mpsc::Receiver<UnifiedMessage>>,
+111 |     handlers: Mutex<Vec<MessageHandler>>,
+    |     ^^^^^^^^
+
+warning: multiple methods are never used
+   --> src\im_integration\message_router.rs:125:18
+    |
+114 | impl MessageRouter {
+    | ------------------ methods in this implementation
+...
+125 |     pub async fn register_adapter(&self, adapter: Arc<dyn PlatformAdapter>) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^^^
+...
+132 |     pub async fn unregister_adapter(&self, platform: &str) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^^^^^
+...
+143 |     pub async fn list_platforms(&self) -> Vec<String> {
+    |                  ^^^^^^^^^^^^^^
+...
+148 |     pub async fn connect_platform(&self, platform: &str) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^^^
+...
+170 |     pub async fn disconnect_platform(&self, platform: &str) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^^^^^^
+...
+194 |     pub async fn feishu_stream_start(&self, chat_id: &str) -> Result<String> {
+    |                  ^^^^^^^^^^^^^^^^^^^
+...
+214 |     pub async fn add_handler(&self, handler: MessageHandler) {
+    |                  ^^^^^^^^^^^
+...
+219 |     pub async fn start_dispatch(&self) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^
+...
+232 |     pub fn parse_inbound(&self, platform: &str, raw: serde_json::Value) -> Result<UnifiedMessage> {
+    |            ^^^^^^^^^^^^^
+...
+252 |     fn parse_telegram(&self, raw: serde_json::Value) -> Result<UnifiedMessage> {
+    |        ^^^^^^^^^^^^^^
+...
+312 |     fn parse_feishu(&self, raw: serde_json::Value) -> Result<UnifiedMessage> {
+    |        ^^^^^^^^^^^^
+...
+385 |     fn parse_wechat(&self, raw: serde_json::Value) -> Result<UnifiedMessage> {
+    |        ^^^^^^^^^^^^
+...
+426 |     fn parse_dingtalk(&self, raw: serde_json::Value) -> Result<UnifiedMessage> {
+    |        ^^^^^^^^^^^^^^
+
+warning: method `thread_key` is never used
+  --> src\im_integration\session_manager.rs:30:12
+   |
+25 | impl SessionContext {
+   | ------------------- method in this implementation
+...
+30 |     pub fn thread_key(&self) -> String {
+   |            ^^^^^^^^^^
+
+warning: struct `SessionMessage` is never constructed
+  --> src\im_integration\session_manager.rs:57:12
+   |
+57 | pub struct SessionMessage {
+   |            ^^^^^^^^^^^^^^
+
+warning: multiple methods are never used
+   --> src\im_integration\session_manager.rs:86:18
+    |
+ 72 | impl SessionManager {
+    | ------------------- methods in this implementation
+...
+ 86 |     pub async fn get_or_create_session(&self, msg: &UnifiedMessage) -> Result<SessionContext> {
+    |                  ^^^^^^^^^^^^^^^^^^^^^
+...
+104 |     pub async fn get_session(&self, platform: &str, user_id: &str, chat_id: &str, thread_id: Option<&str>) -> Option<SessionContext> {
+    |                  ^^^^^^^^^^^
+...
+113 |     pub async fn update_session(&self, msg: &UnifiedMessage) -> Result<SessionContext> {
+    |                  ^^^^^^^^^^^^^^
+...
+131 |     pub async fn list_sessions(&self) -> Vec<SessionContext> {
+    |                  ^^^^^^^^^^^^^
+...
+136 |     pub async fn list_sessions_by_platform(&self, platform: &str) -> Vec<SessionContext> {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+145 |     pub async fn delete_session(&self, platform: &str, user_id: &str, chat_id: &str, thread_id: Option<&str>) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^
+...
+177 |     pub async fn get_session_messages(
+    |                  ^^^^^^^^^^^^^^^^^^^^
+...
+234 |     pub async fn add_message_to_session(
+    |                  ^^^^^^^^^^^^^^^^^^^^^^
+...
+288 |     pub async fn set_session_metadata(
+    |                  ^^^^^^^^^^^^^^^^^^^^
+...
+422 |     async fn persist_session(&self, session: &SessionContext) -> Result<()> {
+    |              ^^^^^^^^^^^^^^^
+...
+459 |     async fn persist_message(&self, session: &SessionContext, msg: &UnifiedMessage) -> Result<()> {
+    |              ^^^^^^^^^^^^^^^
+
+warning: methods `verify_pairing_code`, `add_to_whitelist`, `remove_from_whitelist`, and `check_permission` are never used
+   --> src\im_integration\permission_manager.rs:154:18
+    |
+ 71 | impl PermissionManager {
+    | ---------------------- methods in this implementation
+...
+154 |     pub async fn verify_pairing_code(
+    |                  ^^^^^^^^^^^^^^^^^^^
+...
+184 |     pub async fn add_to_whitelist(&self, platform: &str, user_id: &str) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^^^
+...
+239 |     pub async fn remove_from_whitelist(&self, platform: &str, user_id: &str) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^^^^^^^^
+...
+259 |     pub async fn check_permission(&self, platform: &str, user_id: &str) -> Result<bool> {
+    |                  ^^^^^^^^^^^^^^^^
+
+warning: fields `content`, `mtime`, `hash`, `cached_at`, `etag`, and `last_modified` are never read
+  --> src\cache\mod.rs:11:9
+   |
+10 | pub struct CacheEntry {
+   |            ---------- fields in this struct
+11 |     pub content: String,
+   |         ^^^^^^^
+12 |     pub mtime: u64,
+   |         ^^^^^
+13 |     pub hash: String,
+   |         ^^^^
+14 |     pub cached_at: Instant,
+   |         ^^^^^^^^^
+15 |     pub etag: Option<String>,
+   |         ^^^^
+16 |     pub last_modified: Option<String>,
+   |         ^^^^^^^^^^^^^
+   |
+   = note: `CacheEntry` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: constant `COMMAND_CACHE_TTL_SECS` is never used
+  --> src\cache\mod.rs:19:7
+   |
+19 | const COMMAND_CACHE_TTL_SECS: u64 = 30;
+   |       ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: constant `IDEMPOTENT_COMMANDS` is never used
+  --> src\cache\mod.rs:21:7
+   |
+21 | const IDEMPOTENT_COMMANDS: &[&str] = &[
+   |       ^^^^^^^^^^^^^^^^^^^
+
+warning: fields `url_cache` and `dir_cache` are never read
+  --> src\cache\mod.rs:40:5
+   |
+38 | pub struct FileCache {
+   |            --------- fields in this struct
+39 |     file_cache: Arc<RwLock<HashMap<String, CacheEntry>>>,
+40 |     url_cache: Arc<RwLock<HashMap<String, CacheEntry>>>,
+   |     ^^^^^^^^^
+41 |     command_cache: Arc<RwLock<HashMap<String, CacheEntry>>>,
+42 |     dir_cache: Arc<RwLock<HashMap<String, CacheEntry>>>,
+   |     ^^^^^^^^^
+
+warning: multiple associated items are never used
+   --> src\cache\mod.rs:55:12
+    |
+ 45 | impl FileCache {
+    | -------------- associated items in this implementation
+...
+ 55 |     pub fn get_file(&self, path: &str, current_mtime: u64) -> Option<String> {
+    |            ^^^^^^^^
+...
+ 81 |     pub fn invalidate_file(&self, path: &str) {
+    |            ^^^^^^^^^^^^^^^
+...
+ 88 |     pub fn invalidate_dir(&self, dir: &str) {
+    |            ^^^^^^^^^^^^^^
+...
+ 98 |     pub fn get_url(&self, url: &str) -> Option<(String, Option<String>, Option<String>)> {
+    |            ^^^^^^^
+...
+104 |     pub fn set_url(&self, url: &str, content: String, etag: Option<String>, last_modified: Option<String>) {
+    |            ^^^^^^^
+...
+118 |     pub fn get_command(&self, command: &str, cwd: &str) -> Option<String> {
+    |            ^^^^^^^^^^^
+...
+144 |     pub fn on_file_write(&self, path: &str) {
+    |            ^^^^^^^^^^^^^
+...
+151 |     pub fn is_idempotent_command(command: &str) -> bool {
+    |            ^^^^^^^^^^^^^^^^^^^^^
+...
+158 |     pub fn get_dir(&self, key: &str) -> Option<String> {
+    |            ^^^^^^^
+...
+165 |     pub fn set_dir(&self, key: &str, content: String) {
+    |            ^^^^^^^
+
+warning: static `TOKENS_INPUT` is never used
+  --> src\metrics\mod.rs:50:12
+   |
+50 | pub static TOKENS_INPUT: LazyLock<IntCounter> = LazyLock::new(|| {
+   |            ^^^^^^^^^^^^
+
+warning: static `TOKENS_OUTPUT` is never used
+  --> src\metrics\mod.rs:54:12
+   |
+54 | pub static TOKENS_OUTPUT: LazyLock<IntCounter> = LazyLock::new(|| {
+   |            ^^^^^^^^^^^^^
+
+warning: static `TOKENS_SAVED_COMPRESSION` is never used
+  --> src\metrics\mod.rs:58:12
+   |
+58 | pub static TOKENS_SAVED_COMPRESSION: LazyLock<IntCounter> = LazyLock::new(|| {
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: static `TOKENS_PROCESSED` is never used
+  --> src\metrics\mod.rs:62:12
+   |
+62 | pub static TOKENS_PROCESSED: LazyLock<IntCounter> = LazyLock::new(|| {
+   |            ^^^^^^^^^^^^^^^^
+
+warning: static `MEMORY_SEGMENTS` is never used
+  --> src\metrics\mod.rs:66:12
+   |
+66 | pub static MEMORY_SEGMENTS: LazyLock<IntGauge> = LazyLock::new(|| {
+   |            ^^^^^^^^^^^^^^^
+
+warning: function `record_tokens` is never used
+  --> src\metrics\mod.rs:83:8
+   |
+83 | pub fn record_tokens(input: u64, output: u64) {
+   |        ^^^^^^^^^^^^^
+
+warning: function `record_tokens_saved` is never used
+  --> src\metrics\mod.rs:90:8
+   |
+90 | pub fn record_tokens_saved(saved: u64, processed: u64) {
+   |        ^^^^^^^^^^^^^^^^^^^
+
+warning: function `set_memory_segments` is never used
+  --> src\metrics\mod.rs:96:8
+   |
+96 | pub fn set_memory_segments(count: i64) {
+   |        ^^^^^^^^^^^^^^^^^^^
+
+warning: struct `AgentMessage` is never constructed
+  --> src\agent_bus\mod.rs:10:12
+   |
+10 | pub struct AgentMessage {
+   |            ^^^^^^^^^^^^
+
+warning: enum `AgentMessageType` is never used
+  --> src\agent_bus\mod.rs:20:10
+   |
+20 | pub enum AgentMessageType {
+   |          ^^^^^^^^^^^^^^^^
+
+warning: struct `AgentMessageBus` is never constructed
+  --> src\agent_bus\mod.rs:30:12
+   |
+30 | pub struct AgentMessageBus {
+   |            ^^^^^^^^^^^^^^^
+
+warning: associated items `new`, `register_agent`, `send`, `broadcast`, and `subscribe_global` are never used
+  --> src\agent_bus\mod.rs:36:12
+   |
+35 | impl AgentMessageBus {
+   | -------------------- associated items in this implementation
+36 |     pub fn new() -> Self {
+   |            ^^^
+...
+44 |     pub async fn register_agent(&self, agent_id: String) -> broadcast::Receiver<AgentMessage> {
+   |                  ^^^^^^^^^^^^^^
+...
+51 |     pub async fn send(&self, message: AgentMessage) {
+   |                  ^^^^
+...
+59 |     pub async fn broadcast(&self, sender_id: String, message_type: AgentMessageType, payload: serde_json::Value) {
+   |                  ^^^^^^^^^
+...
+74 |     pub fn subscribe_global(&self) -> broadcast::Receiver<AgentMessage> {
+   |            ^^^^^^^^^^^^^^^^
+
+warning: methods `read`, `list_keys`, and `delete` are never used
+   --> src\agent_bus\workspace.rs:35:18
+    |
+ 27 | impl SharedWorkspace {
+    | -------------------- methods in this implementation
+...
+ 35 |     pub async fn read(&self, key: &str) -> Option<WorkspaceEntry> {
+    |                  ^^^^
+...
+102 |     pub async fn list_keys(&self) -> Vec<String> {
+    |                  ^^^^^^^^^
+...
+107 |     pub async fn delete(&self, key: &str) {
+    |                  ^^^^^^
+
+warning: variants `Healthy` and `Unknown` are never constructed
+  --> src\agent_bus\health.rs:8:5
+   |
+ 7 | pub enum AgentHealth {
+   |          ----------- variants in this enum
+ 8 |     Healthy,
+   |     ^^^^^^^
+ 9 |     Unhealthy(String),
+10 |     Unknown,
+   |     ^^^^^^^
+   |
+   = note: `AgentHealth` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: methods `register_agent` and `record_heartbeat` are never used
+  --> src\agent_bus\health.rs:32:18
+   |
+21 | impl AgentHealthMonitor {
+   | ----------------------- methods in this implementation
+...
+32 |     pub async fn register_agent(&self, agent_id: String) {
+   |                  ^^^^^^^^^^^^^^
+...
+39 |     pub async fn record_heartbeat(&self, agent_id: &str) {
+   |                  ^^^^^^^^^^^^^^^^
+
+warning: field `config` is never read
+  --> src\preview_engine.rs:33:5
+   |
+31 | pub struct PreviewEngine {
+   |            ------------- field in this struct
+32 |     contents: RwLock<HashMap<String, PreviewContent>>,
+33 |     config: PreviewConfig,
+   |     ^^^^^^
+
+warning: methods `load_from_file`, `infer_content_type`, `get_config`, and `set_config` are never used
+   --> src\preview_engine.rs:71:18
+    |
+ 37 | impl PreviewEngine {
+    | ------------------ methods in this implementation
+...
+ 71 |     pub async fn load_from_file(&self, id: &str, file_path: &PathBuf) -> Result<()> {
+    |                  ^^^^^^^^^^^^^^
+...
+ 87 |     pub fn infer_content_type(&self, file_path: &PathBuf) -> String {
+    |            ^^^^^^^^^^^^^^^^^^
+...
+ 98 |     pub fn get_config(&self) -> PreviewConfig {
+    |            ^^^^^^^^^^
+...
+102 |     pub fn set_config(&mut self, config: PreviewConfig) {
+    |            ^^^^^^^^^^
+
+warning: struct `InsightEvent` is never constructed
+  --> src\knowledge\flow.rs:12:12
+   |
+12 | pub struct InsightEvent {
+   |            ^^^^^^^^^^^^
+
+warning: struct `TrendingQuery` is never constructed
+  --> src\knowledge\github_hub.rs:19:12
+   |
+19 | pub struct TrendingQuery {
+   |            ^^^^^^^^^^^^^
+
+warning: struct `FusionDirection` is never constructed
+  --> src\knowledge\github_hub.rs:26:12
+   |
+26 | pub struct FusionDirection {
+   |            ^^^^^^^^^^^^^^^
+
+warning: static `FUSION_DIRECTIONS` is never used
+  --> src\knowledge\github_hub.rs:33:12
+   |
+33 | pub static FUSION_DIRECTIONS: &[FusionDirection] = &[
+   |            ^^^^^^^^^^^^^^^^^
+
+warning: method `exchange_code` is never used
+  --> src\knowledge\github_hub.rs:69:18
+   |
+56 | impl GitHubHub {
+   | -------------- method in this implementation
+...
+69 |     pub async fn exchange_code(&self, code: &str) -> Result<String, String> {
+   |                  ^^^^^^^^^^^^^
+
+warning: variant `NotAvailable` is never constructed
+  --> src\secure_storage.rs:11:5
+   |
+ 9 | pub enum SecureStorageError {
+   |          ------------------ variant in this enum
+10 |     #[error("secure storage not available")]
+11 |     NotAvailable,
+   |     ^^^^^^^^^^^^
+   |
+   = note: `SecureStorageError` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+
+warning: `claude-desktop-tauri` (bin "claude-desktop-tauri") generated 406 warnings (23 duplicates) (run `cargo fix --bin "claude-desktop-tauri" -p claude-desktop-tauri` to apply 5 suggestions)
+    Finished `release` profile [optimized] target(s) in 2m 06s
+       Built application at: D:\tauri-dev\claude-desktop-tauri\src-tauri\target\release\claude-desktop-tauri.exe
+        Info Patching D:\tauri-dev\claude-desktop-tauri\src-tauri\target\release\claude-desktop-tauri.exe with bundle type information: msi
+        Info Target: x64
+     Running candle for "D:\\tauri-dev\\claude-desktop-tauri\\src-tauri\\target\\release\\wix\\x64\\main.wxs"
+     Running light to produce D:\tauri-dev\claude-desktop-tauri\src-tauri\target\release\bundle\msi\Claude Rust_3.0.0_x64_en-US.msi
+        Info Patching D:\tauri-dev\claude-desktop-tauri\src-tauri\target\release\claude-desktop-tauri.exe with bundle type information: nsis
+        Info Target: x64
+     Running makensis to produce D:\tauri-dev\claude-desktop-tauri\src-tauri\target\release\bundle\nsis\Claude Rust_3.0.0_x64-setup.exe
+    Finished 2 bundles at:
+        D:\tauri-dev\claude-desktop-tauri\src-tauri\target\release\bundle\msi\Claude Rust_3.0.0_x64_en-US.msi
+        D:\tauri-dev\claude-desktop-tauri\src-tauri\target\release\bundle\nsis\Claude Rust_3.0.0_x64-setup.exe
+

@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One-Pager PRD Creator</title>
+    <style>
+        :root {
+            --bg: #fafafa;
+            --card-bg: #ffffff;
+            --text: #1a1a1a;
+            --text-secondary: #555;
+            --border: #e5e5e5;
+            --accent: #d97706;
+            --accent-hover: #b45309;
+            --accent-light: #fffbeb;
+            --input-bg: #f9fafb;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-lg: 0 4px 24px rgba(0,0,0,0.08);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* ── Header ─────────────────────── */
+        .header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 17px;
+            color: var(--text);
+            text-decoration: none;
+        }
+        .header-brand .icon {
+            width: 30px; height: 30px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        /* ── Layout ────────────────────── */
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 36px 20px;
+        }
+
+        /* ── Cards ─────────────────────── */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+        .card + .card { margin-top: 20px; }
+
+        /* ── Input Screen ──────────────── */
+        .input-screen .subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+        .question-group {
+            margin-bottom: 24px;
+        }
+        .question-group:last-of-type {
+            margin-bottom: 16px;
+        }
+        .question-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 7px;
+            color: var(--text);
+            flex-wrap: wrap;
+        }
+        .question-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .question-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+        textarea, input[type=text], input[type=password] {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--input-bg);
+            font-family: var(--font);
+            font-size: 14px;
+            color: var(--text);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        textarea:focus, input[type=text]:focus, input[type=password]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(217,119,6,0.1);
+        }
+        textarea { min-height: 80px; resize: vertical; }
+        input[type=text], input[type=password] { height: 44px; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 22px;
+            font-family: var(--font);
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { background: var(--bg); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+        /* ── API key ────────────────────── */
+        .api-section {
+            margin-top: 4px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+        .api-section summary {
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+        .api-section details[open] summary { margin-bottom: 10px; }
+        .api-key-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .api-key-row input { flex: 1; }
+        .api-note {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .env-indicator {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 100px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .env-ok { background: #f0fdf4; color: #16a34a; }
+        .env-no { background: #fef2f2; color: #dc2626; }
+
+        /* ── Spinner ───────────────────── */
+        .spinner-overlay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 56px 0;
+        }
+        .spinner {
+            width: 32px; height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner-text { font-size: 14px; color: var(--text-secondary); }
+
+        /* ── Error ─────────────────────── */
+        .error-box {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: var(--radius-sm);
+            padding: 14px 18px;
+            color: #991b1b;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        .error-box button {
+            margin-top: 8px;
+        }
+
+        /* ── PRD Output ────────────────── */
+        .prd-header-bar {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 22px;
+            padding-bottom: 18px;
+            border-bottom: 2px solid var(--accent);
+        }
+        .prd-title {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+        .prd-section {
+            margin-bottom: 24px;
+        }
+        .prd-section h2 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 8px;
+            letter-spacing: -0.2px;
+        }
+        .prd-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin: 12px 0 5px;
+        }
+        .prd-section p, .prd-section li {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+        .prd-section ul, .prd-section ol {
+            padding-left: 18px;
+        }
+        .prd-section li {
+            margin-bottom: 3px;
+        }
+        .prd-section strong {
+            color: var(--text);
+        }
+        .prd-content hr {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 18px 0;
+        }
+        .tag {
+            display: inline-block;
+            padding: 2px 9px;
+            border-radius: 100px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            margin-right: 3px;
+            vertical-align: middle;
+        }
+        .tag-p0 { background: #fef2f2; color: #dc2626; }
+        .tag-p1 { background: #fffbeb; color: #d97706; }
+        .tag-p2 { background: #f0fdf4; color: #16a34a; }
+
+        /* ── Toast ─────────────────────── */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a1a;
+            color: #fff;
+            padding: 10px 22px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .toast.show { opacity: 1; pointer-events: auto; }
+
+        /* ── Responsive ────────────────── */
+        @media (max-width: 600px) {
+            .container { padding: 16px 10px; }
+            .card { padding: 20px; }
+            .prd-title { font-size: 20px; }
+            .header { padding: 12px 14px; }
+            .prd-header-bar { flex-direction: column; }
+        }
+
+        @media print {
+            .header, .btn-row, .btn, .toast { display: none !important; }
+            .card { border: none; box-shadow: none; padding: 0; }
+            .container { max-width: 100%; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header class="header">
+    <span class="header-brand">
+        <span class="icon">📋</span>
+        One-Pager PRD Creator
+    </span>
+    <button class="btn btn-secondary btn-sm" onclick="resetAll()">+ New PRD</button>
+</header>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div class="container" id="app">
+
+    <!-- ── Input Screen ── -->
+    <div id="inputScreen" class="input-screen">
+        <div class="card">
+            <p class="subtitle">Answer <strong>three questions</strong> below. Claude will write a complete one-pager PRD from your answers. Press <strong>⌘+Enter</strong> when ready.</p>
+
+            <div class="question-group">
+                <label class="question-label" for="q1">
+                    <span class="question-num">1</span>What are you building?
+                    <span class="question-hint">— Product or feature name + one-line description</span>
+                </label>
+                <input type="text" id="q1" placeholder="e.g. Team dashboard — a real-time view of team progress across sprints" maxlength="200">
+            </div>
+
+            <div class="question-group">
+                <label class="question-label" for="q2">
+                    <span class="question-num">2</span>Who is it for?
+                    <span class="question-hint">— Target users, personas, or team</span>
+                </label>
+                <input type="text" id="q2" placeholder="e.g. Engineering managers and scrum masters running 8+ person teams" maxlength="200">
+            </div>
+
+            <div class="question-group">
+                <label class="question-label" for="q3">
+                    <span class="question-num">3</span>What problem does it solve, and why now?
+                    <span class="question-hint">— Core pain point and timing context</span>
+                </label>
+                <textarea id="q3" placeholder="e.g. Managers stitch together data from Jira, Slack, and spreadsheets to understand team velocity. We're launching a new planning suite and this closes the visibility gap." maxlength="500"></textarea>
+            </div>
+
+            <div class="api-section">
+                <details>
+                    <summary>🔑 API settings</summary>
+                    <div class="api-key-row" style="margin-top:8px;">
+                        <input type="password" id="apiKey" placeholder="sk-ant-api03-… (Anthropic API key)">
+                        <button class="btn btn-secondary btn-sm" onclick="detectBridge()">Auto-detect</button>
+                    </div>
+                    <p class="api-note" id="apiNote">Leave empty to try the local Claude Desktop bridge. Or paste your Anthropic API key above. Your key is never stored.</p>
+                </details>
+            </div>
+
+            <div class="btn-row" style="margin-top: 18px;">
+                <button class="btn btn-primary" id="generateBtn" onclick="generatePRD()">✨ Generate PRD</button>
+                <button class="btn btn-secondary" onclick="resetInputs()">Clear form</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Loading ── -->
+    <div id="loadingScreen" style="display:none;">
+        <div class="card">
+            <div class="spinner-overlay">
+                <div class="spinner"></div>
+                <p class="spinner-text" id="loadingText">Claude is writing your PRD…</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Result ── -->
+    <div id="resultScreen" style="display:none;"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+const $ = id => document.getElementById(id);
+const show = el => el.style.display = '';
+const hide = el => el.style.display = 'none';
+
+let currentPRD = null;
+let bridgeAvailable = false;
+let bridgeBaseUrl = 'http://127.0.0.1:30085';
+
+function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timeout);
+    t._timeout = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════════
+// BRIDGE DETECTION
+// ═══════════════════════════════════════
+async function detectBridge() {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Checking…';
+
+    try {
+        const resp = await fetch(`${bridgeBaseUrl}/api/system-status`, {
+            signal: AbortSignal.timeout(2000)
+        });
+        if (resp.ok) {
+            bridgeAvailable = true;
+            $('apiNote').innerHTML = '<span class="env-indicator env-ok">✓ Claude Desktop bridge detected</span> — using it for API calls.';
+            $('apiKey').value = '';
+            toast('Bridge detected! Using local Claude Desktop.');
+        } else {
+            throw new Error('Not ok');
+        }
+    } catch (_) {
+        bridgeAvailable = false;
+        $('apiNote').innerHTML = '<span class="env-indicator env-no">✗ No local bridge found</span> — please paste your Anthropic API key above.';
+        toast('No local bridge found. Please enter your API key.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Auto-detect';
+    }
+}
+
+// Auto-detect on load
+(async function autoDetect() {
+    try {
+        const resp = await fetch(`${bridgeBaseUrl}/api/system-status`, {
+            signal: AbortSignal.timeout(1500)
+        });
+        if (resp.ok) {
+            bridgeAvailable = true;
+            $('apiNote').innerHTML = '<span class="env-indicator env-ok">✓ Claude Desktop bridge detected</span> — using it automatically.';
+        }
+    } catch (_) {
+        bridgeAvailable = false;
+    }
+})();
+
+// ═══════════════════════════════════════
+// RESET
+// ═══════════════════════════════════════
+function resetInputs() {
+    $('q1').value = '';
+    $('q2').value = '';
+    $('q3').value = '';
+    $('q1').focus();
+}
+
+function resetAll() {
+    resetInputs();
+    currentPRD = null;
+    show($('inputScreen'));
+    hide($('loadingScreen'));
+    hide($('resultScreen'));
+    $('resultScreen').innerHTML = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════
+// PROMPT BUILDING
+// ═══════════════════════════════════════
+function buildSystemPrompt() {
+    return `You are an expert product manager. Given a user's three answers about what they're building, who it's for, and what problem it solves, generate a complete one-pager PRD.
+
+Follow this template exactly:
+
+---
+
+### One-pager: [PRODUCT NAME]
+
+### 1. TL;DR
+2–3 sentences: what this is, who it's for, and why it matters.
+
+### 2. Goals
+- **Business goals:** What business outcomes does this drive?
+- **User goals:** What do users gain?
+- **Non-goals:** What are we explicitly NOT doing?
+
+### 3. User stories
+List 2–4 personas with jobs-to-be-done. Format: "As a [persona], I want to [action] so that [outcome]."
+
+### 4. Functional requirements
+Group by priority:
+- **P0 (Must have):** Core features for launch
+- **P1 (Should have):** Important, can follow shortly
+- **P2 (Nice to have):** Future enhancements
+
+### 5. User experience
+Bullet-pointed user journey:
+- Entry points / discovery
+- Key flows step by step
+- Edge cases & error states
+- Exit / completion
+
+### 6. Narrative
+A short "day in the life" story (1–2 paragraphs) showing a real user interacting with this. Make it concrete and vivid.
+
+### 7. Success metrics
+3–5 measurable outcomes. Include leading indicators and lagging indicators.
+
+### 8. Milestones & sequencing
+A lean 3-phase roadmap:
+- **Phase 1 (MVP):** What ships first + timeline
+- **Phase 2 (Enhance):** What follows
+- **Phase 3 (Scale):** Future vision
+
+---
+
+Rules:
+- Be specific. Use the user's actual words and context.
+- Plain English. No buzzwords or jargon.
+- Actionable. Someone should be able to pick this up and start building.
+- Aim for 500–800 words total.
+- Use Markdown formatting.`;
+}
+
+function buildUserMessage(q1, q2, q3) {
+    return `Here's what I'm working on:
+
+**What I'm building:**
+${q1}
+
+**Who it's for:**
+${q2}
+
+**Problem it solves and why now:**
+${q3}
+
+Generate a complete one-pager PRD.`;
+}
+
+// ═══════════════════════════════════════
+// API CALLS
+// ═══════════════════════════════════════
+async function callClaude(systemPrompt, userMessage) {
+    const explicitKey = $('apiKey').value.trim();
+
+    // If user provided a key, use it directly
+    if (explicitKey) {
+        return await callAnthropicDirect(explicitKey, systemPrompt, userMessage);
+    }
+
+    // If bridge is available, use it
+    if (bridgeAvailable) {
+        return await callViaBridge(systemPrompt, userMessage);
+    }
+
+    throw new Error('No API key and no local bridge. Please enter your Anthropic API key or open Claude Desktop.');
+}
+
+async function callAnthropicDirect(apiKey, systemPrompt, userMessage) {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 4096,
+            system: systemPrompt,
+            messages: [{ role: 'user', content: userMessage }]
+        })
+    });
+
+    if (!resp.ok) {
+        const err = await resp.text();
+        if (resp.status === 401) throw new Error('Invalid API key. Please check your Anthropic API key.');
+        throw new Error(`API error (${resp.status}): ${err.substring(0, 200)}`);
+    }
+
+    const data = await resp.json();
+    return extractResponseText(data);
+}
+
+async function callViaBridge(systemPrompt, userMessage) {
+    // The bridge /api/chat endpoint returns SSE (Server-Sent Events).
+    // We'll collect all text deltas and return the full result.
+    const conversationId = 'prd-' + Date.now();
+
+    const resp = await fetch(`${bridgeBaseUrl}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            conversation_id: conversationId,
+            message: userMessage,
+            model: 'claude-sonnet-4-20250514',
+            custom_system_prompt: systemPrompt,
+            permission_mode: 'allow_once'
+        })
+    });
+
+    if (!resp.ok) {
+        const err = await resp.text();
+        throw new Error(`Bridge error (${resp.status}): ${err.substring(0, 200)}`);
+    }
+
+    // Parse SSE stream
+    const text = await resp.text();
+    let fullText = '';
+    const lines = text.split('\n');
+
+    for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+            const data = JSON.parse(line.substring(6));
+            if (data.type === 'content_block_delta' && data.delta?.text) {
+                fullText += data.delta.text;
+            } else if (data.type === 'message_stop' && data.full_text) {
+                fullText = data.full_text; // Use final complete text
+            } else if (data.type === 'error') {
+                throw new Error(data.error || 'Unknown bridge error');
+            }
+        } catch (e) {
+            if (e.message && !e.message.includes('JSON')) throw e;
+            // Skip unparseable lines
+        }
+    }
+
+    if (!fullText) {
+        throw new Error('No text received from bridge. The response may have been empty.');
+    }
+
+    return fullText;
+}
+
+function extractResponseText(data) {
+    if (data.content && Array.isArray(data.content)) {
+        return data.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+    }
+    if (data.choices && Array.isArray(data.choices)) {
+        return data.choices[0]?.message?.content || '';
+    }
+    return JSON.stringify(data);
+}
+
+// ═══════════════════════════════════════
+// GENERATE
+// ═══════════════════════════════════════
+async function generatePRD() {
+    const q1 = $('q1').value.trim();
+    const q2 = $('q2').value.trim();
+    const q3 = $('q3').value.trim();
+
+    // Validate
+    let hasError = false;
+    [['q1', q1], ['q2', q2], ['q3', q3]].forEach(([id, val]) => {
+        if (!val) {
+            $(id).style.borderColor = '#dc2626';
+            hasError = true;
+        }
+    });
+    if (hasError) {
+        toast('Please fill in all three questions.');
+        setTimeout(() => {
+            $('q1').style.borderColor = '';
+            $('q2').style.borderColor = '';
+            $('q3').style.borderColor = '';
+        }, 2000);
+        return;
+    }
+
+    // Show loading
+    hide($('inputScreen'));
+    hide($('resultScreen'));
+    show($('loadingScreen'));
+    $('generateBtn').disabled = true;
+    $('loadingText').textContent = 'Claude is writing your PRD…';
+
+    try {
+        const systemPrompt = buildSystemPrompt();
+        const userMessage = buildUserMessage(q1, q2, q3);
+        const rawPRD = await callClaude(systemPrompt, userMessage);
+
+        const name = extractName(rawPRD) || q1;
+        currentPRD = { name, raw: rawPRD, q1, q2, q3 };
+
+        renderPRD(currentPRD);
+        hide($('loadingScreen'));
+        show($('resultScreen'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+        hide($('loadingScreen'));
+        show($('inputScreen'));
+        toast(err.message);
+        console.error('PRD generation error:', err);
+    } finally {
+        $('generateBtn').disabled = false;
+    }
+}
+
+function extractName(raw) {
+    const m = raw.match(/###\s*One-pager:\s*(.+)/i);
+    return m ? m[1].replace(/\*+/g, '').trim() : null;
+}
+
+// ═══════════════════════════════════════
+// RENDER PRD
+// ═══════════════════════════════════════
+function renderPRD(prd) {
+    const html = markdownToHTML(prd.raw);
+
+    $('resultScreen').innerHTML = `
+        <div class="card">
+            <div class="prd-header-bar">
+                <span class="prd-title">${esc(prd.name)}</span>
+                <div class="btn-row">
+                    <button class="btn btn-secondary btn-sm" onclick="copyPRD()">📋 Copy</button>
+                    <button class="btn btn-secondary btn-sm" onclick="downloadPRD()">⬇ .md</button>
+                    <button class="btn btn-primary btn-sm" onclick="resetAll()">← New</button>
+                </div>
+            </div>
+            <div class="prd-content">${html}</div>
+            <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-secondary btn-sm" onclick="copyPRD()">📋 Copy to clipboard</button>
+                <button class="btn btn-secondary btn-sm" onclick="downloadPRD()">⬇ Download .md</button>
+                <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨 Print</button>
+                <button class="btn btn-primary btn-sm" onclick="resetAll()">✨ Create another</button>
+            </div>
+        </div>
+    `;
+}
+
+function markdownToHTML(md) {
+    let html = md;
+
+    // Escape HTML first (except what we'll transform)
+    html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // But we want to KEEP our own HTML tags, so let's use a different approach:
+    // Actually, let's just do the markdown transforms directly on the raw text.
+    // The raw text from Claude should be safe (no user-injected HTML).
+
+    html = md;
+
+    // Section headers: ### 1. Title → <h2>
+    html = html.replace(/^###\s+(.+)$/gm, '<h2>$1</h2>');
+
+    // Bold: **text**
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    // Priority tags
+    html = html.replace(/\bP0\b/g, '<span class="tag tag-p0">P0</span>');
+    html = html.replace(/\bP1\b/g, '<span class="tag tag-p1">P1</span>');
+    html = html.replace(/\bP2\b/g, '<span class="tag tag-p2">P2</span>');
+
+    // Horizontal rules
+    html = html.replace(/^---$/gm, '<hr>');
+
+    // Unordered list items
+    html = html.replace(/^(\s*)[-*]\s+(.+)$/gm, '<li>$2</li>');
+
+    // Numbered list items
+    html = html.replace(/^(\s*)\d+\.\s+(.+)$/gm, '<li>$2</li>');
+
+    // Wrap consecutive <li> in <ul>
+    html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, (match) => {
+        return '<ul>' + match + '</ul>';
+    });
+
+    // Now wrap non-tag paragraphs
+    const lines = html.split('\n');
+    const result = [];
+    let inList = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (line.startsWith('<h2>') || line.startsWith('<hr') || line.startsWith('<ul>')) {
+            result.push(line);
+            inList = line.startsWith('<ul>');
+            continue;
+        }
+        if (line.startsWith('</ul>')) {
+            result.push(line);
+            inList = false;
+            continue;
+        }
+        if (inList && line.startsWith('<li>')) {
+            result.push(line);
+            continue;
+        }
+        const trimmed = line.trim();
+        if (!trimmed) {
+            result.push('');
+            continue;
+        }
+        if (trimmed.startsWith('<')) {
+            result.push(trimmed);
+        } else {
+            result.push('<p>' + trimmed + '</p>');
+        }
+    }
+
+    html = result.join("\n");
+
+    // Clean up: don't wrap section headers in <p>
+    html = html.replace(/<p><h2>/g, '<h2>');
+    html = html.replace(/<\/h2><\/p>/g, '</h2>');
+
+    // Wrap in sections: each h2 starts a new section
+    html = html.replace(/<h2>/g, '</div><div class="prd-section"><h2>');
+    html = html.replace(/^<\/div>/, '');
+    html = '<div class="prd-section">' + html + '</div>';
+
+    // Clean empty sections
+    html = html.replace(/<div class="prd-section">\s*<\/div>/g, '');
+
+    return html;
+}
+
+function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
+// ═══════════════════════════════════════
+// COPY & DOWNLOAD
+// ═══════════════════════════════════════
+function copyPRD() {
+    if (!currentPRD) return;
+    navigator.clipboard.writeText(currentPRD.raw).then(
+        () => toast('PRD copied!'),
+        () => toast('Failed to copy. Select and copy manually.')
+    );
+}
+
+function downloadPRD() {
+    if (!currentPRD) return;
+    const slug = (currentPRD.name || 'prd').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const blob = new Blob([currentPRD.raw], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${slug}-prd.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('Downloaded!');
+}
+
+// ═══════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if ($('inputScreen').style.display !== 'none') {
+            generatePRD();
+        }
+    }
+});
+</script>
+
+</body>
+</html>

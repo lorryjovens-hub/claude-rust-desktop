@@ -1,0 +1,61 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+*.local
+.env
+.env.*
+!.env.example
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Tauri
+src-tauri/target*/
+src-tauri/target-stage/
+src-tauri/gen/
+
+# Build artifacts
+*.msi
+*.exe
+*.dmg
+*.app
+
+# OS
+Thumbs.db
+
+# Runtime data (may contain user configs with API keys)
+src-tauri/data/
+src-tauri/providers.json
+src-tauri/sessions.json
+
+# SQLite databases (runtime generated)
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+
+# Debug/temp files
+debug-*.md
+*.tmp
+
+# Tauri bridge API key (auto-generated at runtime)
+src-tauri/bridge_api_key.txt
+
+# Trae IDE specs (development only)
+.trae/
