@@ -44,7 +44,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt"]
 tracing-appender = "0.2"
 tracing-opentelemetry = "0.24"
 opentelemetry = "0.23"
-opentelemetry_sdk = { version = "0.23", features = ["rt-tokio"] }
+opentelemetry_sdk = { version = "0.32", features = ["rt-tokio"] }
 opentelemetry-otlp = "0.16"
 futures = "0.3"
 tokio-stream = { version = "0.1", features = ["sync"] }
