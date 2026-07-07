@@ -1,3 +1,8 @@
+
+
+
+<img width="1727" height="1097" alt="52ba2ab78fb1847f8635a9f984779382" src="https://github.com/user-attachments/assets/6ff88823-786f-4211-bb18-6cae6f7ec593" />
+
 # Claude Desktop (Tauri Edition)
 
 A desktop client for AI chat assistants, built with Tauri 2.0, Rust, and React. Provides a native-feeling GUI for interacting with Claude and other LLM providers, with local data persistence and a plugin-style architecture for extending functionality.
