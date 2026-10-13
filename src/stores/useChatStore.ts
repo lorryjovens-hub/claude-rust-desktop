@@ -147,7 +147,7 @@ const initialState = {
       return localStorage.getItem('permission_mode') || 'accept_edits';
     } catch { return 'accept_edits'; }
   })() as string,
-  reasoningMode: null as string | null,
+  reasoningMode: localStorage.getItem('model_effort') || 'off',
 };
 
 export const useChatStore = create<ChatState>()(
@@ -243,7 +243,7 @@ export const useChatStore = create<ChatState>()(
         localStorage.setItem('permission_mode', permissionMode);
       } catch {}
     },
-    setReasoningMode: (reasoningMode: string | null) => set({ reasoningMode }),
+    setReasoningMode: (reasoningMode: string | null) => { localStorage.setItem('model_effort', reasoningMode || 'off'); set({ reasoningMode }); },
     resetChat: () => {
       // Bug #7 fix: Flush pending deltas before resetting to avoid data loss
       flushAllDeltas();

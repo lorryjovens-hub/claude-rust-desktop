@@ -117,6 +117,7 @@ async fn h5_chat_handler(
         let mut engine_guard = native_engine.lock().await;
         if let Some(engine) = engine_guard.as_mut() {
             let chat_req = crate::native_engine::engine_core::ChatRequest {
+                provider_id: None, effort: None,
                 conversation_id: conv_id.clone(),
                 messages: vec![serde_json::json!({
                     "role": "user",

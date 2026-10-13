@@ -129,6 +129,8 @@ async fn sync_push(
                                     .and_then(|v| v.as_u64())
                                     .map(|v| v as u32),
                                 supports_vision: false,
+                                supports_text: true,
+                                api: None,
                                 supports_tools: true,
                                 supports_streaming: true,
                                 context_window: None,

@@ -1,3 +1,4 @@
+pub mod provider_runtime;
 pub mod anthropic_client;
 pub mod openai_client;
 pub mod engine_core;

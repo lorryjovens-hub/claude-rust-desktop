@@ -219,6 +219,10 @@ pub struct ModelConfig {
     pub enabled: bool,
     pub max_tokens: Option<u32>,
     pub supports_vision: bool,
+    #[serde(default = "default_true")]
+    pub supports_text: bool,
+    #[serde(default)]
+    pub api: Option<String>,
     pub supports_tools: bool,
     pub supports_streaming: bool,
     pub context_window: Option<u32>,
@@ -292,18 +296,18 @@ impl ConfigManager {
     where
         F: FnOnce(&mut AppConfig),
     {
+        let previous = self.config.clone();
         f(&mut self.config);
-        self.save()
+        if let Err(error) = self.save() { self.config = previous; return Err(error); }
+        Ok(())
     }
 
     pub fn add_provider(&mut self, provider: ProviderConfig) -> Result<()> {
-        self.config.providers.push(provider);
-        self.save()
+        self.update_config(|c| c.providers.push(provider))
     }
 
     pub fn remove_provider(&mut self, id: &str) -> Result<()> {
-        self.config.providers.retain(|p| p.id != id);
-        self.save()
+        self.update_config(|c| c.providers.retain(|p| p.id != id))
     }
 
     pub fn get_provider(&self, id: &str) -> Option<&ProviderConfig> {
@@ -327,7 +331,12 @@ impl ConfigManager {
             std::fs::create_dir_all(parent)?;
         }
         let json = serde_json::to_string_pretty(&self.config)?;
-        std::fs::write(&self.config_path, json)?;
+        let temporary = self.config_path.with_extension(format!("{}.tmp", uuid::Uuid::new_v4()));
+        std::fs::write(&temporary, json)?;
+        if let Err(error) = std::fs::rename(&temporary, &self.config_path) {
+            let _ = std::fs::remove_file(&temporary);
+            return Err(error.into());
+        }
         Ok(())
     }
 }

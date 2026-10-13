@@ -18,6 +18,8 @@ pub struct OpenAIMessage {
     pub tool_call_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reasoning_content: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub provider_content: Option<Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -171,6 +173,34 @@ impl OpenAIClient {
         tools: Vec<ToolDefinition>,
         max_tokens: u32,
     ) -> Result<OpenAIResponse> {
+        if provider.provider.builtin_id.is_some() {
+            let mut stream = super::provider_runtime::stream(provider, messages, system_prompt, tools, max_tokens).await?;
+            let mut text = String::new();
+            let mut thinking = String::new();
+            let mut calls = Vec::new();
+            let mut native = None;
+            let mut usage = None;
+            let mut finish = None;
+            while let Some(chunk) = stream.next().await {
+                let chunk = chunk?;
+                let data = chunk.trim().strip_prefix("data: ").unwrap_or("");
+                if data == "[DONE]" { continue; }
+                let value: Value = serde_json::from_str(data)?;
+                let choice = &value["choices"][0];
+                if let Some(part) = choice["delta"]["content"].as_str() { text.push_str(part); }
+                if let Some(part) = choice["delta"]["reasoning_content"].as_str() { thinking.push_str(part); }
+                if let Some(items) = choice["delta"]["tool_calls"].as_array() {
+                    for item in items { calls.push(serde_json::from_value(item.clone())?); }
+                }
+                if let Some(reason) = choice["finish_reason"].as_str() { finish = Some(reason.to_string()); }
+                if value.get("provider_content").is_some() { native = Some(value["provider_content"].clone()); }
+                if value.get("usage").is_some() { usage = Some(serde_json::from_value(value["usage"].clone())?); }
+            }
+            return Ok(OpenAIResponse { id: uuid::Uuid::new_v4().to_string(), object: "chat.completion".into(), created: 0, model: provider.model.id.clone(),
+                choices: vec![OpenAIChoice { index: 0, finish_reason: finish, message: OpenAIMessage { role: "assistant".into(), content: OpenAIContent::Text(text),
+                    tool_calls: if calls.is_empty() { None } else { Some(calls) }, tool_call_id: None,
+                    reasoning_content: if thinking.is_empty() { None } else { Some(thinking) }, provider_content: native } }], usage });
+        }
         let base_url = crate::native_engine::provider_manager::ProviderManager::normalize_base_url(&provider.provider.base_url);
         let url = format!("{}/v1/chat/completions", base_url.trim_end_matches('/'));
 
@@ -182,7 +212,7 @@ impl OpenAIClient {
                 content: OpenAIContent::Text(system.to_string()),
                 tool_calls: None,
                 tool_call_id: None,
-                reasoning_content: None,
+                reasoning_content: None, provider_content: None,
             });
         }
         
@@ -208,6 +238,8 @@ impl OpenAIClient {
             body["tools"] = json!(tool_defs);
         }
 
+        apply_effort(&mut body, provider.model.effort.as_deref(), &provider.provider.base_url);
+        if let Some(messages) = body["messages"].as_array_mut() { for message in messages { if let Some(object) = message.as_object_mut() { object.remove("provider_content"); } } }
         let data: OpenAIResponse = retry_with_backoff(|| async {
             let response = self.client
                 .post(&url)
@@ -237,6 +269,9 @@ impl OpenAIClient {
         tools: Vec<ToolDefinition>,
         max_tokens: u32,
     ) -> Result<Pin<Box<dyn Stream<Item = Result<String>> + Send>>> {
+        if provider.provider.builtin_id.is_some() {
+            return super::provider_runtime::stream(provider, messages, system_prompt, tools, max_tokens).await;
+        }
         let base_url = crate::native_engine::provider_manager::ProviderManager::normalize_base_url(&provider.provider.base_url);
         let url = format!("{}/v1/chat/completions", base_url.trim_end_matches('/'));
 
@@ -248,7 +283,7 @@ impl OpenAIClient {
                 content: OpenAIContent::Text(system.to_string()),
                 tool_calls: None,
                 tool_call_id: None,
-                reasoning_content: None,
+                reasoning_content: None, provider_content: None,
             });
         }
         
@@ -275,6 +310,8 @@ impl OpenAIClient {
             body["tools"] = json!(tool_defs);
         }
 
+        apply_effort(&mut body, provider.model.effort.as_deref(), &provider.provider.base_url);
+        if let Some(messages) = body["messages"].as_array_mut() { for message in messages { if let Some(object) = message.as_object_mut() { object.remove("provider_content"); } } }
         let response = retry_with_backoff(|| async {
             let resp = self.client
                 .post(&url)
@@ -311,5 +348,14 @@ impl OpenAIClient {
 impl Default for OpenAIClient {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+pub fn apply_effort(body: &mut Value, effort: Option<&str>, base_url: &str) {
+    if let Some(effort) = effort {
+        if base_url.contains("deepseek.com") {
+            body["thinking"] = json!({"type": if effort == "off" { "disabled" } else { "enabled" }});
+            if effort != "off" { body["reasoning_effort"] = json!(effort); }
+        } else { body["reasoning_effort"] = json!(if effort == "off" { "none" } else { effort }); }
     }
 }

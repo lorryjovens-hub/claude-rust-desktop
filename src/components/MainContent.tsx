@@ -1087,9 +1087,14 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
     let tempUserMsg: any;
     if (hasImages) {
       // Multi-content block message with images
-      const contentBlocks: any[] = imageFiles.map(f => ({
-        type: 'image_url' as const,
-        image_url: { url: f.previewUrl!, detail: 'high' },
+      const contentBlocks: any[] = await Promise.all(imageFiles.map(async f => {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(new Error(`无法读取图片：${f.fileName}`));
+          reader.readAsDataURL(f.file);
+        });
+        return { type: 'image_url' as const, image_url: { url: dataUrl, detail: 'high' } };
       }));
       if (userMessageText.trim()) {
         contentBlocks.push({ type: 'text', text: userMessageText });
@@ -1820,6 +1825,8 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                     currentModelString={currentModelString}
                     models={selectorModels}
                     onModelChange={handleModelChange}
+                    effort={reasoningMode}
+                    onEffortChange={setReasoningMode}
                     isNewChat={true}
                   />
                   {speechSupported && (
@@ -1832,17 +1839,6 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                       <IconVoice size={20} />
                     </button>
                   )}
-                  <select
-                    value={reasoningMode || 'auto'}
-                    onChange={(e) => setReasoningMode(e.target.value === 'auto' ? null : e.target.value)}
-                    className="h-8 px-1.5 text-xs rounded-lg border border-claude-border bg-claude-bgSecondary text-claude-textSecondary hover:bg-claude-hover focus:outline-none focus:ring-1 focus:ring-[#C6613F] cursor-pointer"
-                    title="推理模式"
-                  >
-                    <option value="auto">Auto</option>
-                    <option value="quick">Quick</option>
-                    <option value="standard">Standard</option>
-                    <option value="deep">Deep</option>
-                  </select>
                   <button
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => handleSend()}
@@ -2076,6 +2072,8 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                       currentModelString={currentModelString}
                       models={selectorModels}
                       onModelChange={handleModelChange}
+                    effort={reasoningMode}
+                    onEffortChange={setReasoningMode}
                       isNewChat={false}
                       dropdownPosition="top"
                     />
@@ -2111,17 +2109,6 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                       </button>
                     ) : (
                       <>
-                        <select
-                          value={reasoningMode || 'auto'}
-                          onChange={(e) => setReasoningMode(e.target.value === 'auto' ? null : e.target.value)}
-                          className="h-8 px-1.5 text-xs rounded-lg border border-claude-border bg-claude-bgSecondary text-claude-textSecondary hover:bg-claude-hover focus:outline-none focus:ring-1 focus:ring-[#C6613F] cursor-pointer"
-                          title="推理模式"
-                        >
-                          <option value="auto">Auto</option>
-                          <option value="quick">Quick</option>
-                          <option value="standard">Standard</option>
-                          <option value="deep">Deep</option>
-                        </select>
                         <button
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={() => handleSend()}

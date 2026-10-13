@@ -326,11 +326,10 @@ impl AnthropicClient {
             body["tools"] = json!(tool_defs);
         }
 
-        if enable_thinking {
-            body["thinking"] = json!({
-                "type": "enabled",
-                "budget_tokens": 10000
-            });
+        if let Some(effort) = provider.model.effort.as_deref() {
+            apply_effort(&mut body, effort, &provider.model.id, max_tokens)?;
+        } else if enable_thinking {
+            body["thinking"] = json!({"type":"enabled", "budget_tokens": 10000u32.min(max_tokens.saturating_sub(1))});
         }
 
         let response = retry_with_backoff(|| async {
@@ -371,4 +370,17 @@ impl Default for AnthropicClient {
     fn default() -> Self {
         Self::new()
     }
+}
+
+pub fn apply_effort(body: &mut Value, effort: &str, model: &str, max_tokens: u32) -> Result<()> {
+    if effort == "off" { body["thinking"] = json!({"type":"disabled"}); return Ok(()); }
+    if model.contains("opus-4-6") || model.contains("opus-4-7") || model.contains("sonnet-4-6") {
+        body["thinking"] = json!({"type":"adaptive"});
+        body["output_config"] = json!({"effort": if effort == "max" && model.contains("sonnet") { "high" } else { effort }});
+    } else {
+        if max_tokens <= 1024 { anyhow::bail!("Thinking requires max output tokens greater than 1024"); }
+        let budget = match effort { "low" => 2048, "high" => 10000, "max" => 32000, _ => anyhow::bail!("Invalid effort") };
+        body["thinking"] = json!({"type":"enabled", "budget_tokens": budget.min(max_tokens - 1)});
+    }
+    Ok(())
 }

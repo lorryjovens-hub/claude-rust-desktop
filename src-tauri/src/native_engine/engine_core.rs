@@ -21,8 +21,11 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ReasoningMode {
+    #[serde(alias = "quick")]
     Quick,
+    #[serde(alias = "standard")]
     Standard,
+    #[serde(alias = "deep")]
     Deep,
 }
 
@@ -47,6 +50,10 @@ pub struct ChatRequest {
     pub conversation_id: String,
     pub messages: Vec<Value>,
     pub model: String,
+    #[serde(default)]
+    pub provider_id: Option<String>,
+    #[serde(default)]
+    pub effort: Option<String>,
     pub system_prompt: Option<String>,
     pub max_tokens: Option<u32>,
     pub workspace_path: Option<String>,
@@ -199,10 +206,8 @@ impl QueryEngine {
 
     pub async fn sync_providers(&self, providers: Vec<crate::native_engine::provider_manager::Provider>) {
         let mut pm = self.provider_manager.lock().await;
-        for provider in providers {
-            let id = provider.id.clone();
-            pm.update_provider(&id, provider);
-        }
+        let config_path = pm.config_path().clone();
+        *pm = ProviderManager::from_providers(providers, config_path);
     }
 
     pub async fn resolve_provider(&self, model_id: &str) -> Option<crate::native_engine::provider_manager::ResolvedProvider> {
@@ -362,9 +367,9 @@ impl QueryEngine {
 
         tracing::info!(module = "EngineCore", "Reasoning mode: {:?}", reasoning_mode);
 
-        let provider = {
+        let mut provider = {
             let pm = self.provider_manager.lock().await;
-            let resolved = pm.resolve_provider(&model).await;
+            let resolved = if let Some(id) = request.provider_id.as_deref() { pm.resolve_selected(id, &model) } else { pm.resolve_provider(&model).await };
             tracing::info!(module = "EngineCore", "resolve_provider({}): {:?}", model, resolved.as_ref().map(|p| &p.provider.id));
             resolved.ok_or_else(|| anyhow!("No provider found for model: {}", model))?
         };
@@ -374,7 +379,7 @@ impl QueryEngine {
 
         let state = ConversationState {
             conversation_id: conv_id.clone(),
-            model: model.clone(),
+            model: request.provider_id.as_ref().map(|id| format!("{}::{}", id, model)).unwrap_or_else(|| model.clone()),
             messages: request.messages.clone(),
             system_prompt: request.system_prompt.clone(),
             last_activity: Utc::now().to_rfc3339(),
@@ -384,11 +389,18 @@ impl QueryEngine {
         self.update_conversation_state(&conv_id, state).await;
         tracing::info!(module = "EngineCore", "Conversation state updated");
 
-        let max_tokens = match &reasoning_mode {
-            ReasoningMode::Quick => 50000,
-            ReasoningMode::Standard => request.max_tokens.unwrap_or(1000000),
-            ReasoningMode::Deep => 1000000,
-        };
+        if let Some(effort) = request.effort.as_deref() {
+            if !["off", "low", "high", "max"].contains(&effort) { anyhow::bail!("Invalid effort"); }
+        }
+        provider.model.effort = request.effort.clone();
+        validate_model_input(&provider.model, &request.messages)?;
+        let configured_max = provider.model.max_tokens.unwrap_or(8192);
+        let max_tokens = request.max_tokens.unwrap_or(configured_max).min(configured_max);
+        if max_tokens == 0 { anyhow::bail!("max_tokens must be positive"); }
+        if let Some(context) = provider.model.context_window {
+            let estimated = crate::native_engine::token_counter::TokenCounter::estimate(&request.messages) as u64;
+            if estimated + max_tokens as u64 > context as u64 { anyhow::bail!("Input plus output budget exceeds the configured context window; compact the conversation or lower max output tokens"); }
+        }
 
         let mut executor = ToolLoopExecutor::new(
             provider,
@@ -575,7 +587,7 @@ impl QueryEngine {
                                                     content: crate::native_engine::openai_client::OpenAIContent::Text(prompt),
                                                     tool_calls: None,
                                                     tool_call_id: None,
-                                                    reasoning_content: None,
+                                                    reasoning_content: None, provider_content: None,
                                                 }
                                             ];
                                             match client.send_message(&resolved, msgs, None, vec![], 100).await {
@@ -769,3 +781,33 @@ impl QueryEngine {
 }
 
 pub type NativeEngine = QueryEngine;
+
+fn validate_model_input(model: &crate::native_engine::provider_manager::ModelConfig, messages: &[Value]) -> Result<()> {
+    for message in messages.iter().filter(|m| m["role"] == "user") {
+        let content = &message["content"];
+        if content.as_str().is_some_and(|s| !s.is_empty()) && !model.supports_text { anyhow::bail!("Selected model does not accept Text input"); }
+        if let Some(parts) = content.as_array() {
+            for part in parts {
+                match part["type"].as_str().unwrap_or("") {
+                    "image" | "image_url" | "input_image" if !model.supports_vision => anyhow::bail!("Selected model does not accept Image input"),
+                    "text" | "input_text" if !model.supports_text => anyhow::bail!("Selected model does not accept Text input"),
+                    _ => {}
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod provider_input_tests {
+    use super::*;
+    #[test]
+    fn provider_input_capabilities_are_enforced() {
+        let mut model: crate::native_engine::provider_manager::ModelConfig = serde_json::from_value(serde_json::json!({"id":"m","name":"M","enabled":true,"max_tokens":32000,"supports_vision":false,"supports_web_search":false})).unwrap();
+        assert!(validate_model_input(&model,&[serde_json::json!({"role":"user","content":"hello"})]).is_ok());
+        assert!(validate_model_input(&model,&[serde_json::json!({"role":"user","content":[{"type":"image_url","image_url":{"url":"data:image/png;base64,AA=="}}]})]).is_err());
+        model.supports_text = false;
+        assert!(validate_model_input(&model,&[serde_json::json!({"role":"user","content":"hello"})]).is_err());
+    }
+}

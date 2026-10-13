@@ -278,7 +278,7 @@ Guidelines:
             content: OpenAIContent::Text(user_message.to_string()),
             tool_calls: None,
             tool_call_id: None,
-            reasoning_content: None,
+            reasoning_content: None, provider_content: None,
         }];
         let response = client
             .send_message(provider, messages, Some(system_prompt), vec![], 8192)

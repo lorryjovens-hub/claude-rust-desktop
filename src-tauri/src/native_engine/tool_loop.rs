@@ -816,7 +816,7 @@ impl ToolLoopExecutor {
 
             // Context compression check before each API call
             if iteration > 0 {
-                let model_context_limit = TokenCounter::get_safe_limit(&model_id, 0.90);
+                let model_context_limit = self.provider.model.context_window.map(|n| (n as f64 * 0.90) as usize).unwrap_or_else(|| TokenCounter::get_safe_limit(&model_id, 0.90));
                 let conv_values: Vec<Value> = conversation_messages.iter().filter_map(|m| {
                     match &m.content {
                         AnthropicContent::Text(t) => Some(json!({"role": m.role, "content": t})),
@@ -1267,7 +1267,7 @@ impl ToolLoopExecutor {
 
             // Context compression check before each API call
             if iteration > 0 {
-                let model_context_limit = TokenCounter::get_safe_limit(&model_id, 0.90);
+                let model_context_limit = self.provider.model.context_window.map(|n| (n as f64 * 0.90) as usize).unwrap_or_else(|| TokenCounter::get_safe_limit(&model_id, 0.90));
                 let conv_values: Vec<Value> = conversation_messages.iter().filter_map(|m| {
                     let content_value = match &m.content {
                         OpenAIContent::Text(t) => json!(t),
@@ -1357,7 +1357,7 @@ impl ToolLoopExecutor {
                                 };
                                 let tool_calls = v.get("tool_calls").and_then(|tc| serde_json::from_value(tc.clone()).ok());
                                 let tool_call_id = v.get("tool_call_id").and_then(|id| id.as_str()).map(String::from);
-                                Some(OpenAIMessage { role, content: openai_content, tool_calls, tool_call_id, reasoning_content: None })
+                                Some(OpenAIMessage { role, content: openai_content, tool_calls, tool_call_id, reasoning_content: None, provider_content: None })
                             }).collect();
                             tracing::info!(module = "OpenAILoop", "Context compressed: {} -> {} messages, saved {} tokens",
                                 metadata.original_count, metadata.compressed_count, metadata.token_reduction);
@@ -1394,6 +1394,7 @@ impl ToolLoopExecutor {
             let mut has_tool_calls = false;
             let mut assistant_content: Option<OpenAIContent> = None;
             let mut assistant_reasoning: Option<String> = None;
+            let mut assistant_provider_content: Option<Value> = None;
             let mut assistant_tool_calls: Vec<crate::native_engine::openai_client::OpenAIToolCall> = Vec::new();
             let mut openai_tool_args: HashMap<usize, (String, String, String)> = HashMap::new();
 
@@ -1431,6 +1432,7 @@ impl ToolLoopExecutor {
                         Err(_) => continue,
                     };
 
+                    if let Some(content) = event.get("provider_content") { assistant_provider_content = Some(content.clone()); }
                     let choices = match event.get("choices").and_then(|c| c.as_array()) {
                         Some(c) => c,
                         None => continue,
@@ -1582,7 +1584,7 @@ impl ToolLoopExecutor {
                         content: OpenAIContent::Text(compacted),
                         tool_calls: None,
                         tool_call_id: Some(tc.id.clone()),
-                        reasoning_content: None,
+                        reasoning_content: None, provider_content: None,
                     });
                 }
 
@@ -1621,7 +1623,7 @@ impl ToolLoopExecutor {
                             content: OpenAIContent::Text(compacted),
                             tool_calls: None,
                             tool_call_id: Some(tool_use_id),
-                            reasoning_content: None,
+                            reasoning_content: None, provider_content: None,
                         });
                     }
                 }
@@ -1631,7 +1633,7 @@ impl ToolLoopExecutor {
                     content: assistant_content.unwrap_or(OpenAIContent::Text(String::new())),
                     tool_calls: Some(assistant_tool_calls),
                     tool_call_id: None,
-                    reasoning_content: assistant_reasoning,
+                    reasoning_content: assistant_reasoning, provider_content: assistant_provider_content,
                 });
 
                 for tool_result_msg in tool_results {
@@ -1677,6 +1679,15 @@ impl ToolLoopExecutor {
                         "text" => {
                             let text = block.get("text")?.as_str()?.to_string();
                             Some(ContentBlock::Text { text })
+                        }
+                        "image_url" => {
+                            let url = block.get("image_url")?.get("url")?.as_str()?;
+                            let (media_type, data) = url.strip_prefix("data:")?.split_once(";base64,")?;
+                            Some(ContentBlock::Image {
+                                source: crate::native_engine::anthropic_client::ImageSource {
+                                    source_type: "base64".into(), media_type: media_type.into(), data: data.into(),
+                                },
+                            })
                         }
                         "image" => {
                             let source = block.get("source")?;
@@ -1755,7 +1766,7 @@ impl ToolLoopExecutor {
                 content: openai_content,
                 tool_calls,
                 tool_call_id,
-                reasoning_content,
+                reasoning_content, provider_content: None,
             })
         }).collect()
     }

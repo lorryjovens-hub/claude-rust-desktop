@@ -1,3 +1,4 @@
+import { splitModelKey } from './utils/modelConfig';
 import { getErrorMessage } from './utils/errorHelpers';
 import { getSecure, setSecure, removeSecure } from './services/secureStorage';
 import {
@@ -58,7 +59,8 @@ function getApiBase(): string {
   return `http://127.0.0.1:${DEFAULT_BRIDGE_PORT}/api`;
 }
 
-let API_BASE = `http://127.0.0.1:${DEFAULT_BRIDGE_PORT}/api`;
+const useDevProxy = import.meta.env.DEV && !(window as any).__TAURI_INTERNALS__;
+let API_BASE = useDevProxy ? '/api' : `http://127.0.0.1:${DEFAULT_BRIDGE_PORT}/api`;
 const GATEWAY_BASE = 'http://127.0.0.1:30090';
 const CHENGDU_API = 'http://127.0.0.1:30090/api';
 const isTauriApp = typeof window !== 'undefined' && !!(window as any).__TAURI_INTERNALS__;
@@ -1086,10 +1088,14 @@ export function warmEngine(conversationId: string): void {
 }
 
 // ===== Provider Management =====
-export interface ProviderModel { id: string; name: string; enabled?: boolean; }
+export interface ProviderModel {
+  id: string; name: string; enabled?: boolean;
+  contextWindow?: number; maxTokens?: number; inputTypes?: string[];
+  api?: string; reasoning?: boolean; thinkingLevelMap?: Record<string, string | null>;
+}
 export interface Provider {
   id: string; name: string; apiKey: string; baseUrl: string;
-  format: 'anthropic' | 'openai'; models: ProviderModel[]; enabled: boolean;
+  format: 'anthropic' | 'openai' | 'harness'; category?: 'builtin' | 'custom'; builtinId?: string; models: ProviderModel[]; enabled: boolean;
   icon?: string;
   supportsWebSearch?: boolean;
   webSearchStrategy?: 'dashscope' | 'bigmodel' | 'anthropic_native' | null;
@@ -1111,73 +1117,60 @@ export async function testProviderWebSearch(id: string): Promise<WebSearchTestRe
   return res.json();
 }
 
-export async function getProviders(): Promise<Provider[]> {
-  if (isTauriApp) {
-    try {
-      await waitForApiReady();
-      const res = await fetch(`${API_BASE}/providers`, {
-        headers: { ...(getToken() ? { 'Authorization': `Bearer ${getToken()}` } : {}) },
-      });
-      const data = await res.json();
-      return Array.isArray(data) ? data : (Array.isArray(data?.providers) ? data.providers : []);
-    } catch {
-      return [];
-    }
-  }
-  return getLocalProviders();
+async function providerRequest(path: string, method = 'GET', body?: unknown) {
+  await waitForApiReady();
+  const response = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers: { 'Content-Type': 'application/json', ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}) },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const text = await response.text();
+  let data: any;
+  try { data = JSON.parse(text); } catch { throw new Error(`本地后端暂不可用（HTTP ${response.status}），请等待项目启动后重试`); }
+  if (!response.ok || data.error) throw new Error(data.error || `HTTP ${response.status}`);
+  return data;
 }
 
-export async function createProvider(p: Partial<Provider>): Promise<Provider> {
-  if (isTauriApp) {
-    await waitForApiReady();
-    const res = await fetch(`${API_BASE}/providers`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(getToken() ? { 'Authorization': `Bearer ${getToken()}` } : {}) }, body: JSON.stringify(p) });
-    return res.json();
-  }
-  return createLocalProvider(p as any);
-}
-
-export async function updateProvider(id: string, p: Partial<Provider>): Promise<Provider> {
-  if (isTauriApp) {
-    await waitForApiReady();
-    const res = await fetch(`${API_BASE}/providers/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(getToken() ? { 'Authorization': `Bearer ${getToken()}` } : {}) }, body: JSON.stringify(p) });
-    return res.json();
-  }
-  return updateLocalProvider(id, p) as Provider;
-}
-
-export async function deleteProvider(id: string): Promise<void> {
-  if (isTauriApp) {
-    await waitForApiReady();
-    await fetch(`${API_BASE}/providers/${id}`, { method: 'DELETE', headers: { ...(getToken() ? { 'Authorization': `Bearer ${getToken()}` } : {}) } });
-    return;
-  }
-  deleteLocalProvider(id);
-  trackProviderDeletion(id);
-}
-
-export async function getProviderModels(): Promise<Array<{ id: string; name: string; providerId: string; providerName: string }>> {
-  if (isTauriApp) {
-    try {
-      await waitForApiReady();
-      const res = await fetch(`${API_BASE}/providers/models`, {
-        headers: { ...(getToken() ? { 'Authorization': `Bearer ${getToken()}` } : {}) },
-      });
-      return res.json();
-    } catch {
-      return [];
-    }
-  }
-  const providers = getLocalProviders();
-  const models: Array<{ id: string; name: string; providerId: string; providerName: string }> = [];
-  for (const p of providers) {
-    if (!p.enabled) continue;
-    for (const m of p.models || []) {
-      if (m.enabled !== false) {
-        models.push({ id: m.id, name: m.name, providerId: p.id, providerName: p.name });
+let providerMigration: Promise<void> | undefined;
+async function migrateLegacyProviders() {
+  if (localStorage.getItem('providers_file_migrated_v1')) return;
+  if (!providerMigration) providerMigration = (async () => {
+    const data = await providerRequest('/providers');
+    const existing: Provider[] = Array.isArray(data) ? data : data.providers || [];
+    for (const provider of getLocalProviders()) {
+      if (!existing.some(p => p.id === provider.id)) {
+        await providerRequest('/providers', 'POST', provider);
       }
     }
-  }
-  return models;
+    localStorage.setItem('providers_file_migrated_v1', '1');
+  })().catch(error => { providerMigration = undefined; throw error; });
+  await providerMigration;
+}
+export async function getProviders(): Promise<Provider[]> {
+  await migrateLegacyProviders();
+  const data = await providerRequest('/providers');
+  return Array.isArray(data) ? data : data.providers || [];
+}
+function providersChanged() { window.dispatchEvent(new Event('providers-changed')); }
+export async function createProvider(p: Partial<Provider>): Promise<Provider> {
+  const result = await providerRequest('/providers', 'POST', p);
+  providersChanged();
+  return result;
+}
+export async function updateProvider(id: string, p: Partial<Provider>): Promise<Provider> {
+  const result = await providerRequest(`/providers/${encodeURIComponent(id)}`, 'PATCH', p);
+  providersChanged();
+  return result;
+}
+export async function deleteProvider(id: string): Promise<void> {
+  await providerRequest(`/providers/${encodeURIComponent(id)}`, 'DELETE');
+  providersChanged();
+}
+export async function fetchProviderModels(id: string): Promise<ProviderModel[]> {
+  return (await providerRequest(`/providers/${encodeURIComponent(id)}/fetch-models`, 'POST')).models;
+}
+export async function getProviderModels(): Promise<Array<ProviderModel & { providerId: string; providerName: string }>> {
+  return (await providerRequest('/providers/models')).models || [];
 }
 
 // Check if a conversation has an active engine stream
@@ -1800,11 +1793,12 @@ export async function sendMessageNative(
       body: JSON.stringify({
         conversation_id: conversationId,
         messages,
-        model,
+        model: splitModelKey(model).modelId,
+        provider_id: splitModelKey(model).providerId,
         ...resolveEnvCreds(getUserModeForConversation(conversationId)),
         user_mode: getUserModeForConversation(conversationId),
         permission_mode: permissionMode,
-        reasoning_mode: reasoningMode || undefined,
+        effort: ['off', 'low', 'high', 'max'].includes(reasoningMode || '') ? reasoningMode : 'off',
       }),
     });
 
@@ -2015,13 +2009,14 @@ export async function sendMessage(
       body: JSON.stringify({
         conversation_id: conversationId,
         message,
-        model: model || undefined,
+        model: splitModelKey(model || '').modelId,
+        provider_id: splitModelKey(model || '').providerId,
         messages: messages && messages.length > 0 ? messages : undefined,
         attachments: attachments || undefined,
         ...resolveEnvCreds(getUserModeForConversation(conversationId)),
         user_mode: getUserModeForConversation(conversationId),
         permission_mode: permissionMode,
-        reasoning_mode: reasoningMode || undefined,
+        effort: ['off', 'low', 'high', 'max'].includes(reasoningMode || '') ? reasoningMode : 'off',
         user_profile: (() => {
           try {
             const p = JSON.parse(localStorage.getItem('user_profile') || localStorage.getItem('user') || '{}');
@@ -2678,7 +2673,7 @@ export async function multiagentWorkflowStream(
       body: JSON.stringify({
         goal,
         provider_id: providerId || undefined,
-        model: model || undefined,
+        model: splitModelKey(model || '').modelId,
       }),
       signal,
     });

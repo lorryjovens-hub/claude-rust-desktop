@@ -27,6 +27,7 @@
   },
   "bundle": {
     "active": true,
+    "resources": { "../dist-runtime/provider-runtime.mjs": "runtime/provider-runtime.mjs" },
     "targets": "all",
     "icon": [
       "icons/icon.ico"

@@ -6,6 +6,8 @@ use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
 use tokio::time::timeout;
 
+fn default_true() -> bool { true }
+
 const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(60);
 const MAX_RETRIES: u32 = 3;
 const RETRY_BASE_DELAY: Duration = Duration::from_millis(500);
@@ -17,6 +19,8 @@ pub struct Provider {
     pub base_url: String,
     pub api_key: String,
     pub api_format: ApiFormat,
+    #[serde(default)]
+    pub builtin_id: Option<String>,
     pub models: Vec<ModelConfig>,
     pub enabled: bool,
     pub web_search_strategy: Option<String>,
@@ -38,6 +42,14 @@ pub struct ModelConfig {
     pub max_tokens: Option<u32>,
     pub supports_vision: bool,
     pub supports_web_search: bool,
+    #[serde(default)]
+    pub context_window: Option<u32>,
+    #[serde(default = "default_true")]
+    pub supports_text: bool,
+    #[serde(default)]
+    pub api: Option<String>,
+    #[serde(skip)]
+    pub effort: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -185,7 +197,14 @@ impl ProviderManager {
         result
     }
 
+    pub fn resolve_selected(&self, provider_id: &str, model_id: &str) -> Option<ResolvedProvider> {
+        let provider = self.providers.iter().find(|p| p.id == provider_id && p.enabled)?;
+        let model = provider.models.iter().find(|m| m.id == model_id && m.enabled)?;
+        Some(ResolvedProvider { provider: provider.clone(), model: model.clone() })
+    }
+
     fn resolve_provider_internal(&self, model_id: &str) -> Option<ResolvedProvider> {
+        if let Some((provider, model)) = model_id.split_once("::") { return self.resolve_selected(provider, model); }
         let mut first_match: Option<ResolvedProvider> = None;
         
         let aliases: std::collections::HashMap<&str, Vec<&str>> = [
@@ -217,19 +236,12 @@ impl ProviderManager {
                                 model: model.clone(),
                             });
                         } else {
-                            tracing::warn!(
-                                module = "ProviderManager",
-                                "Model \"{}\" exists in multiple providers. Using first match.",
-                                model_id
-                            );
+                            return None;
                         }
                         break;
                     }
                 }
                 
-                if first_match.is_some() {
-                    break;
-                }
             }
             if first_match.is_some() {
                 break;
@@ -305,7 +317,7 @@ impl ProviderManager {
             .or_else(|| clean.strip_suffix("/anthropic"))
             .or_else(|| clean.strip_suffix("/v1"))
             .unwrap_or(clean);
-        clean.trim_end_matches('/').to_string()
+        clean.trim_end_matches('/').strip_suffix("/v1").unwrap_or(clean.trim_end_matches('/')).to_string()
     }
 
     pub fn list_providers(&self) -> &[Provider] {
@@ -348,5 +360,21 @@ impl ProviderManager {
             format!("{}s", self.cache_ttl.as_secs()),
         );
         stats
+    }
+}
+
+#[cfg(test)]
+mod provider_selection_tests {
+    use super::*;
+    #[test]
+    fn provider_selection_is_exact_and_rejects_ambiguity() {
+        let make = |id: &str| serde_json::from_value::<Provider>(serde_json::json!({"id":id,"name":id,"base_url":"http://localhost","api_key":"","api_format":"openai","enabled":true,"models":[{"id":"same","name":"Same","enabled":true,"max_tokens":32000,"supports_vision":false,"supports_web_search":false}]})).unwrap();
+        let mut manager = ProviderManager::new(std::env::temp_dir().join(format!("absent-{}",uuid::Uuid::new_v4())));
+        manager.providers = vec![make("a"),make("b")];
+        assert!(manager.resolve_provider_internal("same").is_none());
+        assert_eq!(manager.resolve_selected("b","same").unwrap().provider.id,"b");
+        manager.providers[1].enabled = false;
+        assert!(manager.resolve_selected("b","same").is_none());
+        assert_eq!(manager.resolve_provider_internal("same").unwrap().provider.id,"a");
     }
 }

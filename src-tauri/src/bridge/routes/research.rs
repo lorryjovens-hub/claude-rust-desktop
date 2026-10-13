@@ -36,6 +36,7 @@ async fn research_start_handler(State(state): State<AppState>, Json(req): Json<C
             cm.get_config().providers.iter().map(|p| {
                 crate::native_engine::provider_manager::Provider {
                     id: p.id.clone(),
+                    builtin_id: p.settings.get("builtinId").and_then(|v| v.as_str()).map(String::from),
                     name: p.name.clone(),
                     base_url: p.base_url.clone(),
                     api_key: p.api_key.clone().unwrap_or_default(),
@@ -53,6 +54,7 @@ async fn research_start_handler(State(state): State<AppState>, Json(req): Json<C
                         enabled: m.enabled,
                         max_tokens: m.max_tokens,
                         supports_vision: m.supports_vision,
+                        context_window: m.context_window, supports_text: m.supports_text, api: m.api.clone(), effort: None,
                         supports_web_search: false,
                     }).collect(),
                     enabled: p.enabled,

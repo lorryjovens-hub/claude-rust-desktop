@@ -281,6 +281,11 @@ impl BridgeServer {
         tracing::info!(module = "Bridge", "MemExClient initialized (backend: {})", memex_client.base_url);
 
         let api_key = uuid::Uuid::new_v4().to_string();
+        // Only the loopback development server reads this file; never expose it to the browser.
+        #[cfg(debug_assertions)]
+        if let Err(error) = std::fs::write(data_dir.join("dev-bridge-key"), &api_key) {
+            tracing::warn!(module = "Bridge", "Cannot initialize browser development proxy: {}", error);
+        }
         tracing::info!(module = "Bridge", "API Key generated for bridge authentication");
 
         let cost_tracker = Arc::new(CostTracker::new(data_dir.join("costs")));
@@ -448,8 +453,8 @@ impl BridgeServer {
         });
 
         let app = routes::build_all_routes()
-            .layer(cors)
             .layer(auth_middleware)
+            .layer(cors)
             .with_state(state);
 
         let mut bound_port = None;
@@ -2159,6 +2164,7 @@ async fn workflow_execute(
 
     let provider = crate::native_engine::provider_manager::Provider {
         id: provider_config.id.clone(),
+        builtin_id: provider_config.settings.get("builtinId").and_then(|v| v.as_str()).map(String::from),
         name: provider_config.name.clone(),
         base_url: provider_config.base_url.clone(),
         api_key: provider_config.api_key.clone().unwrap_or_default(),
@@ -2169,6 +2175,7 @@ async fn workflow_execute(
             enabled: m.enabled,
             max_tokens: m.max_tokens,
             supports_vision: m.supports_vision,
+                        context_window: m.context_window, supports_text: m.supports_text, api: m.api.clone(), effort: None,
             supports_web_search: false,
         }).collect(),
         enabled: provider_config.enabled,
@@ -2181,6 +2188,7 @@ async fn workflow_execute(
         enabled: model_config.enabled,
         max_tokens: model_config.max_tokens,
         supports_vision: model_config.supports_vision,
+        context_window: model_config.context_window, supports_text: model_config.supports_text, api: model_config.api.clone(), effort: None,
         supports_web_search: false,
     };
 
@@ -2244,6 +2252,7 @@ async fn workflow_execute_stream(
 
     let provider = crate::native_engine::provider_manager::Provider {
         id: provider_config.id.clone(),
+        builtin_id: provider_config.settings.get("builtinId").and_then(|v| v.as_str()).map(String::from),
         name: provider_config.name.clone(),
         base_url: provider_config.base_url.clone(),
         api_key: provider_config.api_key.clone().unwrap_or_default(),
@@ -2254,6 +2263,7 @@ async fn workflow_execute_stream(
             enabled: m.enabled,
             max_tokens: m.max_tokens,
             supports_vision: m.supports_vision,
+                        context_window: m.context_window, supports_text: m.supports_text, api: m.api.clone(), effort: None,
             supports_web_search: false,
         }).collect(),
         enabled: provider_config.enabled,
@@ -2266,6 +2276,7 @@ async fn workflow_execute_stream(
         enabled: model_config.enabled,
         max_tokens: model_config.max_tokens,
         supports_vision: model_config.supports_vision,
+        context_window: model_config.context_window, supports_text: model_config.supports_text, api: model_config.api.clone(), effort: None,
         supports_web_search: false,
     };
 

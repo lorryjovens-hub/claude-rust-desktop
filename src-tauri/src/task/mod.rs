@@ -273,7 +273,7 @@ Guidelines:
                     content: OpenAIContent::Text(serde_json::to_string(ctx).unwrap_or_default()),
                     tool_calls: None,
                     tool_call_id: None,
-                    reasoning_content: None,
+                    reasoning_content: None, provider_content: None,
                 });
             }
         }
@@ -283,7 +283,7 @@ Guidelines:
             content: OpenAIContent::Text(format!("Task: {}\n\nPlease execute this task and report your results.", request.prompt)),
             tool_calls: None,
             tool_call_id: None,
-            reasoning_content: None,
+            reasoning_content: None, provider_content: None,
         });
 
         let response = self.openai_client
@@ -491,7 +491,7 @@ Guidelines:
                     content: OpenAIContent::Text(serde_json::to_string(ctx).unwrap_or_default()),
                     tool_calls: None,
                     tool_call_id: None,
-                    reasoning_content: None,
+                    reasoning_content: None, provider_content: None,
                 });
             }
         }
@@ -501,7 +501,7 @@ Guidelines:
             content: OpenAIContent::Text(format!("Task: {}", request.prompt)),
             tool_calls: None,
             tool_call_id: None,
-            reasoning_content: None,
+            reasoning_content: None, provider_content: None,
         });
 
         let mut stream = self.openai_client
