@@ -12,6 +12,13 @@ pub struct ProjectRow {
     pub is_archived: bool,
     pub created_at: String,
     pub updated_at: String,
+    pub folders: Vec<ProjectFolder>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectFolder {
+    pub path: String,
+    pub trusted: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,6 +41,7 @@ fn row_to_project(row: &rusqlite::Row<'_>) -> rusqlite::Result<ProjectRow> {
         is_archived: row.get::<_, i64>(5)? != 0,
         created_at: row.get(6)?,
         updated_at: row.get(7)?,
+        folders: Vec::new(),
     })
 }
 
@@ -81,7 +89,11 @@ pub fn get_project(conn: &Connection, id: &str) -> Result<Option<ProjectRow>> {
     )?;
     let mut rows = stmt.query(params![id])?;
     match rows.next()? {
-        Some(row) => Ok(Some(row_to_project(row)?)),
+        Some(row) => {
+            let mut project = row_to_project(row)?;
+            project.folders = get_folders(conn, &project)?;
+            Ok(Some(project))
+        },
         None => Ok(None),
     }
 }
@@ -93,7 +105,9 @@ pub fn list_projects(conn: &Connection) -> Result<Vec<ProjectRow>> {
     let rows = stmt.query_map([], |row| row_to_project(row))?;
     let mut result = Vec::new();
     for row in rows {
-        result.push(row?);
+        let mut project = row?;
+        project.folders = get_folders(conn, &project)?;
+        result.push(project);
     }
     Ok(result)
 }
@@ -133,9 +147,73 @@ pub fn update_project(
 }
 
 pub fn delete_project(conn: &Connection, id: &str) -> Result<()> {
+    conn.execute("UPDATE conversations SET project_id = NULL, workspace_path = NULL WHERE project_id = ?1", params![id])?;
+    conn.execute("DELETE FROM project_folders WHERE project_id = ?1", params![id])?;
+    conn.execute("DELETE FROM project_files WHERE project_id = ?1", params![id])?;
     let mut stmt = conn.prepare_cached("DELETE FROM projects WHERE id = ?1")?;
     stmt.execute(params![id])?;
     Ok(())
+}
+
+fn get_folders(conn: &Connection, project: &ProjectRow) -> Result<Vec<ProjectFolder>> {
+    let mut stmt = conn.prepare("SELECT path, trusted FROM project_folders WHERE project_id = ?1 ORDER BY sort_order")?;
+    let rows = stmt.query_map(params![project.id], |row| Ok(ProjectFolder { path: row.get(0)?, trusted: row.get(1)? }))?;
+    let mut folders = rows.collect::<rusqlite::Result<Vec<_>>>()?;
+    if folders.is_empty() {
+        if let Some(path) = project.workspace_path.as_ref().filter(|p| !p.is_empty()) {
+            folders.push(ProjectFolder { path: path.clone(), trusted: false });
+        }
+    }
+    Ok(folders)
+}
+
+pub fn normalize_folders(paths: &[String]) -> Result<Vec<String>> {
+    anyhow::ensure!(!paths.is_empty(), "A project must have at least one folder");
+    let mut result = Vec::new();
+    for path in paths {
+        let path = std::path::Path::new(path.trim());
+        anyhow::ensure!(path.is_absolute() && path.is_dir(), "Folder must be an existing absolute directory: {}", path.display());
+        let canonical = std::fs::canonicalize(path)?.to_string_lossy().to_string();
+        // Windows canonical paths use the extended-length prefix; keep display paths readable.
+        let canonical = canonical.strip_prefix("\\\\?\\UNC\\").map(|p| format!("\\\\{}", p))
+            .unwrap_or_else(|| canonical.strip_prefix("\\\\?\\").unwrap_or(&canonical).to_string());
+        if !result.contains(&canonical) { result.push(canonical); }
+    }
+    Ok(result)
+}
+
+pub fn set_folders(conn: &Connection, id: &str, paths: &[String]) -> Result<()> {
+    let paths = normalize_folders(paths)?;
+    let current = get_project(conn, id)?.ok_or_else(|| anyhow::anyhow!("Project not found"))?;
+    conn.execute("DELETE FROM project_folders WHERE project_id = ?1", params![id])?;
+    for (index, path) in paths.iter().enumerate() {
+        let trusted = current.folders.iter().any(|f| f.path == *path && f.trusted);
+        conn.execute("INSERT INTO project_folders (project_id, path, trusted, sort_order) VALUES (?1, ?2, ?3, ?4)", params![id, path, trusted, index as i64])?;
+    }
+    conn.execute("UPDATE projects SET workspace_path = ?1, updated_at = ?2 WHERE id = ?3", params![paths[0], chrono::Utc::now().to_rfc3339(), id])?;
+    conn.execute("UPDATE conversations SET workspace_path = ?1 WHERE project_id = ?2", params![paths[0], id])?;
+    Ok(())
+}
+
+pub fn trust_folders(conn: &Connection, id: &str, paths: &[String]) -> Result<()> {
+    let project = get_project(conn, id)?.ok_or_else(|| anyhow::anyhow!("Project not found"))?;
+    let paths = normalize_folders(paths)?;
+    anyhow::ensure!(paths.iter().all(|p| project.folders.iter().any(|f| f.path == *p)), "Folder is no longer part of this project");
+    // Also materialize legacy projects before recording explicit consent.
+    set_folders(conn, id, &project.folders.iter().map(|f| f.path.clone()).collect::<Vec<_>>())?;
+    for path in paths {
+        conn.execute("UPDATE project_folders SET trusted = 1 WHERE project_id = ?1 AND path = ?2", params![id, path])?;
+    }
+    Ok(())
+}
+
+pub fn require_trusted(conn: &Connection, id: &str) -> Result<ProjectRow> {
+    let project = get_project(conn, id)?.ok_or_else(|| anyhow::anyhow!("Project not found"))?;
+    anyhow::ensure!(!project.folders.is_empty(), "Add at least one folder to this project");
+    anyhow::ensure!(project.folders.iter().all(|f| f.trusted), "Trust all project folders before starting a chat");
+    let normalized = normalize_folders(&project.folders.iter().map(|f| f.path.clone()).collect::<Vec<_>>())?;
+    anyhow::ensure!(normalized == project.folders.iter().map(|f| f.path.clone()).collect::<Vec<_>>(), "Project folders have changed; select and trust them again");
+    Ok(project)
 }
 
 pub fn insert_project_file(
@@ -170,4 +248,74 @@ pub fn delete_project_file(conn: &Connection, id: &str) -> Result<()> {
     let mut stmt = conn.prepare_cached("DELETE FROM project_files WHERE id = ?1")?;
     stmt.execute(params![id])?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn fixture() -> (Connection, tempfile::TempDir, Vec<String>) {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("PRAGMA foreign_keys=ON").unwrap();
+        conn.execute_batch(crate::db::schema::SCHEMA_SQL).unwrap();
+        let root = tempfile::tempdir().unwrap();
+        let paths = ["first", "second"].iter().map(|name| {
+            let path = root.path().join(name);
+            std::fs::create_dir(&path).unwrap();
+            path.to_string_lossy().to_string()
+        }).collect::<Vec<_>>();
+        insert_project(&conn, "project", "Example", None, None, None, false, "now", "now").unwrap();
+        (conn, root, paths)
+    }
+
+    #[test]
+    fn projects_require_explicit_trust_and_keep_it_after_reload() {
+        let (conn, _root, paths) = fixture();
+        set_folders(&conn, "project", &paths).unwrap();
+        assert!(require_trusted(&conn, "project").is_err());
+        trust_folders(&conn, "project", &paths[..1]).unwrap();
+        assert!(require_trusted(&conn, "project").is_err());
+        trust_folders(&conn, "project", &paths[1..]).unwrap();
+        let project = require_trusted(&conn, "project").unwrap();
+        assert_eq!(project.folders.len(), 2);
+        assert!(project.folders.iter().all(|f| f.trusted));
+    }
+
+    #[test]
+    fn adding_and_readding_folders_requires_new_consent() {
+        let (conn, _root, paths) = fixture();
+        set_folders(&conn, "project", &paths[..1]).unwrap();
+        trust_folders(&conn, "project", &paths[..1]).unwrap();
+        set_folders(&conn, "project", &paths).unwrap();
+        let project = get_project(&conn, "project").unwrap().unwrap();
+        assert!(project.folders[0].trusted);
+        assert!(!project.folders[1].trusted);
+        trust_folders(&conn, "project", &paths).unwrap();
+        set_folders(&conn, "project", &paths[..1]).unwrap();
+        set_folders(&conn, "project", &paths).unwrap();
+        assert!(!get_project(&conn, "project").unwrap().unwrap().folders[1].trusted);
+    }
+
+    #[test]
+    fn cannot_remove_last_folder_or_trust_unknown_folder() {
+        let (conn, _root, paths) = fixture();
+        set_folders(&conn, "project", &paths[..1]).unwrap();
+        assert!(set_folders(&conn, "project", &[]).is_err());
+        assert!(trust_folders(&conn, "project", &paths[1..]).is_err());
+        assert_eq!(get_project(&conn, "project").unwrap().unwrap().folders.len(), 1);
+    }
+
+    #[test]
+    fn validates_folders_and_updates_linked_conversation_workspace() {
+        let (conn, _root, paths) = fixture();
+        assert!(normalize_folders(&["relative/path".to_string()]).is_err());
+        set_folders(&conn, "project", &[paths[0].clone(), paths[0].clone()]).unwrap();
+        assert_eq!(get_project(&conn, "project").unwrap().unwrap().folders.len(), 1);
+        crate::db::conversation_repo::insert_conversation(&conn, "chat", None, None, None, Some(&paths[0]), Some("project"), false, false, false, "now", "now", 0).unwrap();
+        set_folders(&conn, "project", &paths[1..]).unwrap();
+        let chat = crate::db::conversation_repo::get_conversation(&conn, "chat").unwrap().unwrap();
+        assert_eq!(chat.workspace_path, get_project(&conn, "project").unwrap().unwrap().workspace_path);
+        delete_project(&conn, "project").unwrap();
+        assert!(crate::db::conversation_repo::get_conversation(&conn, "chat").unwrap().unwrap().project_id.is_none());
+    }
 }

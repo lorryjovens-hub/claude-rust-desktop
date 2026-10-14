@@ -1,23 +1,27 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Search, Plus, ChevronDown, ArrowLeft, MoreVertical, Star, ArrowUp, FileText, Trash, Pencil, MessageSquare, X, Upload, Check, AudioLines, ChevronRight, Archive } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Paperclip, ListCollapse } from 'lucide-react';
-import { getProjects, createProject, getProject, updateProject, deleteProject, uploadProjectFile, deleteProjectFile, createProjectConversation, deleteConversation, getSkills, Project, ProjectFile } from '../api';
+import { getProjects, getProject, updateProject, deleteProject, uploadProjectFile, deleteProjectFile, createProjectConversation, deleteConversation, getSkills, Project, ProjectFile } from '../api';
 import ModelSelector, { SelectableModel } from './ModelSelector';
 import { IconPlus } from './Icons';
+import CreateProjectDialog from '../features/project/CreateProjectDialog';
+import ProjectWorkspaceBar from '../features/project/ProjectWorkspaceBar';
+import TrustProjectDialog from '../features/project/TrustProjectDialog';
 import startProjectsImg from '../assets/icons/start-projects.png';
 import { useI18n } from '../hooks/useI18n';
 
 const ProjectsPage = () => {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [projectName, setProjectName] = useState('');
-  const [projectDescription, setProjectDescription] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentProject, setCurrentProject] = useState<any>(null);
+  const [projectToTrust, setProjectToTrust] = useState<Project | null>(null);
+  const [projectError, setProjectError] = useState('');
   const [editingInstructions, setEditingInstructions] = useState(false);
   const [instructionsText, setInstructionsText] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -73,9 +77,21 @@ const ProjectsPage = () => {
     setCurrentModelString(newModelString);
   };
 
+  const ensureProjectReady = async () => {
+    const project: Project = await getProject(currentProject.id);
+    if (!project.folders?.length) {
+      setProjectError('Add at least one source folder before starting a chat.');
+      return false;
+    }
+    if (project.folders.some(folder => !folder.trusted)) { setProjectToTrust(project); return false; }
+    setProjectError('');
+    return true;
+  };
+
   const handleChatSubmit = async () => {
     if (!message.trim() || !currentProject) return;
     try {
+      if (!await ensureProjectReady()) return;
       const conv = await createProjectConversation(currentProject.id, message.slice(0, 50), currentModelString);
       navigate(`/chat/${conv.id}`, { state: { initialMessage: message, model: currentModelString } });
       setMessage('');
@@ -125,23 +141,25 @@ const ProjectsPage = () => {
     } catch (_) { }
   }, []);
 
-  const handleCreate = async () => {
-    const name = projectName.trim() || 'Untitled Project';
-    try {
-      const project = await createProject(name, projectDescription.trim());
-      setIsCreating(false);
-      setProjectName('');
-      setProjectDescription('');
-      loadProject(project.id);
-      loadProjects();
-    } catch (_) { }
-  };
+  useEffect(() => {
+    const id = searchParams.get('project');
+    if (id) loadProject(id);
+    else setCurrentProject(null);
+  }, [searchParams, loadProject]);
+
+  useEffect(() => {
+    const refresh = () => { loadProjects(); if (currentProject?.id) loadProject(currentProject.id); };
+    window.addEventListener('projectsChanged', refresh);
+    return () => window.removeEventListener('projectsChanged', refresh);
+  }, [loadProjects, loadProject, currentProject?.id]);
 
   const handleDelete = async () => {
     if (!currentProject) return;
     if (!window.confirm(t('customize.confirmDeleteProjectMsg', { name: currentProject.name }))) return;
     try {
       await deleteProject(currentProject.id);
+      window.dispatchEvent(new Event('projectsChanged'));
+      setSearchParams({});
       setCurrentProject(null);
       setShowMenu(false);
       loadProjects();
@@ -151,6 +169,8 @@ const ProjectsPage = () => {
   const handleDeleteProject = async (p: Project) => {
     try {
       await deleteProject(p.id);
+      window.dispatchEvent(new Event('projectsChanged'));
+      if (searchParams.get('project') === p.id) setSearchParams({});
       if (currentProject && currentProject.id === p.id) {
         setCurrentProject(null);
       }
@@ -166,6 +186,7 @@ const ProjectsPage = () => {
         name: editDetailsName,
         description: editDetailsDesc
       });
+      window.dispatchEvent(new Event('projectsChanged'));
       setProjectToEdit(null);
       loadProjects();
       if (currentProject && currentProject.id === projectToEdit.id) {
@@ -202,6 +223,7 @@ const ProjectsPage = () => {
   const handleNewChat = async () => {
     if (!currentProject) return;
     try {
+      if (!await ensureProjectReady()) return;
       const conv = await createProjectConversation(currentProject.id);
       navigate(`/chat/${conv.id}`);
     } catch (_) { }
@@ -220,6 +242,7 @@ const ProjectsPage = () => {
   const handleRenameSave = async () => {
     if (!currentProject || !editName.trim()) return;
     await updateProject(currentProject.id, { name: editName.trim() });
+    window.dispatchEvent(new Event('projectsChanged'));
     setEditingName(false);
     loadProject(currentProject.id);
     loadProjects();
@@ -240,9 +263,12 @@ const ProjectsPage = () => {
     return (
       <div className="flex-1 h-full bg-claude-bg overflow-y-auto">
         <div className="max-w-[800px] mx-auto px-8 py-12">
+          <ProjectWorkspaceBar projectId={currentProject.id} menuPlacement="below" onSelect={project => { setSearchParams({ project: project.id }); loadProject(project.id); }} />
+          {projectError && <p role="alert" className="my-3 text-sm text-red-500">{projectError}</p>}
+          {projectToTrust && <TrustProjectDialog project={projectToTrust} onClose={() => setProjectToTrust(null)} onTrusted={project => { setProjectToTrust(null); loadProject(project.id); }} />}
           <div className="mb-4">
             <button
-              onClick={() => { setCurrentProject(null); loadProjects(); }}
+              onClick={() => { setSearchParams({}); setCurrentProject(null); loadProjects(); }}
               className="flex items-center gap-1.5 text-[14px] text-claude-textSecondary hover:text-claude-text transition-colors font-medium -ml-1"
             >
               <ArrowLeft size={16} />
@@ -559,65 +585,9 @@ const ProjectsPage = () => {
   }
 
   if (isCreating) {
-    return (
-      <div className="flex-1 h-full bg-claude-bg overflow-y-auto">
-        <div className="max-w-[560px] mx-auto px-8 pt-12 pb-8">
-          <h1 className="font-[Spectral] text-[32px] text-claude-text mb-6" style={{ fontWeight: 600 }}>
-            {t('customize.createProjectTitle')}
-          </h1>
-
-          <div className="bg-[#EFEEE7] dark:bg-[#2A2928] rounded-2xl p-6 mb-6 border border-transparent dark:border-white/5">
-            <h3 className="font-semibold text-claude-text text-[15.5px] mb-2 text-[#403A35] dark:text-[#E3E0D8]">{t('customize.howToUseProjects')}</h3>
-            <p className="text-[14.5px] leading-relaxed text-[#564E48] dark:text-[#A8A096] mb-3">
-              {t('customize.projectsHelp1')}
-            </p>
-            <p className="text-[14.5px] leading-relaxed text-[#564E48] dark:text-[#A8A096]">
-              {t('customize.projectsHelp2')}
-            </p>
-          </div>
-
-          <div className="space-y-5">
-            <div>
-              <label className="block text-[15px] font-medium text-claude-textSecondary mb-2">{t('customize.projectNameLabel')}</label>
-              <input
-                type="text"
-                placeholder={t('customize.projectNamePlaceholder')}
-                value={projectName}
-                onChange={e => setProjectName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && projectName.trim()) handleCreate(); }}
-                className="w-full px-4 py-3 bg-white dark:bg-claude-input border border-gray-200 dark:border-claude-border rounded-xl text-claude-text placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-[#387ee0] focus:ring-0 transition-all text-[15px]"
-              />
-            </div>
-            <div>
-              <label className="block text-[15px] font-medium text-claude-textSecondary mb-2">{t('customize.projectGoalLabel')}</label>
-              <textarea
-                placeholder={t('customize.projectGoalPlaceholder')}
-                rows={3}
-                value={projectDescription}
-                onChange={e => setProjectDescription(e.target.value)}
-                className="w-full px-4 py-3 bg-white dark:bg-claude-input border border-gray-200 dark:border-claude-border rounded-xl text-claude-text placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-[#387ee0] focus:ring-0 transition-all text-[15px] resize-none"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 mt-6">
-            <button
-              onClick={() => { setIsCreating(false); setProjectName(''); setProjectDescription(''); }}
-              className="px-5 py-2.5 text-[15px] font-medium text-claude-text bg-white dark:bg-claude-bg border border-gray-300 dark:border-claude-border hover:bg-gray-50 dark:hover:bg-claude-hover rounded-xl transition-colors"
-            >
-              {t('common.cancel')}
-            </button>
-            <button
-              onClick={handleCreate}
-              disabled={!projectName.trim()}
-              className="px-5 py-2.5 text-[15px] font-medium text-claude-bg bg-black dark:bg-white dark:text-black hover:opacity-90 rounded-xl transition-opacity disabled:opacity-40"
-            >
-              {t('customize.createProjectBtn')}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <CreateProjectDialog onClose={() => setIsCreating(false)} onCreated={project => {
+      setIsCreating(false); setSearchParams({ project: project.id }); loadProjects();
+    }} />;
   }
 
   return (
@@ -696,7 +666,7 @@ const ProjectsPage = () => {
             {filteredProjects.map(p => (
               <div
                 key={p.id}
-                onClick={() => loadProject(p.id)}
+                onClick={() => setSearchParams({ project: p.id })}
                 className="flex flex-col p-5 border border-claude-border rounded-[12px] bg-transparent hover:bg-black/[0.02] dark:hover:bg-white/[0.02] cursor-pointer transition-colors group min-h-[170px]"
               >
                 <div className="flex items-center justify-between mb-2.5 relative">

@@ -319,8 +319,23 @@ impl QueryEngine {
         Ok(())
     }
 
-    pub async fn send_message(&self, request: ChatRequest) -> Result<mpsc::Receiver<EngineEvent>> {
+    pub async fn send_message(&self, mut request: ChatRequest) -> Result<mpsc::Receiver<EngineEvent>> {
         let conv_id = request.conversation_id.clone();
+        let db = self.db_manager.clone();
+        let project_conv_id = conv_id.clone();
+        let project = tokio::task::spawn_blocking(move || db.with_conn(|conn| -> Result<_> {
+            let conversation = crate::db::conversation_repo::get_conversation(conn, &project_conv_id)?;
+            match conversation.and_then(|c| c.project_id) {
+                Some(id) => Ok(Some(crate::db::project_repo::require_trusted(conn, &id)?)),
+                None => Ok(None),
+            }
+        })).await???;
+        if let Some(project) = project {
+            request.workspace_path = project.workspace_path;
+            let folders = project.folders.iter().map(|f| f.path.as_str()).collect::<Vec<_>>();
+            let context = format!("\nProject: {}\nProject source folders (the first is the working directory):\n{}\nProject instructions:\n{}", project.name, serde_json::to_string(&folders)?, project.instructions.unwrap_or_default());
+            request.system_prompt.get_or_insert_with(String::new).push_str(&context);
+        }
         let model = request.model.clone();
         let workspace_path = request.workspace_path.clone().unwrap_or_else(|| ".".to_string());
 

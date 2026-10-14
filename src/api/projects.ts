@@ -1,3 +1,4 @@
+import { useWorkspaceModeStore } from '../stores/useWorkspaceModeStore';
 import { request } from './client';
 
 export interface Project {
@@ -6,6 +7,7 @@ export interface Project {
   description: string;
   instructions: string;
   workspace_path: string;
+  folders: Array<{ path: string; trusted: boolean }>;
   is_archived: number;
   file_count?: number;
   chat_count?: number;
@@ -33,10 +35,10 @@ export async function getProjects(): Promise<Project[]> {
   return listProjects();
 }
 
-export async function createProject(name: string, description?: string): Promise<Project> {
+export async function createProject(name: string, description: string = "", folders: string[] = []): Promise<Project> {
   const res = await request('/projects', {
     method: 'POST',
-    body: JSON.stringify({ name, description: description || '' }),
+    body: JSON.stringify({ name, description, folders }),
   });
   return res.json();
 }
@@ -46,12 +48,26 @@ export async function getProject(id: string) {
   return res.json();
 }
 
-export async function updateProject(id: string, data: Partial<Pick<Project, 'name' | 'description' | 'instructions' | 'is_archived'>>) {
+export async function updateProject(id: string, data: Partial<Pick<Project, 'name' | 'description' | 'instructions' | 'is_archived'>> & { folders?: string[] }) {
   const res = await request(`/projects/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
   return res.json();
+}
+
+export async function trustProjectFolders(id: string, folders: string[]): Promise<Project> {
+  const res = await request(`/projects/${id}/trust`, { method: 'POST', body: JSON.stringify({ folders }) });
+  const project = await res.json();
+  window.dispatchEvent(new Event('projectsChanged'));
+  return project;
+}
+
+export async function attachConversationToProject(conversationId: string, projectId: string): Promise<void> {
+  const res = await request(`/conversations/${conversationId}`, { method: 'POST', body: JSON.stringify({ project_id: projectId }) });
+  const result = await res.json();
+  if (result.ok === false || result.error) throw new Error(result.error || 'Could not select project');
+  window.dispatchEvent(new Event('conversationUpdated'));
 }
 
 export async function deleteProject(id: string) {
@@ -87,7 +103,7 @@ export async function getProjectConversations(projectId: string) {
 export async function createProjectConversation(projectId: string, title?: string, model?: string) {
   const res = await request(`/projects/${projectId}/conversations`, {
     method: 'POST',
-    body: JSON.stringify({ title, model }),
+    body: JSON.stringify({ title, model, workspace_mode: useWorkspaceModeStore.getState().mode }),
   });
   return res.json();
 }

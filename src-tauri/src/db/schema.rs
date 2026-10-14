@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS conversations (
     provider TEXT,
     workspace_path TEXT,
     project_id TEXT,
+    workspace_mode TEXT NOT NULL DEFAULT 'chat' CHECK (workspace_mode IN ('chat', 'cowork', 'code')),
     research_mode INTEGER DEFAULT 0,
     pinned INTEGER DEFAULT 0,
     archived INTEGER DEFAULT 0,
@@ -57,6 +58,14 @@ CREATE TABLE IF NOT EXISTS projects (
     is_archived INTEGER DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS project_folders (
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    path TEXT NOT NULL,
+    trusted INTEGER NOT NULL DEFAULT 0,
+    sort_order INTEGER NOT NULL,
+    PRIMARY KEY (project_id, path)
 );
 
 CREATE TABLE IF NOT EXISTS project_files (

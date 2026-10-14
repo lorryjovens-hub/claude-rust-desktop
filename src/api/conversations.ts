@@ -1,3 +1,4 @@
+import { useWorkspaceModeStore, conversationWorkspaceMode } from '../stores/useWorkspaceModeStore';
 import { request, API_BASE, getToken, waitForApiReady, isTauriApp, getUserModeForConversation, resolveEnvCreds } from './client';
 import {
   getLocalConversations,
@@ -36,7 +37,7 @@ export async function getConversations() {
           return localConvs.map(c => ({
             id: c.id, title: c.title, model: c.model, provider: c.provider,
             workspace_path: c.workspace_path, project_id: c.project_id,
-            research_mode: c.research_mode, pinned: c.pinned, archived: c.archived,
+            workspace_mode: conversationWorkspaceMode(c), research_mode: c.research_mode, pinned: c.pinned, archived: c.archived,
             created_at: c.created_at, updated_at: c.updated_at,
             message_count: c.message_count, messages: [],
           }));
@@ -50,7 +51,7 @@ export async function getConversations() {
         return convs.map((c: any) => ({
           id: c.id, title: c.title, model: c.model, provider: c.provider,
           workspace_path: c.workspace_path, project_id: c.project_id,
-          research_mode: c.research_mode, pinned: c.pinned, archived: c.archived,
+          workspace_mode: conversationWorkspaceMode(c), research_mode: c.research_mode, pinned: c.pinned, archived: c.archived,
           created_at: c.created_at, updated_at: c.updated_at,
           message_count: c.message_count, messages: [],
         }));
@@ -64,7 +65,7 @@ export async function getConversations() {
       return localConvs.map(c => ({
         id: c.id, title: c.title, model: c.model, provider: c.provider,
         workspace_path: c.workspace_path, project_id: c.project_id,
-        research_mode: c.research_mode, pinned: c.pinned, archived: c.archived,
+        workspace_mode: conversationWorkspaceMode(c), research_mode: c.research_mode, pinned: c.pinned, archived: c.archived,
         created_at: c.created_at, updated_at: c.updated_at,
         message_count: c.message_count, messages: [],
       }));
@@ -77,7 +78,7 @@ export async function getConversations() {
   return localConvs.map(c => ({
     id: c.id, title: c.title, model: c.model, provider: c.provider,
     workspace_path: c.workspace_path, project_id: c.project_id,
-    research_mode: c.research_mode, pinned: c.pinned, archived: c.archived,
+    workspace_mode: conversationWorkspaceMode(c), research_mode: c.research_mode, pinned: c.pinned, archived: c.archived,
     created_at: c.created_at, updated_at: c.updated_at,
     message_count: c.message_count, messages: [],
   }));
@@ -89,11 +90,12 @@ export async function createConversation(title?: string, model?: string, extras?
   console.log('[API] createConversation called: model=', model, 'title=', title);
   const modelName = model || 'claude-sonnet-4-6';
   const researchMode = extras?.research_mode || false;
+  const workspaceMode = useWorkspaceModeStore.getState().mode;
 
   if (isTauriApp) {
     try {
       await waitForApiReady();
-      const body: any = { model: modelName };
+      const body: any = { model: modelName, workspace_mode: workspaceMode };
       if (title !== undefined) body.title = title;
       if (researchMode) body.research_mode = researchMode;
       const token = getToken();
@@ -111,7 +113,7 @@ export async function createConversation(title?: string, model?: string, extras?
       if (data && data.id) {
         dispatchEvent('conversationCreated', { id: data.id });
         // Also save to localStorage for fallback
-        createLocalConversation(title, modelName, { research_mode: researchMode });
+        createLocalConversation(title, modelName, { research_mode: researchMode, workspace_mode: workspaceMode });
         return data;
       }
       console.warn('[API] Bridge createConversation returned no id:', data);
@@ -121,7 +123,7 @@ export async function createConversation(title?: string, model?: string, extras?
   }
 
   // fallback to localStorage
-  const conv = createLocalConversation(title || undefined, modelName, { research_mode: researchMode });
+  const conv = createLocalConversation(title || undefined, modelName, { research_mode: researchMode, workspace_mode: workspaceMode });
   console.log('[API] createConversation via localStorage:', conv.id);
   dispatchEvent('conversationCreated', { id: conv.id });
   return conv;
@@ -160,6 +162,7 @@ export async function getConversation(id: string) {
       console.log('[API] getConversation from SQLite, messages:', data.messages?.length || 0);
       return {
         id: data.id, title: data.title, model: data.model,
+        workspace_mode: conversationWorkspaceMode(data),
         workspace_path: data.workspace_path, created_at: data.created_at,
         updated_at: data.updated_at, message_count: data.message_count,
         messages: (data.messages || []).map((m: any) => {

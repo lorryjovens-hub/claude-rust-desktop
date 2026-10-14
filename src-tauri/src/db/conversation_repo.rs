@@ -2,6 +2,38 @@ use anyhow::Result;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum WorkspaceMode {
+    #[default]
+    Chat,
+    Cowork,
+    Code,
+}
+
+impl WorkspaceMode {
+    pub fn as_str(self) -> &'static str {
+        match self { Self::Chat => "chat", Self::Cowork => "cowork", Self::Code => "code" }
+    }
+}
+
+pub fn migrate_workspace_mode(conn: &Connection) -> Result<()> {
+    let exists: bool = conn.query_row(
+        "SELECT EXISTS(SELECT 1 FROM pragma_table_info('conversations') WHERE name = 'workspace_mode')",
+        [], |row| row.get(0),
+    )?;
+    if !exists {
+        conn.execute("ALTER TABLE conversations ADD COLUMN workspace_mode TEXT NOT NULL DEFAULT 'chat' CHECK (workspace_mode IN ('chat', 'cowork', 'code'))", [])?;
+    }
+    Ok(())
+}
+
+pub fn set_workspace_mode(conn: &Connection, id: &str, mode: &str) -> Result<()> {
+    anyhow::ensure!(matches!(mode, "chat" | "cowork" | "code"), "Invalid workspace mode");
+    conn.execute("UPDATE conversations SET workspace_mode = ?1 WHERE id = ?2", params![mode, id])?;
+    Ok(())
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConversationRow {
     pub id: String,
@@ -10,6 +42,7 @@ pub struct ConversationRow {
     pub provider: Option<String>,
     pub workspace_path: Option<String>,
     pub project_id: Option<String>,
+    pub workspace_mode: String,
     pub research_mode: bool,
     pub pinned: bool,
     pub archived: bool,
@@ -32,6 +65,7 @@ fn row_to_conversation(row: &rusqlite::Row<'_>) -> rusqlite::Result<Conversation
         created_at: row.get(9)?,
         updated_at: row.get(10)?,
         message_count: row.get(11)?,
+        workspace_mode: row.get(12)?,
     })
 }
 
@@ -72,7 +106,7 @@ pub fn insert_conversation(
 
 pub fn get_conversation(conn: &Connection, id: &str) -> Result<Option<ConversationRow>> {
     let mut stmt = conn.prepare_cached(
-        "SELECT id, title, model, provider, workspace_path, project_id, research_mode, pinned, archived, created_at, updated_at, message_count FROM conversations WHERE id = ?1"
+        "SELECT id, title, model, provider, workspace_path, project_id, research_mode, pinned, archived, created_at, updated_at, message_count, workspace_mode FROM conversations WHERE id = ?1"
     )?;
     let mut rows = stmt.query(params![id])?;
     match rows.next()? {
@@ -83,7 +117,7 @@ pub fn get_conversation(conn: &Connection, id: &str) -> Result<Option<Conversati
 
 pub fn list_conversations(conn: &Connection) -> Result<Vec<ConversationRow>> {
     let mut stmt = conn.prepare_cached(
-        "SELECT id, title, model, provider, workspace_path, project_id, research_mode, pinned, archived, created_at, updated_at, message_count FROM conversations ORDER BY updated_at DESC"
+        "SELECT id, title, model, provider, workspace_path, project_id, research_mode, pinned, archived, created_at, updated_at, message_count, workspace_mode FROM conversations ORDER BY updated_at DESC"
     )?;
     let rows = stmt.query_map([], |row| row_to_conversation(row))?;
     let mut result = Vec::new();
@@ -159,6 +193,44 @@ pub fn archive_conversation(conn: &Connection, id: &str, archived: bool) -> Resu
     let now = chrono::Utc::now().to_rfc3339();
     stmt.execute(params![archived as i64, now, id])?;
     Ok(())
+}
+
+#[cfg(test)]
+mod workspace_mode_tests {
+    use super::*;
+
+    #[test]
+    fn legacy_migration_is_idempotent_and_preserves_history() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE conversations (id TEXT PRIMARY KEY, title TEXT); INSERT INTO conversations VALUES ('old', 'Existing chat');").unwrap();
+        migrate_workspace_mode(&conn).unwrap();
+        migrate_workspace_mode(&conn).unwrap();
+        let value: (String, String) = conn.query_row("SELECT title, workspace_mode FROM conversations WHERE id = 'old'", [], |r| Ok((r.get(0)?, r.get(1)?))).unwrap();
+        assert_eq!(value, ("Existing chat".into(), "chat".into()));
+        assert!(conn.execute("UPDATE conversations SET workspace_mode = 'invalid'", []).is_err());
+    }
+
+    #[test]
+    fn modes_persist_independently_across_database_reopen() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("modes.sqlite");
+        {
+            let conn = Connection::open(&path).unwrap();
+            conn.execute_batch(crate::db::schema::SCHEMA_SQL).unwrap();
+            for mode in ["chat", "cowork", "code"] {
+                insert_conversation(&conn, mode, Some("Same title"), None, None, None, None, false, false, false, "now", "now", 0).unwrap();
+                set_workspace_mode(&conn, mode, mode).unwrap();
+            }
+            assert!(set_workspace_mode(&conn, "code", "invalid").is_err());
+        }
+        let conn = Connection::open(path).unwrap();
+        let conversations = list_conversations(&conn).unwrap();
+        assert_eq!(conversations.len(), 3);
+        for mode in ["chat", "cowork", "code"] {
+            assert_eq!(conversations.iter().filter(|c| c.workspace_mode == mode).count(), 1);
+            assert_eq!(get_conversation(&conn, mode).unwrap().unwrap().workspace_mode, mode);
+        }
+    }
 }
 
 pub fn update_conversation(

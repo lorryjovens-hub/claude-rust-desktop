@@ -1,91 +1,41 @@
+import { useState } from 'react';
 import { X } from 'lucide-react';
+import { createProject, Project } from '../../api';
+import FolderFields from './FolderFields';
+import TrustProjectDialog from './TrustProjectDialog';
 
-interface CreateProjectDialogProps {
-  newProjectName: string;
-  newProjectDescription: string;
-  onNameChange: (v: string) => void;
-  onDescriptionChange: (v: string) => void;
-  onCreate: () => void;
-  onClose: () => void;
-}
-
-export default function CreateProjectDialog({
-  newProjectName,
-  newProjectDescription,
-  onNameChange,
-  onDescriptionChange,
-  onCreate,
-  onClose,
-}: CreateProjectDialogProps) {
-  return (
-    <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40"
-      onClick={onClose}
-    >
-      <div
-        className="bg-claude-bg border border-claude-border rounded-2xl shadow-xl w-[560px] max-w-[92vw] overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between px-7 pt-6 pb-4">
-          <h2
-            className="font-[Spectral] text-[22px] text-claude-text"
-            style={{ fontWeight: 600 }}
-          >
-            Create a project
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-1 text-claude-textSecondary hover:text-claude-text hover:bg-claude-hover rounded-lg transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
-        <div className="px-7 pb-4 space-y-5">
-          <div>
-            <label className="block text-[15px] font-medium text-claude-textSecondary mb-2">
-              What are you working on?
-            </label>
-            <input
-              type="text"
-              placeholder="Name your project"
-              value={newProjectName}
-              onChange={(e) => onNameChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && newProjectName.trim()) onCreate();
-              }}
-              className="w-full px-4 py-3 bg-white dark:bg-claude-input border border-gray-200 dark:border-claude-border rounded-xl text-claude-text placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-[#387ee0] focus:ring-0 transition-all text-[15px]"
-              autoFocus
-            />
-          </div>
-          <div>
-            <label className="block text-[15px] font-medium text-claude-textSecondary mb-2">
-              What are you trying to achieve?
-            </label>
-            <textarea
-              placeholder="Describe your project, goals, subject, etc..."
-              rows={3}
-              value={newProjectDescription}
-              onChange={(e) => onDescriptionChange(e.target.value)}
-              className="w-full px-4 py-3 bg-white dark:bg-claude-input border border-gray-200 dark:border-claude-border rounded-xl text-claude-text placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-[#387ee0] focus:ring-0 transition-all text-[15px] resize-none"
-            />
-          </div>
-        </div>
-        <div className="flex items-center justify-end gap-3 px-7 pb-6 pt-2">
-          <button
-            onClick={onClose}
-            className="px-5 py-2.5 text-[15px] font-medium text-claude-text bg-white dark:bg-claude-bg border border-gray-300 dark:border-claude-border hover:bg-gray-50 dark:hover:bg-claude-hover rounded-xl transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onCreate}
-            disabled={!newProjectName.trim()}
-            className="px-5 py-2.5 text-[15px] font-medium text-claude-bg bg-black dark:bg-white dark:text-black hover:opacity-90 rounded-xl transition-opacity disabled:opacity-40"
-          >
-            Create project
-          </button>
-        </div>
+export default function CreateProjectDialog({ onCreated, onClose }: {
+  onCreated: (project: Project) => void | Promise<void>; onClose: () => void;
+}) {
+  const [name, setName] = useState('');
+  const [folders, setFolders] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [created, setCreated] = useState<Project | null>(null);
+  const create = async () => {
+    if (!name.trim() || !folders.length || busy) return;
+    setBusy(true); setError('');
+    try {
+      const project = await createProject(name.trim(), '', folders);
+      window.dispatchEvent(new Event('projectsChanged'));
+      setCreated(project);
+    } catch (error) { setError(error instanceof Error ? error.message : String(error)); }
+    finally { setBusy(false); }
+  };
+  if (created) return <TrustProjectDialog project={created} onClose={onClose} onTrusted={onCreated} />;
+  return <div className="fixed inset-0 z-[220] flex items-center justify-center bg-black/40 p-4" onKeyDown={e => { if (e.key === 'Escape' && !busy) { e.stopPropagation(); onClose(); } }}>
+    <form role="dialog" aria-modal="true" aria-labelledby="create-project-title" onSubmit={e => { e.preventDefault(); create(); }} className="w-[520px] max-w-full max-h-[85vh] overflow-y-auto rounded-2xl border border-claude-border bg-claude-bg p-5 shadow-xl">
+      <div className="flex items-center justify-between mb-4">
+        <h2 id="create-project-title" className="text-xl font-semibold text-claude-text">Create project</h2>
+        <button type="button" disabled={busy} aria-label="Close create project" onClick={onClose} className="text-claude-textSecondary"><X size={18} /></button>
       </div>
-    </div>
-  );
+      <input autoFocus aria-label="Project name" placeholder="Project name" value={name} disabled={busy} onChange={e => setName(e.target.value)} className="w-full mb-4 rounded-xl border border-claude-border bg-claude-input px-4 py-3 text-sm text-claude-text outline-none focus:border-blue-500" />
+      <FolderFields folders={folders} onChange={setFolders} disabled={busy} />
+      {error && <p role="alert" className="mt-3 text-sm text-red-500">{error}</p>}
+      <div className="flex justify-end gap-3 mt-6">
+        <button type="button" disabled={busy} onClick={onClose} className="px-4 py-2 text-sm text-claude-textSecondary">Cancel</button>
+        <button type="submit" disabled={busy || !name.trim() || !folders.length} className="rounded-xl bg-claude-text px-4 py-2 text-sm font-medium text-claude-bg disabled:opacity-40">{busy ? 'Creating...' : 'Create project'}</button>
+      </div>
+    </form>
+  </div>;
 }

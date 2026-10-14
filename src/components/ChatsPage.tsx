@@ -4,6 +4,7 @@ import { getConversations, deleteConversation, updateConversation, getProjects, 
 import { Search, Plus, MoreHorizontal, Star, Pencil, Trash, X, Minus, Check } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { IconProjects } from './Icons';
+import { useWorkspaceModeStore, conversationWorkspaceMode } from '../stores/useWorkspaceModeStore';
 
 const RenameModal = ({ isOpen, onClose, onSave, initialTitle }: { isOpen: boolean; onClose: () => void; onSave: (newTitle: string) => void; initialTitle: string; }) => {
   const [title, setTitle] = useState(initialTitle);
@@ -69,6 +70,7 @@ const RenameModal = ({ isOpen, onClose, onSave, initialTitle }: { isOpen: boolea
 };
 
 const ChatsPage = () => {
+  const workspaceMode = useWorkspaceModeStore(s => s.mode);
   const navigate = useNavigate();
   const [chats, setChats] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -82,6 +84,12 @@ const ChatsPage = () => {
   // Selection Mode State
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedChatIds, setSelectedChatIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    setSelectedChatIds(new Set());
+    setIsSelectionMode(false);
+    setActiveMenuId(null);
+    setShowProjectPicker(false);
+  }, [workspaceMode]);
 
   // Add to project state
   const [showProjectPicker, setShowProjectPicker] = useState(false);
@@ -241,7 +249,8 @@ const ChatsPage = () => {
     }
   };
 
-  const filteredChats = chats.filter(chat =>
+  const modeChats = chats.filter(chat => conversationWorkspaceMode(chat) === workspaceMode);
+  const filteredChats = modeChats.filter(chat =>
     (chat.title || 'New Chat').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -360,7 +369,7 @@ const ChatsPage = () => {
           </div>
         ) : (
           <div className="flex items-center gap-2 mb-4 text-[13px] text-claude-textSecondary h-8">
-            <span>{chats.length} chats with Claude</span>
+            <span>{modeChats.length} chats with Claude</span>
             <button onClick={toggleSelectionMode} className="text-blue-600 hover:underline">Select</button>
           </div>
         )}

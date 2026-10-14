@@ -31,6 +31,8 @@ struct SyncConversationPayload {
     provider: Option<String>,
     workspace_path: Option<String>,
     project_id: Option<String>,
+    #[serde(default, alias = "workspace_mode")]
+    workspace_mode: Option<crate::db::conversation_repo::WorkspaceMode>,
     #[serde(default)]
     research_mode: bool,
     #[serde(default)]
@@ -191,6 +193,7 @@ async fn sync_push(
         let provider = conv.provider.clone();
         let workspace_path = conv.workspace_path.clone();
         let project_id = conv.project_id.clone();
+        let workspace_mode = conv.workspace_mode;
         let research_mode = conv.research_mode;
         let pinned = conv.pinned;
         let archived = conv.archived;
@@ -217,7 +220,8 @@ async fn sync_push(
                         &created_at,
                         &updated_at,
                         message_count,
-                    )
+                    )?;
+                    crate::db::conversation_repo::set_workspace_mode(conn, &id, workspace_mode.unwrap_or_default().as_str())
                 } else if let Some(ex) = existing {
                     if updated_at > ex.updated_at {
                         conn.execute(
@@ -233,6 +237,9 @@ async fn sync_push(
                                 &id,
                             ],
                         )?;
+                        if let Some(mode) = workspace_mode {
+                            crate::db::conversation_repo::set_workspace_mode(conn, &id, mode.as_str())?;
+                        }
                     }
                     Ok(())
                 } else {
@@ -434,6 +441,7 @@ async fn sync_pull(
                 "provider": c.provider,
                 "workspace_path": c.workspace_path,
                 "project_id": c.project_id,
+                "workspace_mode": c.workspace_mode,
                 "research_mode": c.research_mode,
                 "pinned": c.pinned,
                 "archived": c.archived,

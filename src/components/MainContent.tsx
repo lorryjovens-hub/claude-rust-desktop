@@ -3,7 +3,7 @@ import { ChevronDown, FileText, ArrowUp, RotateCcw, Pencil, Copy, Check, Papercl
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { IconPlus, IconVoice, IconWebSearch } from './Icons';
 import ClaudeLogo from './ClaudeLogo';
-import { getConversation, sendMessage, createConversation, getUser, updateConversation, deleteMessagesFrom, deleteMessagesTail, branchConversation, compactConversation, answerUserQuestion, respondToolPermission, getUserUsage, getGenerationStatus, stopGeneration, getContextSize, getStreamStatus, reconnectStream, getSkills, warmEngine, getProjects, createProject, Project, getProviders } from '../api';
+import { getConversation, sendMessage, createConversation, getUser, updateConversation, deleteMessagesFrom, deleteMessagesTail, branchConversation, compactConversation, answerUserQuestion, respondToolPermission, getUserUsage, getGenerationStatus, stopGeneration, getContextSize, getStreamStatus, reconnectStream, getSkills, warmEngine, getProjects, getProject, createProjectConversation, attachConversationToProject, Project, getProviders } from '../api';
 import PermissionDialog, { ApprovalInfo } from './PermissionDialog';
 import { permissionApprovalAPI } from '../utils/tauriAPI';
 import { useChatStore } from '../stores/useChatStore';
@@ -21,6 +21,8 @@ import AddFromGithubModal from './AddFromGithubModal';
 import CompactingStatus from '../features/compact/CompactingStatus';
 import CompactDialog from '../features/compact/CompactDialog';
 import CreateProjectDialog from '../features/project/CreateProjectDialog';
+import ProjectWorkspaceBar from '../features/project/ProjectWorkspaceBar';
+import TrustProjectDialog from '../features/project/TrustProjectDialog';
 import MessageList, { draftsStore } from '../features/message-list/MessageList';
 import { handleSlashCommand, SLASH_COMMANDS } from '../features/slash-commands/registry';
 import { createStreamCallbacks } from '../features/streaming/createStreamCallbacks';
@@ -367,8 +369,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
   const plusBtnRef = useRef<HTMLButtonElement>(null);
   // Add-to-project state
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
-  const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectDescription, setNewProjectDescription] = useState('');
+  const [projectToTrust, setProjectToTrust] = useState<Project | null>(null);
   const [projectAddToast, setProjectAddToast] = useState<string | null>(null);
   const [slashCommandFilter, setSlashCommandFilter] = useState<string | null>(null);
 
@@ -946,16 +947,24 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
   const handleAttachToProject = async (project: Project) => {
     setShowPlusMenu(false);
     setShowProjectsSubmenu(false);
+    const latest: Project = await getProject(project.id);
+    if (!latest.folders?.length) {
+      setProjectAddToast('Add a source folder from Projects before selecting this project');
+      return;
+    }
+    if (latest.folders.some(folder => !folder.trusted)) { setProjectToTrust(latest); return; }
     if (activeId) {
       if (currentProjectId === project.id) return;
       try {
-        await updateConversation(activeId, { project_id: project.id });
+        await attachConversationToProject(activeId, project.id);
         setCurrentProjectId(project.id);
         onNewChat();
         setProjectAddToast(`Added to ${project.name}`);
         setTimeout(() => setProjectAddToast(null), 2500);
       } catch (err) {
         console.error('Failed to add conversation to project', err);
+        setProjectAddToast(err instanceof Error ? err.message : 'Could not select project');
+        throw err;
       }
     } else {
       setPendingProjectId(project.id);
@@ -964,24 +973,15 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
     }
   };
 
-  const handleCreateProjectFromMenu = async () => {
-    const name = newProjectName.trim();
-    if (!name) return;
-    try {
-      const project = await createProject(name, newProjectDescription.trim());
-      setShowNewProjectDialog(false);
-      setNewProjectName('');
-      setNewProjectDescription('');
-      setProjectList(prev => [project, ...prev]);
-      await handleAttachToProject(project);
-    } catch (err) {
-      console.error('Failed to create project', err);
-    }
-  };
-
   const handleSend = async (overrideText?: string) => {
     try {
     const effectiveText = (typeof overrideText === 'string') ? overrideText : inputText;
+    const selectedProjectId = activeId ? currentProjectId : pendingProjectId;
+    if (selectedProjectId) {
+      const project: Project = await getProject(selectedProjectId);
+      if (!project.folders?.length) { setProjectAddToast('Add a source folder before sending'); return; }
+      if (project.folders.some(folder => !folder.trusted)) { setProjectToTrust(project); return; }
+    }
     if (await handleSlashCommand(effectiveText, activeId)) return;
     // Skill slug is already in the text (inserted when selected from menu)
     setSelectedSkill(null);
@@ -1131,7 +1131,9 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
         }
         // 不传临时标题，让后端生成
         console.log("Creating conversation with model:", modelForCreate);
-        const newConv = await createConversation(undefined, modelForCreate, { research_mode: researchMode });
+        const newConv = pendingProjectId
+          ? await createProjectConversation(pendingProjectId, undefined, modelForCreate)
+          : await createConversation(undefined, modelForCreate, { research_mode: researchMode });
         console.log("Created conversation response:", newConv);
 
         if (!newConv || !newConv.id) {
@@ -1144,14 +1146,8 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
         conversationId = newConv.id;
         console.log("New Conversation ID:", conversationId);
         trackConversationCreated();
-        // Attach to pending project if user chose one before sending
         if (pendingProjectId) {
-          try {
-            await updateConversation(conversationId!, { project_id: pendingProjectId });
-            setCurrentProjectId(pendingProjectId);
-          } catch (e) {
-            console.error('Failed to attach new conversation to project', e);
-          }
+          setCurrentProjectId(pendingProjectId);
           setPendingProjectId(null);
         }
         if (conversationId) warmEngine(conversationId); // Pre-warm engine while user waits
@@ -1627,8 +1623,6 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
     onCreateProject: () => {
       setShowProjectsSubmenu(false);
       setShowPlusMenu(false);
-      setNewProjectName('');
-      setNewProjectDescription('');
       setShowNewProjectDialog(true);
     },
     onSelectSkill: (skill: any) => {
@@ -1660,15 +1654,13 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
   const sharedProjectOverlays = (
     <>
       {showNewProjectDialog && (
-        <CreateProjectDialog
-          newProjectName={newProjectName}
-          newProjectDescription={newProjectDescription}
-          onNameChange={setNewProjectName}
-          onDescriptionChange={setNewProjectDescription}
-          onCreate={handleCreateProjectFromMenu}
-          onClose={() => { setShowNewProjectDialog(false); setNewProjectName(''); setNewProjectDescription(''); }}
-        />
+        <CreateProjectDialog onCreated={async project => {
+          setProjectList(prev => [project, ...prev.filter(p => p.id !== project.id)]);
+          await handleAttachToProject(project);
+          setShowNewProjectDialog(false);
+        }} onClose={() => setShowNewProjectDialog(false)} />
       )}
+      {projectToTrust && <TrustProjectDialog project={projectToTrust} onTrusted={async project => { await handleAttachToProject(project); setProjectToTrust(null); }} onClose={() => setProjectToTrust(null)} />}
       {projectAddToast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[300] px-4 py-2 bg-claude-input border border-claude-border rounded-lg shadow-lg text-[13px] text-claude-text flex items-center gap-2">
           <Check size={14} className="text-[#C6613F]" />
@@ -1720,6 +1712,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
 
           {/* 输入框区域 */}
           <div className="w-full relative z-20 group">
+            <ProjectWorkspaceBar projectId={pendingProjectId} onSelect={handleAttachToProject} disabled={loading} />
             {filteredCommands.length > 0 && (
               <div className="absolute bottom-full left-0 right-0 mb-1 bg-claude-bg border border-claude-border rounded-xl shadow-lg overflow-hidden z-50">
                 {filteredCommands.map(cmd => (
@@ -1956,6 +1949,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
             style={{ maxWidth: `${inputBarWidth}px` }}
           >
             <div className="w-full relative group" ref={inputWrapperRef}>
+              <ProjectWorkspaceBar projectId={currentProjectId} onSelect={handleAttachToProject} disabled={loading} />
               <input
                 type="file"
                 ref={fileInputRef}

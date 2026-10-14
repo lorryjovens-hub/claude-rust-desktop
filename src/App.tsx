@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { BellRing, Menu, ArrowLeft, ArrowRight, GitBranch, BarChart3, Terminal } from 'lucide-react';
+import { BellRing, Menu, ArrowLeft, ArrowRight, GitBranch, BarChart3, Terminal, HelpCircle } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import MainContent from './components/MainContent';
 import { IconSidebarToggle } from './components/Icons';
@@ -51,6 +51,7 @@ const Layout = () => {
   const [newChatKey, setNewChatKey] = useState(0);
   const [authChecked, setAuthChecked] = useState(false);
   const [authValid, setAuthValid] = useState(true);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // Check auth validity on mount
   useEffect(() => {
@@ -395,9 +396,10 @@ const Layout = () => {
             <Tooltip content="Agent Worktree (Ctrl+Shift+A)"><button onClick={() => { setShowAgentPanel(true); setShowAnalyticsPanel(false); }} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-claude-textSecondary hover:text-claude-text transition-colors"><GitBranch size={16} strokeWidth={1.5} /></button></Tooltip>
             <Tooltip content="使用统计"><button onClick={() => { setShowAnalyticsPanel(true); setShowAgentPanel(false); }} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-claude-textSecondary hover:text-claude-text transition-colors"><BarChart3 size={16} strokeWidth={1.5} /></button></Tooltip>
             <Tooltip content="终端 (Ctrl+`)"><button onClick={() => setShowTerminal(!showTerminal)} className={`p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors ${showTerminal ? 'text-[#C6613F]' : 'text-claude-textSecondary hover:text-claude-text'}`}><Terminal size={16} strokeWidth={1.5} /></button></Tooltip>
+            <Tooltip content="帮助"><button type="button" aria-label="帮助" aria-haspopup="dialog" aria-expanded={showHelpModal} onClick={() => setShowHelpModal(true)} className="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-md text-claude-textSecondary hover:text-claude-text transition-colors"><HelpCircle size={16} strokeWidth={1.5} /></button></Tooltip>
           </div>
         </div>
-        <Sidebar isCollapsed={isSidebarCollapsed} toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)} refreshTrigger={refreshTrigger} onNewChatClick={handleNewChat} onOpenSettings={() => { navigate('/settings'); setShowUpgrade(false); }} onOpenUpgrade={() => setShowUpgrade(true)} onOpenDirectory={() => setShowDirectoryModal(true)} onCloseOverlays={() => setShowUpgrade(false)} tunerConfig={tunerConfig} setTunerConfig={setTunerConfig} titleBarHeight={titleBarHeight} />
+        <Sidebar isCollapsed={isSidebarCollapsed} toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)} refreshTrigger={refreshTrigger} onNewChatClick={handleNewChat} onOpenSettings={() => { navigate('/settings'); setShowUpgrade(false); }} onOpenUpgrade={() => setShowUpgrade(true)} onOpenDirectory={() => setShowDirectoryModal(true)} onCloseOverlays={() => setShowUpgrade(false)} tunerConfig={tunerConfig} setTunerConfig={setTunerConfig} titleBarHeight={titleBarHeight} showHelpModal={showHelpModal} onHelpModalChange={setShowHelpModal} />
         <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative" style={{ paddingTop: `${titleBarHeight}px` }}>
           {isChatMode && !showUpgrade && (location.pathname === '/' || location.pathname.startsWith('/chat/')) && (
             <ChatHeader title={currentChatTitle} showArtifacts={showArtifacts} documentPanelDoc={documentPanelDoc} onOpenArtifacts={handleOpenArtifacts} hasArtifacts={artifacts.length > 0} onTitleRename={handleTitleChange} />

@@ -796,59 +796,6 @@ async fn tools_list_handler() -> Json<Vec<ToolDefinition>> {
     Json(get_tool_definitions())
 }
 
-async fn projects_list(State(state): State<AppState>) -> Json<serde_json::Value> {
-    let db = state.db_manager.clone();
-    let result = tokio::task::spawn_blocking(move || {
-        db.with_conn(|conn| crate::db::project_repo::list_projects(conn))
-    }).await;
-    match result {
-        Ok(Ok(Ok(projects))) => Json(serde_json::json!({ "projects": projects })),
-        _ => Json(serde_json::json!({ "projects": [] })),
-    }
-}
-
-#[derive(Deserialize)]
-struct ProjectCreateRequest {
-    name: String,
-    description: Option<String>,
-    instructions: Option<String>,
-    workspace_path: Option<String>,
-}
-
-async fn projects_create(State(state): State<AppState>, Json(req): Json<ProjectCreateRequest>) -> Json<serde_json::Value> {
-    let id = uuid::Uuid::new_v4().to_string();
-    let req_name = req.name.clone();
-    let db = state.db_manager.clone();
-    let id_for_db = id.clone();
-    let name_for_db = req_name.clone();
-    let desc_clone = req.description.clone();
-    let instructions_clone = req.instructions.clone();
-    let workspace_clone = req.workspace_path.clone();
-    let result = tokio::task::spawn_blocking(move || {
-        db.with_conn(|conn| {
-            let now = chrono::Utc::now().to_rfc3339();
-            crate::db::project_repo::insert_project(
-                conn,
-                &id_for_db,
-                &name_for_db,
-                desc_clone.as_deref(),
-                instructions_clone.as_deref(),
-                workspace_clone.as_deref(),
-                false,
-                &now,
-                &now,
-            )
-        })
-    }).await;
-    match result {
-        Ok(Ok(Ok(()))) => Json(serde_json::json!({ "id": id.clone(), "name": req_name })),
-        _ => {
-            tracing::error!(module = "Projects", "Failed to create project {}", id);
-            Json(serde_json::json!({ "error": "Failed to create project" }))
-        }
-    }
-}
-
 static UPLOAD_DIR: once_cell::sync::Lazy<std::sync::Mutex<Option<PathBuf>>> =
     once_cell::sync::Lazy::new(|| std::sync::Mutex::new(None));
 

@@ -1,4 +1,5 @@
 import type { Provider, ProviderModel } from '../api/providers';
+import type { WorkspaceMode } from '../stores/useWorkspaceModeStore';
 
 const KEYS = {
   providers: 'app_providers',
@@ -7,6 +8,7 @@ const KEYS = {
 };
 
 export interface LocalConversation {
+  workspace_mode?: WorkspaceMode;
   id: string;
   title?: string | null;
   model?: string | null;
@@ -116,7 +118,7 @@ export function getLocalConversation(id: string): LocalConversation | undefined 
 export function createLocalConversation(
   title?: string | null,
   model?: string | null,
-  extras?: { research_mode?: boolean }
+  extras?: { research_mode?: boolean; workspace_mode?: WorkspaceMode }
 ): LocalConversation {
   const convs = getLocalConversations();
   const now = new Date().toISOString();
@@ -128,6 +130,7 @@ export function createLocalConversation(
     workspace_path: null,
     project_id: null,
     research_mode: extras?.research_mode || false,
+    workspace_mode: extras?.workspace_mode || 'chat',
     pinned: false,
     archived: false,
     created_at: now,

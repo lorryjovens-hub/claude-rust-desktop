@@ -17,6 +17,8 @@ struct CreateConversationBody {
     title: Option<String>,
     model: Option<String>,
     research_mode: Option<bool>,
+    #[serde(default)]
+    workspace_mode: crate::db::conversation_repo::WorkspaceMode,
 }
 
 async fn conversations_list(State(state): State<AppState>) -> Json<serde_json::Value> {
@@ -30,36 +32,42 @@ async fn conversations_list(State(state): State<AppState>) -> Json<serde_json::V
     }
 }
 
-async fn conversations_create(State(state): State<AppState>, Json(body): Json<CreateConversationBody>) -> Json<serde_json::Value> {
+async fn conversations_create(State(state): State<AppState>, Json(body): Json<CreateConversationBody>) -> Result<Json<serde_json::Value>, StatusCode> {
     let id = uuid::Uuid::new_v4().to_string();
     let db = state.db_manager.clone();
     let id_clone = id.clone();
     let title_clone = body.title.clone();
     let model_clone = body.model.clone();
+    let workspace_mode = body.workspace_mode.as_str();
     let result = tokio::task::spawn_blocking(move || {
         db.with_conn(|conn| {
+            let tx = conn.unchecked_transaction()?;
             let now = chrono::Utc::now().to_rfc3339();
             crate::db::conversation_repo::insert_conversation(
-                conn, &id_clone,
+                &tx, &id_clone,
                 title_clone.as_deref(),
                 model_clone.as_deref(),
                 None, None, None,
-                false, false, false,
+                body.research_mode.unwrap_or(false), false, false,
                 &now, &now, 0
-            )
+            )?;
+            crate::db::conversation_repo::set_workspace_mode(&tx, &id_clone, workspace_mode)?;
+            tx.commit()?;
+            Ok::<(), anyhow::Error>(())
         })
     }).await;
     let now = chrono::Utc::now().to_rfc3339();
-    let success = result.is_ok();
-    Json(serde_json::json!({
+    if !matches!(result, Ok(Ok(Ok(())))) { return Err(StatusCode::INTERNAL_SERVER_ERROR); }
+    Ok(Json(serde_json::json!({
         "id": id,
         "title": body.title,
         "model": body.model.unwrap_or_default(),
         "workspace_path": "",
+        "workspace_mode": workspace_mode,
         "created_at": now.clone(),
         "updated_at": now,
-        "success": success,
-    }))
+        "success": true,
+    })))
 }
 
 async fn conversation_get(Path(id): Path<String>, State(state): State<AppState>) -> Json<serde_json::Value> {
@@ -104,6 +112,7 @@ async fn conversation_get(Path(id): Path<String>, State(state): State<AppState>)
             "model": conv.model,
             "workspace_path": conv.workspace_path,
             "project_id": conv.project_id,
+            "workspace_mode": conv.workspace_mode,
             "research_mode": conv.research_mode,
             "created_at": conv.created_at,
             "updated_at": conv.updated_at,
@@ -121,6 +130,15 @@ async fn conversation_update(Path(id): Path<String>, State(state): State<AppStat
     let id_clone = id.clone();
     let result = tokio::task::spawn_blocking(move || {
         db.with_conn(|conn: &rusqlite::Connection| {
+            if let Some(project_id) = body.get("project_id") {
+                if let Some(project_id) = project_id.as_str() {
+                    let project = crate::db::project_repo::require_trusted(conn, project_id)?;
+                    conn.execute("UPDATE conversations SET project_id = ?1, workspace_path = ?2, updated_at = ?3 WHERE id = ?4",
+                        rusqlite::params![project_id, project.workspace_path, chrono::Utc::now().to_rfc3339(), &id_clone])?;
+                } else if project_id.is_null() {
+                    conn.execute("UPDATE conversations SET project_id = NULL, workspace_path = NULL WHERE id = ?1", rusqlite::params![&id_clone])?;
+                }
+            }
             if let Some(title) = body.get("title").and_then(|v| v.as_str()) {
                 let _ = conn.execute(
                     "UPDATE conversations SET title = ?1, updated_at = ?2 WHERE id = ?3",
@@ -277,6 +295,7 @@ async fn conversation_branch_handler(
             crate::db::conversation_repo::insert_conversation(
                 conn, &new_id, Some(&format!("{} (branch)", title)), model, None, None, None, false, false, false, &now, &now, 0,
             )?;
+            crate::db::conversation_repo::set_workspace_mode(conn, &new_id, source.as_ref().map(|c| c.workspace_mode.as_str()).unwrap_or("chat"))?;
             let mut messages = crate::db::message_repo::get_messages_by_conversation(conn, &id)?;
             if let Some(mid) = req.from_message_id.as_deref() {
                 if let Some(m) = crate::db::message_repo::get_message(conn, mid)? {

@@ -20,6 +20,7 @@ export interface Project {
   description?: string;
   instructions?: string;
   workspace_path?: string;
+  folders?: Array<{ path: string; trusted: boolean }>;
   is_archived?: number | boolean;
   file_count?: number;
   chat_count?: number;

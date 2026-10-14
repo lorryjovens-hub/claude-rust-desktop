@@ -1,3 +1,4 @@
+import { useWorkspaceModeStore, conversationWorkspaceMode } from './stores/useWorkspaceModeStore';
 import { splitModelKey } from './utils/modelConfig';
 import { getErrorMessage } from './utils/errorHelpers';
 import { getSecure, setSecure, removeSecure } from './services/secureStorage';
@@ -445,6 +446,10 @@ export async function getUserUsage() {
 }
 
 export async function getUnreadAnnouncements() {
+  // Local usage does not require an account or the separate gateway service.
+  if (localStorage.getItem('user_mode') === 'selfhosted' || !localStorage.getItem('auth_token')) {
+    return { announcements: [] };
+  }
   const res = await request('/user/announcements');
   return res.json();
 }
@@ -559,6 +564,7 @@ export interface Project {
   description: string;
   instructions: string;
   workspace_path: string;
+  folders: Array<{ path: string; trusted: boolean }>;
   is_archived: number;
   file_count?: number;
   chat_count?: number;
@@ -582,10 +588,10 @@ export async function getProjects(): Promise<Project[]> {
   return Array.isArray(data) ? data : (Array.isArray(data?.projects) ? data.projects : []);
 }
 
-export async function createProject(name: string, description?: string): Promise<Project> {
+export async function createProject(name: string, description: string = "", folders: string[] = []): Promise<Project> {
   const res = await request('/projects', {
     method: 'POST',
-    body: JSON.stringify({ name, description: description || '' }),
+    body: JSON.stringify({ name, description, folders }),
   });
   return res.json();
 }
@@ -595,12 +601,26 @@ export async function getProject(id: string) {
   return res.json();
 }
 
-export async function updateProject(id: string, data: Partial<Pick<Project, 'name' | 'description' | 'instructions' | 'is_archived'>>) {
+export async function updateProject(id: string, data: Partial<Pick<Project, 'name' | 'description' | 'instructions' | 'is_archived'>> & { folders?: string[] }) {
   const res = await request(`/projects/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
   return res.json();
+}
+
+export async function trustProjectFolders(id: string, folders: string[]): Promise<Project> {
+  const res = await request(`/projects/${id}/trust`, { method: 'POST', body: JSON.stringify({ folders }) });
+  const project = await res.json();
+  window.dispatchEvent(new Event('projectsChanged'));
+  return project;
+}
+
+export async function attachConversationToProject(conversationId: string, projectId: string): Promise<void> {
+  const res = await request(`/conversations/${conversationId}`, { method: 'POST', body: JSON.stringify({ project_id: projectId }) });
+  const result = await res.json();
+  if (result.ok === false || result.error) throw new Error(result.error || 'Could not select project');
+  window.dispatchEvent(new Event('conversationUpdated'));
 }
 
 export async function deleteProject(id: string) {
@@ -635,7 +655,7 @@ export async function getProjectConversations(projectId: string) {
 export async function createProjectConversation(projectId: string, title?: string, model?: string) {
   const res = await request(`/projects/${projectId}/conversations`, {
     method: 'POST',
-    body: JSON.stringify({ title, model }),
+    body: JSON.stringify({ title, model, workspace_mode: useWorkspaceModeStore.getState().mode }),
   });
   return res.json();
 }
@@ -663,7 +683,7 @@ export async function getConversations() {
             provider: c.provider,
             workspace_path: c.workspace_path,
             project_id: c.project_id,
-            research_mode: c.research_mode,
+            workspace_mode: conversationWorkspaceMode(c), research_mode: c.research_mode,
             pinned: c.pinned,
             archived: c.archived,
             created_at: c.created_at,
@@ -687,7 +707,7 @@ export async function getConversations() {
         provider: c.provider,
         workspace_path: c.workspace_path,
         project_id: c.project_id,
-        research_mode: c.research_mode,
+        workspace_mode: conversationWorkspaceMode(c), research_mode: c.research_mode,
         pinned: c.pinned,
         archived: c.archived,
         created_at: c.created_at,
@@ -707,7 +727,7 @@ export async function getConversations() {
     provider: c.provider,
     workspace_path: c.workspace_path,
     project_id: c.project_id,
-    research_mode: c.research_mode,
+    workspace_mode: conversationWorkspaceMode(c), research_mode: c.research_mode,
     pinned: c.pinned,
     archived: c.archived,
     created_at: c.created_at,
@@ -731,11 +751,12 @@ export async function createConversation(title?: string, model?: string, extras?
   console.log('[API] createConversation called: model=', model, 'title=', title);
   const modelName = model || 'claude-sonnet-4-6';
   const researchMode = extras?.research_mode || false;
+  const workspaceMode = useWorkspaceModeStore.getState().mode;
 
   if (isTauriApp) {
     try {
       await waitForApiReady();
-      const body: any = { model: modelName };
+      const body: any = { model: modelName, workspace_mode: workspaceMode };
       if (title !== undefined) body.title = title;
       if (researchMode) body.research_mode = researchMode;
       const token = getToken();
@@ -761,7 +782,7 @@ export async function createConversation(title?: string, model?: string, extras?
       console.warn('[API] createConversation via SQLite failed:', e);
     }
   } else {
-    const conv = createLocalConversation(title, modelName, { research_mode: researchMode });
+    const conv = createLocalConversation(title, modelName, { research_mode: researchMode, workspace_mode: workspaceMode });
     console.log('[API] createConversation via localStorage:', conv.id);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('conversationCreated', { detail: { id: conv.id } }));
@@ -774,6 +795,7 @@ export async function createConversation(title?: string, model?: string, extras?
   console.warn('[API] Using local fallback conversation id:', fallbackId);
   return {
     id: fallbackId,
+    workspace_mode: workspaceMode,
     title: title || null,
     model: modelName,
     workspace_path: '',
@@ -803,6 +825,7 @@ export async function getConversation(id: string) {
         provider: data.provider,
         workspace_path: data.workspace_path,
         project_id: data.project_id,
+        workspace_mode: conversationWorkspaceMode(data),
         research_mode: data.research_mode,
         pinned: data.pinned,
         archived: data.archived,

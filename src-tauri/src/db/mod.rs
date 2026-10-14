@@ -48,6 +48,7 @@ impl DbManager {
 
             let result: Result<()> = (|| {
                 conn.execute_batch(schema::SCHEMA_SQL)?;
+                conversation_repo::migrate_workspace_mode(conn)?;
 
                 let has_col: i64 = conn
                     .query_row(

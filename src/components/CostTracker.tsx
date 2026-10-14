@@ -170,20 +170,27 @@ export default function CostTracker({ conversationId, compact = false, apiBase =
 
   if (compact) {
     return (
-      <div className="flex items-center gap-1.5 px-2 py-1 text-[11px] text-claude-textSecondary bg-claude-hover/50 rounded-md">
-        <Coins size={12} className="text-amber-500" />
+      <div className="bg-claude-hover rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <TrendingUp size={14} className="text-[#C6613F]" />
+          <span className="text-xs text-claude-textSecondary">今日 Token 用量</span>
+        </div>
         {usageStats ? (
-          <span className="font-mono">
-            {formatTokens(usageStats.daily_usage)}
-            {usageStats.daily_budget && (
-              <span className="text-claude-textSecondary">/{formatTokens(usageStats.daily_budget)}</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-semibold tabular-nums text-claude-text">{formatTokens(usageStats.daily_usage)}</span>
+            <span className="text-xs text-claude-textSecondary">Token</span>
+            {usageStats.daily_budget != null && usageStats.daily_budget > 0 && (
+              <span className="ml-auto text-xs text-claude-textSecondary">每日预算：{formatTokens(usageStats.daily_budget)} Token</span>
             )}
-          </span>
+          </div>
         ) : (
-          <span className="animate-pulse">...</span>
+          <span className="text-sm text-claude-textSecondary animate-pulse">加载中...</span>
         )}
         {budgetWarning && (
-          <AlertTriangle size={10} className="text-amber-500" />
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+            <AlertTriangle size={12} />
+            <span>{budgetWarning}</span>
+          </div>
         )}
       </div>
     );

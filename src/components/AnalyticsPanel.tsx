@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BarChart3, TrendingUp, MessageSquare, Zap, AlertTriangle, Mic, Hash, FileUp, Activity, Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { getAnalyticsSummary, getAnalyticsRange, getAnalyticsEventCounts, getAnalyticsRecentEvents } from '../api';
+import CostTracker from './CostTracker';
 
 interface DailyStats {
   date: string;
@@ -193,6 +194,7 @@ const AnalyticsPanel = ({ onClose }: { onClose: () => void }) => {
             </div>
           ) : tab === 'overview' ? (
             <div className="space-y-6">
+              <CostTracker compact />
               <div className="grid grid-cols-4 gap-3">
                 {statCards.map(card => (
                   <div key={card.label} className="bg-claude-hover rounded-lg p-3">
