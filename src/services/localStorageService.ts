@@ -1,5 +1,5 @@
 import type { Provider, ProviderModel } from '../api/providers';
-import type { WorkspaceMode } from '../stores/useWorkspaceModeStore';
+import { conversationWorkspaceMode, type WorkspaceMode } from '../stores/useWorkspaceModeStore';
 
 const KEYS = {
   providers: 'app_providers',
@@ -33,6 +33,11 @@ export interface LocalMessage {
   is_compact_boundary?: number;
   sort_order: number;
   toolCalls?: any[];
+  processSteps?: import('../features/trajectory/model').ProcessStep[];
+  processStartedAt?: number;
+  processEndedAt?: number;
+  toolTextEndOffset?: number;
+  requestSnapshots?: import('../features/trajectory/model').RequestSnapshot[];
 }
 
 function safeGet<T>(key: string, fallback: T): T {
@@ -104,7 +109,10 @@ export function deleteLocalProvider(id: string): void {
 // ============ Conversations ============
 
 export function getLocalConversations(): LocalConversation[] {
-  return safeGet<LocalConversation[]>(KEYS.conversations, []);
+  return safeGet<LocalConversation[]>(KEYS.conversations, []).map(conversation => ({
+    ...conversation,
+    workspace_mode: conversationWorkspaceMode(conversation),
+  }));
 }
 
 export function saveLocalConversations(convs: LocalConversation[]): void {

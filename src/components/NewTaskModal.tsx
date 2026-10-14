@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { TaskInfo } from '../utils/tauriAPI';
+import { useI18n } from '../hooks/useI18n';
 
 interface NewTaskModalProps {
   open: boolean;
@@ -17,24 +18,25 @@ interface NewTaskModalProps {
 }
 
 const CRON_PRESETS = [
-  { label: 'Every minute', value: '* * * * *' },
-  { label: 'Every 5 minutes', value: '*/5 * * * *' },
-  { label: 'Every 15 minutes', value: '*/15 * * * *' },
-  { label: 'Every hour', value: '0 * * * *' },
-  { label: 'Every day at midnight', value: '0 0 * * *' },
-  { label: 'Every day at 9 AM', value: '0 9 * * *' },
-  { label: 'Every Monday at 9 AM', value: '0 9 * * 1' },
-  { label: 'Every weekday at 9 AM', value: '0 9 * * 1-5' },
+  { label: 'tasks.everyMinute', value: '* * * * *' },
+  { label: 'tasks.every5Minutes', value: '*/5 * * * *' },
+  { label: 'tasks.every15Minutes', value: '*/15 * * * *' },
+  { label: 'tasks.everyHour', value: '0 * * * *' },
+  { label: 'tasks.midnight', value: '0 0 * * *' },
+  { label: 'tasks.daily9', value: '0 9 * * *' },
+  { label: 'tasks.monday9', value: '0 9 * * 1' },
+  { label: 'tasks.weekday9', value: '0 9 * * 1-5' },
 ];
 
 const TASK_TYPES = [
-  { value: 'prompt', label: 'Send Prompt' },
-  { value: 'webhook', label: 'Webhook Call' },
-  { value: 'system', label: 'System Command' },
-  { value: 'report', label: 'Generate Report' },
+  { value: 'prompt', label: 'tasks.prompt' },
+  { value: 'webhook', label: 'tasks.webhook' },
+  { value: 'system', label: 'tasks.system' },
+  { value: 'report', label: 'tasks.report' },
 ];
 
 export default function NewTaskModal({ open, onClose, onSave, initialTask }: NewTaskModalProps) {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [cronExpression, setCronExpression] = useState('');
@@ -78,7 +80,7 @@ export default function NewTaskModal({ open, onClose, onSave, initialTask }: New
       <div className="w-full max-w-lg rounded-2xl bg-claude-input border border-claude-border shadow-2xl">
         <div className="flex items-center justify-between px-5 py-4 border-b border-claude-border">
           <h3 className="text-[16px] font-semibold text-claude-text">
-            {initialTask ? 'Edit Task' : 'New Scheduled Task'}
+            {initialTask ? t('tasks.editTask') : t('tasks.newScheduledTask')}
           </h3>
           <button
             onClick={onClose}
@@ -91,39 +93,39 @@ export default function NewTaskModal({ open, onClose, onSave, initialTask }: New
         <div className="px-5 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
           <div>
             <label className="block text-[12px] font-medium text-claude-textSecondary mb-1.5">
-              Task Name
+              {t('tasks.name')}
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Daily Report Generator"
+              placeholder={t('tasks.namePlaceholder')}
               className="w-full px-3 py-2 text-[13px] text-claude-text bg-claude-bg border border-claude-border rounded-lg outline-none focus:border-claude-accent transition-colors placeholder:text-claude-textSecondary/60"
             />
           </div>
 
           <div>
             <label className="block text-[12px] font-medium text-claude-textSecondary mb-1.5">
-              Description
+              {t('tasks.description')}
             </label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional description..."
+              placeholder={t('tasks.descriptionPlaceholder')}
               className="w-full px-3 py-2 text-[13px] text-claude-text bg-claude-bg border border-claude-border rounded-lg outline-none focus:border-claude-accent transition-colors placeholder:text-claude-textSecondary/60"
             />
           </div>
 
           <div>
             <label className="block text-[12px] font-medium text-claude-textSecondary mb-1.5">
-              Cron Expression
+              {t('tasks.cron')}
             </label>
             <input
               type="text"
               value={cronExpression}
               onChange={(e) => setCronExpression(e.target.value)}
-              placeholder="e.g. 0 9 * * *"
+              placeholder={t('tasks.cronPlaceholder')}
               className="w-full px-3 py-2 text-[13px] font-mono text-claude-text bg-claude-bg border border-claude-border rounded-lg outline-none focus:border-claude-accent transition-colors placeholder:text-claude-textSecondary/60"
             />
             <div className="flex flex-wrap gap-1.5 mt-2">
@@ -137,7 +139,7 @@ export default function NewTaskModal({ open, onClose, onSave, initialTask }: New
                       : 'border-claude-border text-claude-textSecondary hover:bg-claude-btn-hover hover:text-claude-text'
                   }`}
                 >
-                  {preset.label}
+                  {t(preset.label)}
                 </button>
               ))}
             </div>
@@ -145,16 +147,16 @@ export default function NewTaskModal({ open, onClose, onSave, initialTask }: New
 
           <div>
             <label className="block text-[12px] font-medium text-claude-textSecondary mb-1.5">
-              Task Type
+              {t('tasks.type')}
             </label>
             <select
               value={taskType}
               onChange={(e) => setTaskType(e.target.value)}
               className="w-full px-3 py-2 text-[13px] text-claude-text bg-claude-bg border border-claude-border rounded-lg outline-none focus:border-claude-accent transition-colors"
             >
-              {TASK_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
+              {TASK_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {t(type.label)}
                 </option>
               ))}
             </select>
@@ -162,12 +164,12 @@ export default function NewTaskModal({ open, onClose, onSave, initialTask }: New
 
           <div>
             <label className="block text-[12px] font-medium text-claude-textSecondary mb-1.5">
-              Task Config (JSON or prompt)
+              {t('tasks.config')}
             </label>
             <textarea
               value={taskConfig}
               onChange={(e) => setTaskConfig(e.target.value)}
-              placeholder={taskType === 'prompt' ? 'Enter the prompt to send...' : 'Enter configuration...'}
+              placeholder={taskType === 'prompt' ? t('tasks.promptPlaceholder') : t('tasks.configPlaceholder')}
               rows={4}
               className="w-full px-3 py-2 text-[13px] text-claude-text bg-claude-bg border border-claude-border rounded-lg outline-none focus:border-claude-accent transition-colors placeholder:text-claude-textSecondary/60 resize-none"
             />
@@ -175,13 +177,13 @@ export default function NewTaskModal({ open, onClose, onSave, initialTask }: New
 
           <div>
             <label className="block text-[12px] font-medium text-claude-textSecondary mb-1.5">
-              Conversation ID (optional)
+              {t('tasks.conversation')}
             </label>
             <input
               type="text"
               value={conversationId}
               onChange={(e) => setConversationId(e.target.value)}
-              placeholder="Link to a conversation..."
+              placeholder={t('tasks.conversationPlaceholder')}
               className="w-full px-3 py-2 text-[13px] text-claude-text bg-claude-bg border border-claude-border rounded-lg outline-none focus:border-claude-accent transition-colors placeholder:text-claude-textSecondary/60"
             />
           </div>
@@ -192,14 +194,14 @@ export default function NewTaskModal({ open, onClose, onSave, initialTask }: New
             onClick={onClose}
             className="px-4 py-2 text-[13px] font-medium text-claude-textSecondary hover:text-claude-text transition-colors rounded-lg hover:bg-claude-btn-hover"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleSave}
             disabled={!name.trim() || !cronExpression.trim() || !taskConfig.trim()}
             className="px-5 py-2 text-[13px] font-medium text-white bg-claude-accent rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            {initialTask ? 'Save Changes' : 'Create Task'}
+            {initialTask ? t('tasks.saveChanges') : t('tasks.create')}
           </button>
         </div>
       </div>

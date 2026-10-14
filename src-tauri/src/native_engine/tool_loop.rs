@@ -4,10 +4,12 @@ use crate::native_engine::openai_client::{OpenAIClient, OpenAIContent, OpenAIMes
 use crate::native_engine::provider_manager::{ApiFormat, ResolvedProvider};
 use crate::native_engine::token_counter::TokenCounter;
 use crate::native_engine::context_compressor::{ContextCompressor, ContextWindow, CompressionLevel};
+use crate::native_engine::request_trace::RequestTrace;
 use crate::permissions::{PermissionManager, PermissionResult};
 use crate::prefetch::PrefetchEngine;
 use crate::streaming::sse_parser::{consume_sse_payloads, merge_tool_args, recover_malformed_tool_input};
 use crate::tools::get_tool_definitions;
+use crate::prompt::{PromptProfile, code::{adapt_tools, is_memory_tool}};
 use crate::mcp::McpToolRegistry;
 use crate::memory::{ContextManager, MemExClient, TieredCompressor};
 use anyhow::{anyhow, Result};
@@ -19,8 +21,17 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use tokio::sync::{mpsc, Mutex, oneshot};
 use tokio::time::{timeout, Duration};
 
+#[cfg(test)]
+#[path = "search_integration_tests.rs"]
+mod search_integration_tests;
+
+#[cfg(test)]
+#[path = "code_prompt_tests.rs"]
+mod code_prompt_tests;
+
 #[derive(Debug, Clone)]
 pub enum EngineEvent {
+    RequestSnapshot(Value),
     Text(String),
     Thinking(String),
     ToolUseStart {
@@ -96,8 +107,10 @@ pub struct ToolLoopExecutor {
     permission_manager: Option<Arc<PermissionManager>>,
     memex_client: Option<MemExClient>,
     context_manager: Option<ContextManager>,
+    prompt_profile: PromptProfile,
     reasoning_mode: ReasoningMode,
     prefetch_engine: Option<Arc<PrefetchEngine>>,
+    search_config_path: Option<std::path::PathBuf>,
 }
 
 #[derive(Debug, Clone)]
@@ -143,6 +156,92 @@ fn compact_tool_output(tool_name: &str, output: &str) -> String {
     }
 }
 
+fn uses_independent_deepseek_search(provider: &ResolvedProvider) -> bool {
+    match provider.provider.web_search_strategy.as_deref().unwrap_or("auto") {
+        "deepseek_native" | "deepseek" => true,
+        "auto" | "" => provider.model.id.to_ascii_lowercase().contains("deepseek")
+            || provider.provider.builtin_id.as_deref() == Some("deepseek")
+            || reqwest::Url::parse(&provider.provider.base_url).ok()
+                .and_then(|url| url.host_str().map(String::from)).as_deref() == Some("api.deepseek.com"),
+        _ => false,
+    }
+}
+
+async fn independent_search_provider(path: Option<&std::path::Path>) -> Result<ResolvedProvider> {
+    // Read at call time so saving settings takes effect without restarting a turn.
+    let settings = if let Some(path) = path {
+        match tokio::fs::read(path).await {
+            Ok(bytes) => serde_json::from_slice::<crate::config::AppConfig>(&bytes)
+                .map_err(|_| anyhow!("无法读取联网搜索设置，请在系统设置 → 联网搜索中重新保存 DeepSeek 配置。"))?
+                .deepseek_search,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Default::default(),
+            Err(_) => return Err(anyhow!("无法读取联网搜索设置，请检查应用配置文件权限。")),
+        }
+    } else { Default::default() };
+    settings.resolved_provider()
+}
+
+/// Provider credentials are request-scoped, including parallel tool execution.
+async fn execute_builtin_tool(
+    name: &str,
+    input: Value,
+    cwd: &str,
+    provider: &ResolvedProvider,
+    event_tx: &mpsc::Sender<EngineEvent>,
+    search_config_path: Option<&std::path::Path>,
+) -> Result<Value> {
+    if name != "WebSearch" {
+        return crate::tools::execute_tool_async(name, input, cwd).await;
+    }
+    if crate::tools::provider_search::uses_public_search(provider) {
+        return crate::tools::execute_public_web_search(input).await;
+    }
+
+    let independent;
+    let provider = if uses_independent_deepseek_search(provider) {
+        independent = independent_search_provider(search_config_path).await?;
+        &independent
+    } else { provider };
+
+    let mut trace = RequestTrace::new(json!({
+        "id": uuid::Uuid::new_v4().to_string(), "number": 0,
+        "startedAt": chrono::Utc::now().timestamp_millis(),
+        "model": provider.model.id, "providerId": provider.provider.id,
+        "providerName": provider.provider.name, "apiFormat": provider.provider.api_format,
+        "source": "web_search", "systemPrompt": null, "systemMessages": [], "tools": [],
+        "searchQuery": input["query"]
+    }));
+    let _ = event_tx.send(EngineEvent::RequestSnapshot(trace.started())).await;
+    let result = crate::tools::provider_search::search(input, provider).await;
+    let snapshot = match &result {
+        Ok(value) => {
+            trace.observe_openai(&json!({"usage": value["usage"], "model": value["model"], "id": value["response_id"]}));
+            trace.mark_completed();
+            let mut snapshot = trace.finish("completed", None);
+            snapshot["apiFormat"] = value["api_format"].clone();
+            if let Some(tokens) = snapshot["totalTokens"].as_f64() {
+                crate::metrics::TOKENS_CONSUMED.inc_by(tokens);
+            }
+            snapshot
+        }
+        Err(error) => {
+            if let Some(response) = error.downcast_ref::<crate::tools::provider_search::SearchResponseError>() {
+                trace.observe_openai(&json!({"usage": response.usage, "model": response.model, "id": response.response_id}));
+            }
+            let mut snapshot = trace.finish("error", Some(&error.to_string()));
+            if let Some(response) = error.downcast_ref::<crate::tools::provider_search::SearchResponseError>() {
+                snapshot["apiFormat"] = json!(response.api_format);
+            }
+            if let Some(tokens) = snapshot["totalTokens"].as_f64() {
+                crate::metrics::TOKENS_CONSUMED.inc_by(tokens);
+            }
+            snapshot
+        }
+    };
+    let _ = event_tx.send(EngineEvent::RequestSnapshot(snapshot)).await;
+    result
+}
+
 async fn execute_tool_standalone(
     tool_name: String,
     tool_input: Value,
@@ -154,6 +253,8 @@ async fn execute_tool_standalone(
     conv_id: Option<String>,
     completed_count: Arc<AtomicUsize>,
     total_count: usize,
+    provider: ResolvedProvider,
+    search_config_path: Option<std::path::PathBuf>,
 ) -> (String, String, Value, String, bool) {
     crate::metrics::TOOL_CALLS_TOTAL.inc();
     let _tool_timer = crate::metrics::TOOL_CALL_DURATION.start_timer();
@@ -227,14 +328,14 @@ async fn execute_tool_standalone(
                 Err(e) => (format!("Error: {}", e), true),
             }
         } else {
-            let result = crate::tools::execute_tool_async(&tool_name, tool_input.clone(), &workspace_cwd).await;
+            let result = execute_builtin_tool(&tool_name, tool_input.clone(), &workspace_cwd, &provider, &event_tx, search_config_path.as_deref()).await;
             match &result {
                 Ok(val) => (serde_json::to_string_pretty(val).unwrap_or_default(), false),
                 Err(e) => (format!("Error: {}", e), true),
             }
         }
     } else {
-        let result = crate::tools::execute_tool_async(&tool_name, tool_input.clone(), &workspace_cwd).await;
+        let result = execute_builtin_tool(&tool_name, tool_input.clone(), &workspace_cwd, &provider, &event_tx, search_config_path.as_deref()).await;
         match &result {
             Ok(val) => (serde_json::to_string_pretty(val).unwrap_or_default(), false),
             Err(e) => (format!("Error: {}", e), true),
@@ -289,9 +390,16 @@ impl ToolLoopExecutor {
             permission_manager: None,
             memex_client: None,
             context_manager: None,
+            prompt_profile: PromptProfile::Desktop,
             reasoning_mode,
             prefetch_engine: None,
+            search_config_path: None,
         }
+    }
+
+    pub fn with_search_config_path(mut self, path: std::path::PathBuf) -> Self {
+        self.search_config_path = Some(path);
+        self
     }
 
     pub fn with_conv_id(mut self, conv_id: String) -> Self {
@@ -323,6 +431,15 @@ impl ToolLoopExecutor {
         self.context_manager = Some(ContextManager::new(client_arc));
         self.memex_client = Some(client);
         self
+    }
+
+    pub fn with_prompt_profile(mut self, profile: PromptProfile) -> Self {
+        self.prompt_profile = profile;
+        self
+    }
+
+    fn tool_definitions(&self) -> Vec<crate::tools::ToolDefinition> {
+        adapt_tools(get_tool_definitions(), self.prompt_profile)
     }
 
     pub fn with_prefetch_engine(mut self, engine: Arc<PrefetchEngine>) -> Self {
@@ -388,9 +505,13 @@ impl ToolLoopExecutor {
             .rev()
             .find(|m| m.get("role").and_then(|r| r.as_str()) == Some("user"))
             .and_then(|m| m.get("content"))
-            .and_then(|c| c.as_str())
-            .unwrap_or("")
-            .to_string();
+            .map(|content| {
+                if let Some(text) = content.as_str() { return text.to_string(); }
+                content.as_array().map(|blocks| blocks.iter()
+                    .filter_map(|block| block.get("text").and_then(Value::as_str))
+                    .collect::<Vec<_>>().join("\n")).unwrap_or_default()
+            })
+            .unwrap_or_default();
         tracing::info!(module = "ToolLoop", "[E3] Last user msg len={}", last_user_msg.len());
 
         if let Some(ref prefetch) = self.prefetch_engine {
@@ -459,6 +580,12 @@ impl ToolLoopExecutor {
         match &loop_result {
             Ok((full_text, stop_reason)) => {
                 tracing::info!(module = "ToolLoop", "[E6] API loop COMPLETED, full_text_len={}", full_text.len());
+                // Persist before announcing completion so the next session can recall this turn.
+                if !matches!(stop_reason.as_deref(), Some("stream_error" | "error" | "interrupted" | "failed" | "cancelled" | "max_iterations")) {
+                    if let Some(ctx_mgr) = &self.context_manager {
+                        ctx_mgr.after_response(&conv_id, &last_user_msg, full_text).await;
+                    }
+                }
                 let _ = self.event_tx.send(EngineEvent::MessageStop {
                     full_text: full_text.clone(),
                     stop_reason: stop_reason.clone(),
@@ -474,15 +601,6 @@ impl ToolLoopExecutor {
                     stop_reason: Some("error".to_string()),
                 }).await;
                 tracing::info!(module = "ToolLoop", "[E7] Error + MessageStop sent (failure)");
-            }
-        }
-
-        // 回复后：存储记忆
-        if let Some(ctx_mgr) = &self.context_manager {
-            if !last_user_msg.is_empty() {
-                if let Ok((ref full_text, _)) = loop_result {
-                    ctx_mgr.after_response(&conv_id, &last_user_msg, full_text).await;
-                }
             }
         }
 
@@ -536,7 +654,7 @@ impl ToolLoopExecutor {
                 };
             } else {
                 let cwd = self.get_workspace_cwd().to_string();
-                let result = crate::tools::execute_tool_async(tool_name, tool_input.clone(), &cwd).await;
+                let result = execute_builtin_tool(tool_name, tool_input.clone(), &cwd, &self.provider, &self.event_tx, self.search_config_path.as_deref()).await;
                 output_str = match &result {
                     Ok(val) => serde_json::to_string_pretty(val).unwrap_or_default(),
                     Err(e) => format!("Error: {}", e),
@@ -545,7 +663,7 @@ impl ToolLoopExecutor {
             }
         } else {
             let cwd = self.get_workspace_cwd().to_string();
-            let result = crate::tools::execute_tool_async(tool_name, tool_input.clone(), &cwd).await;
+            let result = execute_builtin_tool(tool_name, tool_input.clone(), &cwd, &self.provider, &self.event_tx, self.search_config_path.as_deref()).await;
             output_str = match &result {
                 Ok(val) => serde_json::to_string_pretty(val).unwrap_or_default(),
                 Err(e) => format!("Error: {}", e),
@@ -766,7 +884,7 @@ impl ToolLoopExecutor {
                 is_error = result.is_err();
             } else {
                 let cwd = self.get_workspace_cwd().to_string();
-                let result = crate::tools::execute_tool_async(tool_name, tool_input.clone(), &cwd).await;
+                let result = execute_builtin_tool(tool_name, tool_input.clone(), &cwd, &self.provider, &self.event_tx, self.search_config_path.as_deref()).await;
                 output_str = match &result {
                     Ok(val) => serde_json::to_string_pretty(val).unwrap_or_default(),
                     Err(e) => format!("Error: {}", e),
@@ -775,7 +893,7 @@ impl ToolLoopExecutor {
             }
         } else {
             let cwd = self.get_workspace_cwd().to_string();
-            let result = crate::tools::execute_tool_async(tool_name, tool_input.clone(), &cwd).await;
+            let result = execute_builtin_tool(tool_name, tool_input.clone(), &cwd, &self.provider, &self.event_tx, self.search_config_path.as_deref()).await;
             output_str = match &result {
                 Ok(val) => serde_json::to_string_pretty(val).unwrap_or_default(),
                 Err(e) => format!("Error: {}", e),
@@ -791,7 +909,7 @@ impl ToolLoopExecutor {
         let mut conversation_messages: Vec<AnthropicMessage> = self.build_anthropic_messages();
         tracing::info!(module = "AnthropicLoop", "Messages built, count={}", conversation_messages.len());
 
-        let tools = get_tool_definitions();
+        let tools = self.tool_definitions();
         tracing::info!(module = "AnthropicLoop", "Tool definitions loaded, count={}, mode={:?}", tools.len(), self.reasoning_mode);
 
         if matches!(self.reasoning_mode, ReasoningMode::Deep) {
@@ -913,6 +1031,24 @@ impl ToolLoopExecutor {
             }
 
             self.streaming_tool_args.clear();
+            let mut request_trace = RequestTrace::new(json!({
+                "id": uuid::Uuid::new_v4().to_string(),
+                "number": iteration + 1,
+                "startedAt": chrono::Utc::now().timestamp_millis(),
+                "model": self.provider.model.id,
+                "providerId": self.provider.provider.id,
+                "providerName": self.provider.provider.name,
+                "apiFormat": self.provider.provider.api_format,
+                "maxOutputTokens": self.max_tokens,
+                "contextWindow": self.provider.model.context_window.map(|n| n as usize).unwrap_or_else(|| TokenCounter::get_model_context_limit(&self.provider.model.id)),
+                "reservedForCompletion": (self.max_tokens as u64) * 2,
+                "effort": self.provider.model.effort,
+                "systemPrompt": self.system_prompt,
+                "systemMessages": conversation_messages.iter().filter(|m| m.role == "system").collect::<Vec<_>>(),
+                "tools": tools,
+                "source": "native_engine"
+            }));
+            let _ = self.event_tx.send(EngineEvent::RequestSnapshot(request_trace.started())).await;
             let stream = self.anthropic_client
                 .send_message_stream_with_thinking(
                     &self.provider,
@@ -932,6 +1068,7 @@ impl ToolLoopExecutor {
                 Err(e) => {
                     let err_msg = format!("API request failed: {}", e);
                     tracing::error!(module = "AnthropicLoop", "Stream creation FAILED: {}", err_msg);
+                    let _ = self.event_tx.send(EngineEvent::RequestSnapshot(request_trace.finish("error", Some(&err_msg)))).await;
                     let _ = self.event_tx.send(EngineEvent::Error(err_msg.clone())).await;
                     return Err(anyhow!(err_msg));
                 }
@@ -946,7 +1083,13 @@ impl ToolLoopExecutor {
             let mut current_tool_name: Option<String> = None;
             let mut pending_tool_calls: Vec<PendingToolCall> = Vec::new();
 
-            while let Some(chunk_result) = stream.next().await {
+            loop {
+                let chunk_result = match stream.next().await {
+                    Some(chunk) => chunk,
+                    // Some providers omit the delimiter on their final SSE event.
+                    None if !sse_buffer.is_empty() => Ok("\n\n".to_string()),
+                    None => break,
+                };
                 if self.event_tx.is_closed() {
                     drop(stream);
                     break;
@@ -956,6 +1099,7 @@ impl ToolLoopExecutor {
                     Err(e) => {
                         let err_msg = format!("Stream error: {}", e);
                         tracing::error!(module = "AnthropicLoop", "Stream chunk error: {}", err_msg);
+                        let _ = self.event_tx.send(EngineEvent::RequestSnapshot(request_trace.finish("error", Some(&err_msg)))).await;
                         let _ = self.event_tx.send(EngineEvent::Error(err_msg)).await;
                         let _ = self.event_tx.send(EngineEvent::MessageStop {
                             full_text: full_text.clone(),
@@ -976,6 +1120,7 @@ impl ToolLoopExecutor {
                         Err(_) => continue,
                     };
 
+                    request_trace.observe_anthropic(&event);
                     let event_type = event.get("type").and_then(|t| t.as_str()).unwrap_or("");
 
                     match event_type {
@@ -1073,7 +1218,9 @@ impl ToolLoopExecutor {
                                 let name = current_tool_name.clone().unwrap_or_default();
                                 let input = self.finalize_streaming_tool_args(&id);
 
+                                // Memory calls need this executor's configured client, not a generic stub.
                                 let requires_user_interaction = name == "AskUserQuestion"
+                                    || is_memory_tool(&name)
                                     || self.check_permission_requires_confirmation(&name, &input);
 
                                 assistant_blocks.push(ContentBlock::ToolUse {
@@ -1116,27 +1263,15 @@ impl ToolLoopExecutor {
                 }
             }
 
-            if !sse_buffer.is_empty() {
-                let consumed = consume_sse_payloads(&sse_buffer);
-                for payload in &consumed.payloads {
-                    let event: Value = match serde_json::from_str(payload) {
-                        Ok(v) => v,
-                        Err(_) => continue,
-                    };
-                    let event_type = event.get("type").and_then(|t| t.as_str()).unwrap_or("");
-                    if event_type == "message_delta" {
-                        let delta = event.get("delta");
-                        let sr = delta.and_then(|d| d.get("stop_reason")).and_then(|s| s.as_str()).map(String::from);
-                        if sr.is_some() {
-                            stop_reason = sr.clone();
-                            let _ = self.event_tx.send(EngineEvent::MessageDelta {
-                                stop_reason: sr,
-                            }).await;
-                        }
-                    }
-                }
+            let interrupted = self.event_tx.is_closed();
+            let snapshot = request_trace.finish(if interrupted { "interrupted" } else { "completed" }, None);
+            let response_status = snapshot["status"].as_str().unwrap_or("interrupted").to_string();
+            let response_error = snapshot["error"].as_str().unwrap_or("Model response ended before completion").to_string();
+            let _ = self.event_tx.send(EngineEvent::RequestSnapshot(snapshot)).await;
+            if response_status != "completed" {
+                let _ = self.event_tx.send(EngineEvent::Error(response_error)).await;
+                return Ok((full_text, Some(response_status)));
             }
-
             if has_tool_use && !pending_tool_calls.is_empty() {
                 let mut tool_results: Vec<AnthropicMessage> = Vec::new();
 
@@ -1186,6 +1321,8 @@ impl ToolLoopExecutor {
                             conv_id_clone.clone(),
                             completed_count.clone(),
                             total + serial_calls.len(),
+                            self.provider.clone(),
+                            self.search_config_path.clone(),
                         );
                         futures.push(fut);
                     }
@@ -1218,6 +1355,7 @@ impl ToolLoopExecutor {
             }
 
             if iteration == self.max_tool_iterations - 1 {
+                stop_reason = Some("max_iterations".to_string());
                 let _ = self.event_tx.send(EngineEvent::Error("Max tool iterations reached".to_string())).await;
                 let _ = self.event_tx.send(EngineEvent::MessageStop {
                     full_text: full_text.clone(),
@@ -1244,7 +1382,7 @@ impl ToolLoopExecutor {
         let mut conversation_messages: Vec<OpenAIMessage> = self.build_openai_messages();
         tracing::info!(module = "OpenAILoop", "Messages built, count={}", conversation_messages.len());
 
-        let tools = get_tool_definitions();
+        let tools = self.tool_definitions();
         tracing::info!(module = "OpenAILoop", "Tool definitions loaded, count={}, mode={:?}", tools.len(), self.reasoning_mode);
 
         if matches!(self.reasoning_mode, ReasoningMode::Deep) {
@@ -1367,6 +1505,24 @@ impl ToolLoopExecutor {
             }
 
             self.streaming_tool_args.clear();
+            let mut request_trace = RequestTrace::new(json!({
+                "id": uuid::Uuid::new_v4().to_string(),
+                "number": iteration + 1,
+                "startedAt": chrono::Utc::now().timestamp_millis(),
+                "model": self.provider.model.id,
+                "providerId": self.provider.provider.id,
+                "providerName": self.provider.provider.name,
+                "apiFormat": self.provider.provider.api_format,
+                "maxOutputTokens": self.max_tokens,
+                "contextWindow": self.provider.model.context_window.map(|n| n as usize).unwrap_or_else(|| TokenCounter::get_model_context_limit(&self.provider.model.id)),
+                "reservedForCompletion": (self.max_tokens as u64) * 2,
+                "effort": self.provider.model.effort,
+                "systemPrompt": self.system_prompt,
+                "systemMessages": conversation_messages.iter().filter(|m| m.role == "system").collect::<Vec<_>>(),
+                "tools": tools,
+                "source": "native_engine"
+            }));
+            let _ = self.event_tx.send(EngineEvent::RequestSnapshot(request_trace.started())).await;
             let stream = self.openai_client
                 .send_message_stream(
                     &self.provider,
@@ -1385,6 +1541,7 @@ impl ToolLoopExecutor {
                 Err(e) => {
                     let err_msg = format!("API request failed: {}", e);
                     tracing::error!(module = "OpenAILoop", "Stream creation FAILED: {}", err_msg);
+                    let _ = self.event_tx.send(EngineEvent::RequestSnapshot(request_trace.finish("error", Some(&err_msg)))).await;
                     let _ = self.event_tx.send(EngineEvent::Error(err_msg.clone())).await;
                     return Err(anyhow!(err_msg));
                 }
@@ -1398,7 +1555,12 @@ impl ToolLoopExecutor {
             let mut assistant_tool_calls: Vec<crate::native_engine::openai_client::OpenAIToolCall> = Vec::new();
             let mut openai_tool_args: HashMap<usize, (String, String, String)> = HashMap::new();
 
-            while let Some(chunk_result) = stream.next().await {
+            loop {
+                let chunk_result = match stream.next().await {
+                    Some(chunk) => chunk,
+                    None if !sse_buffer.is_empty() => Ok("\n\n".to_string()),
+                    None => break,
+                };
                 if self.event_tx.is_closed() {
                     drop(stream);
                     break;
@@ -1408,6 +1570,7 @@ impl ToolLoopExecutor {
                     Err(e) => {
                         let err_msg = format!("Stream error: {}", e);
                         tracing::error!(module = "OpenAILoop", "Stream chunk error: {}", err_msg);
+                        let _ = self.event_tx.send(EngineEvent::RequestSnapshot(request_trace.finish("error", Some(&err_msg)))).await;
                         let _ = self.event_tx.send(EngineEvent::Error(err_msg)).await;
                         let _ = self.event_tx.send(EngineEvent::MessageStop {
                             full_text: full_text.clone(),
@@ -1424,6 +1587,7 @@ impl ToolLoopExecutor {
 
                 for payload in &consumed.payloads {
                     if payload == "[DONE]" {
+                        request_trace.mark_completed();
                         continue;
                     }
 
@@ -1432,7 +1596,14 @@ impl ToolLoopExecutor {
                         Err(_) => continue,
                     };
 
+                    request_trace.observe_openai(&event);
                     if let Some(content) = event.get("provider_content") { assistant_provider_content = Some(content.clone()); }
+                    // Usage-only final chunks have no choices and must still be recorded.
+                    if let Some(usage) = event.get("usage").filter(|usage| usage.is_object()) {
+                        if let Some(tokens) = usage.get("prompt_tokens").and_then(|v| v.as_f64()) { crate::metrics::TOKENS_CONSUMED.inc_by(tokens); }
+                        if let Some(tokens) = usage.get("completion_tokens").and_then(|v| v.as_f64()) { crate::metrics::TOKENS_CONSUMED.inc_by(tokens); }
+                        let _ = self.event_tx.send(EngineEvent::Usage(usage.clone())).await;
+                    }
                     let choices = match event.get("choices").and_then(|c| c.as_array()) {
                         Some(c) => c,
                         None => continue,
@@ -1512,18 +1683,18 @@ impl ToolLoopExecutor {
                         }
                     }
 
-                    if let Some(usage) = event.get("usage") {
-                        if let Some(prompt_tokens) = usage.get("prompt_tokens").and_then(|v| v.as_f64()) {
-                            crate::metrics::TOKENS_CONSUMED.inc_by(prompt_tokens);
-                        }
-                        if let Some(completion_tokens) = usage.get("completion_tokens").and_then(|v| v.as_f64()) {
-                            crate::metrics::TOKENS_CONSUMED.inc_by(completion_tokens);
-                        }
-                        let _ = self.event_tx.send(EngineEvent::Usage(usage.clone())).await;
-                    }
                 }
             }
 
+            let interrupted = self.event_tx.is_closed();
+            let snapshot = request_trace.finish(if interrupted { "interrupted" } else { "completed" }, None);
+            let response_status = snapshot["status"].as_str().unwrap_or("interrupted").to_string();
+            let response_error = snapshot["error"].as_str().unwrap_or("Model response ended before completion").to_string();
+            let _ = self.event_tx.send(EngineEvent::RequestSnapshot(snapshot)).await;
+            if response_status != "completed" {
+                let _ = self.event_tx.send(EngineEvent::Error(response_error)).await;
+                return Ok((full_text, Some(response_status)));
+            }
             if has_tool_calls {
                 let mut indices: Vec<usize> = openai_tool_args.keys().copied().collect();
                 indices.sort();
@@ -1543,7 +1714,9 @@ impl ToolLoopExecutor {
                         text_before: full_text.clone(),
                     }).await;
 
+                    // Memory calls need this executor's configured client, not a generic stub.
                     let requires_user_interaction = name == "AskUserQuestion"
+                        || is_memory_tool(&name)
                         || self.check_permission_requires_confirmation(name, &input);
 
                     assistant_tool_calls.push(crate::native_engine::openai_client::OpenAIToolCall {
@@ -1610,6 +1783,8 @@ impl ToolLoopExecutor {
                             conv_id_clone.clone(),
                             completed_count.clone(),
                             total + serial_calls.len(),
+                            self.provider.clone(),
+                            self.search_config_path.clone(),
                         );
                         futures.push(fut);
                     }
@@ -1644,6 +1819,7 @@ impl ToolLoopExecutor {
             }
 
             if iteration == self.max_tool_iterations - 1 {
+                stop_reason = Some("max_iterations".to_string());
                 let _ = self.event_tx.send(EngineEvent::Error("Max tool iterations reached".to_string())).await;
                 let _ = self.event_tx.send(EngineEvent::MessageStop {
                     full_text: full_text.clone(),

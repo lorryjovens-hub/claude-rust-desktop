@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronDown, Folder, FolderPlus, Laptop, Plus, X } from 'lucide-react';
 import { getProject, getProjects, Project, updateProject } from '../../api';
 import CreateProjectDialog from './CreateProjectDialog';
 import TrustProjectDialog from './TrustProjectDialog';
 import FolderFields from './FolderFields';
+import { useWorkspaceModeStore } from '../../stores/useWorkspaceModeStore';
 
-export default function ProjectWorkspaceBar({ projectId, onSelect, disabled = false, menuPlacement = 'above' }: {
+export default function ProjectWorkspaceBar({ projectId, onSelect, disabled = false, menuPlacement = 'above', children }: {
   projectId: string | null; onSelect: (project: Project) => void | Promise<void>; disabled?: boolean; menuPlacement?: 'above' | 'below';
+  children?: ReactNode;
 }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selected, setSelected] = useState<Project | null>(null);
@@ -17,18 +19,24 @@ export default function ProjectWorkspaceBar({ projectId, onSelect, disabled = fa
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
+  const workspaceMode = useWorkspaceModeStore(s => s.mode);
   useEffect(() => {
     let cancelled = false;
     const refresh = async () => {
       try {
         const [list, project] = await Promise.all([getProjects(), projectId ? getProject(projectId) : Promise.resolve(null)]);
-        if (!cancelled) { setProjects(list.filter(p => !p.is_archived)); setSelected(project); }
+        if (!cancelled) {
+          setProjects(list.filter(p => !p.is_archived)); setSelected(project);
+          if (workspaceMode === 'code' && project && !project.is_archived) {
+            useWorkspaceModeStore.getState().setLastCodeProjectId(project.id);
+          }
+        }
       } catch (error) { if (!cancelled) setError(error instanceof Error ? error.message : String(error)); }
     };
     refresh();
     window.addEventListener('projectsChanged', refresh);
     return () => { cancelled = true; window.removeEventListener('projectsChanged', refresh); };
-  }, [projectId]);
+  }, [projectId, workspaceMode]);
   useEffect(() => {
     if (!open) return;
     const close = (e: MouseEvent) => { if (!menuRef.current?.contains(e.target as Node)) setOpen(false); };
@@ -58,20 +66,25 @@ export default function ProjectWorkspaceBar({ projectId, onSelect, disabled = fa
     finally { setBusy(false); }
   };
   const folders = selected?.folders || [];
-  const buttonClass = 'flex items-center gap-1.5 rounded-md border border-claude-border bg-claude-input px-2 py-1 text-xs text-claude-text hover:bg-claude-hover disabled:opacity-40';
+  // A single source folder often supplies the project name; show that label once.
+  const folderName = (path: string) => path.split(/[\\/]/).filter(Boolean).pop() || path;
+  const projectRepresentsFolder = folders.length === 1 && folderName(folders[0].path) === selected?.name;
+  const visibleFolders = projectRepresentsFolder ? [] : folders;
+  const buttonClass = 'flex h-9 items-center gap-2 rounded-lg border border-claude-border bg-claude-input px-3 text-sm text-claude-text hover:bg-claude-hover disabled:opacity-40';
   return <div className="mb-2 text-claude-text" data-project-workspace>
-    <div className="flex flex-wrap items-center gap-1.5">
-      <span className="flex items-center gap-1 rounded-md border border-claude-border px-2 py-1 text-xs text-claude-textSecondary"><Laptop size={13} /> Local</span>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="flex h-9 items-center gap-1.5 rounded-lg border border-claude-border px-3 text-sm text-claude-textSecondary"><Laptop size={15} /> Local</span>
       <div className="relative" ref={menuRef}>
-        <button type="button" aria-label="Select project" aria-expanded={open} disabled={disabled || busy} onClick={() => setOpen(!open)} className={buttonClass}><Folder size={13} />{selected?.name || 'Select project'}<ChevronDown size={12} /></button>
+        <button type="button" aria-label="Select project" aria-expanded={open} title={projectRepresentsFolder ? folders[0].path : selected?.name} disabled={disabled || busy} onClick={() => setOpen(!open)} className={buttonClass}><Folder size={13} />{selected?.name || 'Select project'}<ChevronDown size={12} /></button>
         {open && <div className={`absolute left-0 ${menuPlacement === 'above' ? 'bottom-full mb-2' : 'top-full mt-2'} w-64 max-h-72 overflow-y-auto rounded-xl border border-claude-border bg-claude-input p-1.5 shadow-xl z-50`}>
           {projects.map(project => <button type="button" key={project.id} onClick={() => { choose(project).catch(() => {}); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-claude-hover"><Folder size={14} /><span className="truncate">{project.name}</span>{project.id === projectId && <span className="ml-auto">✓</span>}</button>)}
           {!projects.length && <p className="px-3 py-2 text-xs text-claude-textSecondary">No projects yet</p>}
           <button type="button" onClick={() => { setOpen(false); setCreating(true); }} className="mt-1 flex w-full items-center gap-2 rounded-lg border-t border-claude-border px-3 py-2 text-sm hover:bg-claude-hover"><Plus size={14} /> Create project</button>
         </div>}
       </div>
-      {folders.map(folder => <span key={folder.path} title={folder.path} className="flex max-w-[220px] items-center gap-1 rounded-md border border-claude-border bg-claude-input px-2 py-1 text-xs">
-        <Folder size={13} className="shrink-0" /><span className="truncate">{folder.path.split(/[\\/]/).filter(Boolean).pop() || folder.path}</span>
+      {children}
+      {visibleFolders.map(folder => <span key={folder.path} title={folder.path} className="flex h-9 max-w-[220px] items-center gap-1 rounded-lg border border-claude-border bg-claude-input px-3 text-sm">
+        <Folder size={13} className="shrink-0" /><span className="truncate">{folderName(folder.path)}</span>
         <button type="button" disabled={disabled || busy || folders.length <= 1} aria-label={`Remove folder ${folder.path}`} title={folders.length <= 1 ? 'Keep at least one source folder' : 'Remove folder'} onClick={() => saveFolders(folders.filter(f => f.path !== folder.path).map(f => f.path))} className="rounded hover:bg-claude-hover disabled:opacity-25"><X size={12} /></button>
       </span>)}
       {selected && <button type="button" aria-label="Add project folders" title="Add source folders" disabled={disabled || busy} onClick={() => setEditingFolders(folders.map(f => f.path))} className={buttonClass}><FolderPlus size={14} /></button>}

@@ -1,6 +1,10 @@
 /* === Local Font Imports (must come first - CSS spec requirement) === */
+@import './styles/anthropic-fonts.css';
 @import '@fontsource-variable/figtree';
 @import '@fontsource-variable/source-serif-4';
+@import '@fontsource-variable/source-serif-4/wght-italic.css';
+@import '@fontsource/opendyslexic/400.css';
+@import '@fontsource/opendyslexic/700.css';
 @import '@fontsource/spectral/400.css';
 @import '@fontsource/spectral/500.css';
 @import '@fontsource/spectral/600.css';
@@ -15,13 +19,16 @@
 
 /* === CSS Variables (Theme) === */
 :root {
-  --bg-claude-main: #F8F8F6;
-  --bg-claude-sidebar: #F7F7F4;
-  --border-claude: #E5E4E0;
+  --chat-serif-family: 'Anthropic Serif', 'Source Serif 4 Variable', 'Source Serif 4', Georgia, 'Times New Roman', 'Songti SC', SimSun, 'Noto Serif SC', serif;
+  --chat-sans-family: 'Anthropic Sans', 'Figtree Variable', 'Figtree', system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  --conversation-font-size: 16px;
+  --bg-claude-main: #FCFCFB;
+  --bg-claude-sidebar: #F5F5F3;
+  --border-claude: #D8D8D2;
   --border-subtle: rgba(0, 0, 0, 0.06);
-  --text-claude-main: #2a2a2a;
-  --text-claude-model-body: #2a2a2a;
-  --text-claude-secondary: #8B8B82;
+  --text-claude-main: #141413;
+  --text-claude-model-body: #141413;
+  --text-claude-secondary: #60605B;
   --bg-claude-accent: #CC7C5E;
   --bg-claude-hover: #EFEEEB;
   --bg-claude-btn-hover: #EAE9E6;
@@ -29,10 +36,10 @@
   --bg-claude-avatar: #333333;
   --text-claude-avatar: #FFFFFF;
   --bg-mode-tabs: #EFEEEB;
-  --bg-mode-tab-active: #F8F8F6;
+  --bg-mode-tab-active: #FCFCFB;
   --bg-tooltip: #2a2a2a;
   --text-tooltip: #FFFFFF;
-  --text-nav-active: #73726C;
+  --text-nav-active: #454540;
   --text-nav-disabled: #B7B5B0;
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -60,8 +67,8 @@
   --border-claude: #3A3A36;
   --border-subtle: rgba(255, 255, 255, 0.04);
   --text-claude-main: #FFFFFF;
-  --text-claude-model-body: #E8E4DA;
-  --text-claude-secondary: #8D8B82;
+  --text-claude-model-body: #F5F4EF;
+  --text-claude-secondary: #B5B4AD;
   --bg-claude-accent: #CC7C5E;
   --bg-claude-hover: #121212;
   --bg-claude-btn-hover: #121212;
@@ -94,7 +101,7 @@
 
 /* === Enhanced Base Styles === */
 body {
-  font-family: 'Figtree', sans-serif;
+  font-family: var(--chat-sans-family);
   background-color: var(--bg-claude-main);
   color: var(--text-claude-main);
   -webkit-font-smoothing: antialiased;
@@ -118,8 +125,11 @@ button:active, a:active {
 }
 
 .font-serif-claude {
-  font-family: 'Source Serif 4', serif;
+  font-family: var(--chat-serif-family);
 }
+
+.font-sans-claude { font-family: var(--chat-sans-family); }
+.font-dyslexic { font-family: 'OpenDyslexic', sans-serif; }
 
 /* === Sidebar Scrollbar === */
 .sidebar-scroll::-webkit-scrollbar {
@@ -587,17 +597,42 @@ html.dark .chat-scroll::-webkit-scrollbar-thumb:hover {
 
 /* === Chat Font Settings === */
 
-/* Default - Serif (Source Serif 4) */
+.conversation-content .conversation-text,
+.conversation-content .assistant-markdown,
+.conversation-content .assistant-markdown :where(p, ul, ol, li, blockquote, table) {
+  font-size: var(--conversation-font-size, 16px);
+}
+
+.conversation-content .assistant-markdown {
+  font-weight: 400;
+  line-height: 1.5;
+  font-optical-sizing: auto;
+}
+.conversation-content .assistant-markdown p { line-height: 1.5; margin-bottom: 0.75em; }
+.conversation-content .assistant-markdown .inline-code { font-size: 0.875em; }
+.conversation-content .assistant-markdown h1 { font-size: calc(var(--conversation-font-size, 16px) * 1.52); }
+.conversation-content .assistant-markdown h2 { font-size: calc(var(--conversation-font-size, 16px) * 1.27); }
+.conversation-content .assistant-markdown h3 { font-size: calc(var(--conversation-font-size, 16px) * 1.09); }
+.conversation-content .assistant-markdown :where(h4, h5, h6) { font-size: var(--conversation-font-size, 16px); }
+
+.general-permission-selector > button {
+  padding: 12px 16px;
+  border: 0;
+  font-size: 15px;
+  background: var(--bg-claude-hover);
+  border-radius: 12px;
+}
+
+/* Anthropic fonts are bundled locally, with fallbacks for unsupported glyphs. */
 html[data-chat-font="default"] .chat-font-scope {
-  --chat-font-family: 'Source Serif 4', 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', STSong, Georgia, ui-serif, serif;
+  --chat-font-family: var(--chat-serif-family);
   font-family: var(--chat-font-family);
-  font-weight: 430;
-  font-synthesis-weight: none;
+  font-weight: 400;
 }
 
 /* Sans */
 html[data-chat-font="sans"] .chat-font-scope {
-  --chat-font-family: 'Figtree', Inter, ui-sans-serif, system-ui, -apple-system, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --chat-font-family: var(--chat-sans-family);
   font-family: var(--chat-font-family);
 }
 
@@ -609,7 +644,7 @@ html[data-chat-font="system"] .chat-font-scope {
 
 /* Dyslexic Friendly */
 html[data-chat-font="dyslexic"] .chat-font-scope {
-  --chat-font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+  --chat-font-family: 'OpenDyslexic', sans-serif;
   font-family: var(--chat-font-family);
   line-height: 1.6;
 }
@@ -622,8 +657,7 @@ html[data-chat-font] .chat-font-scope .markdown-body :where(p, h1, h2, h3, h4, h
 }
 
 html[data-chat-font] .chat-font-scope textarea,
-html[data-chat-font] .chat-font-scope input,
-html[data-chat-font] .chat-font-scope .markdown-body {
+html[data-chat-font] .chat-font-scope input {
   font-family: inherit;
 }
 

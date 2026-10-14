@@ -159,6 +159,7 @@ async fn h5_chat_handler(
         let mut full_text = String::new();
         while let Some(event) = rx.recv().await {
             let event_data = match event {
+                crate::native_engine::tool_loop::EngineEvent::RequestSnapshot(_) => None,
                 crate::native_engine::tool_loop::EngineEvent::MessageStart { model } => {
                     Some(serde_json::json!({
                         "type": "message_start",

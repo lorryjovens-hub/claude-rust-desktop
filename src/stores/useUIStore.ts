@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { applyDocumentLanguage, getInitialLanguage, resolveLanguage } from '../locales/languages';
 
 interface UIState {
   sidebarCollapsed: boolean;
@@ -52,13 +53,8 @@ interface UIState {
   setLanguage: (lang: string) => void;
 }
 
-const getInitialLanguage = (): string => {
-  const stored = localStorage.getItem('app_language');
-  if (stored) return stored;
-  const browserLang = navigator.language || (navigator as any).userLanguage || '';
-  if (browserLang.toLowerCase().startsWith('zh')) return 'zh';
-  return 'en';
-};
+const initialLanguage = getInitialLanguage();
+applyDocumentLanguage(initialLanguage);
 
 export const useUIStore = create<UIState>()(
   subscribeWithSelector((set) => ({
@@ -84,7 +80,7 @@ export const useUIStore = create<UIState>()(
     documentPanelWidth: 400,
     terminalPanelHeight: 300,
     zoomLevel: 1,
-    language: getInitialLanguage(),
+    language: initialLanguage,
 
     toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
     setSidebarCollapsed: (sidebarCollapsed) => set({ sidebarCollapsed }),
@@ -118,10 +114,11 @@ export const useUIStore = create<UIState>()(
     setDocumentPanelWidth: (documentPanelWidth) => set({ documentPanelWidth }),
     setTerminalPanelHeight: (terminalPanelHeight) => set({ terminalPanelHeight }),
     setZoomLevel: (zoomLevel) => set({ zoomLevel }),
-    setLanguage: (language) => {
+    setLanguage: (value) => {
+      const language = resolveLanguage(value) || 'en';
       set({ language });
       localStorage.setItem('app_language', language);
-      document.documentElement.lang = language;
+      applyDocumentLanguage(language);
     },
   }))
 );

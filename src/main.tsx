@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { initializeGeneralSettings, useGeneralSettingsStore } from './stores/useGeneralSettingsStore';
+import { useChatStore } from './stores/useChatStore';
 
 console.log('[Main] Starting application...');
 console.log('[Main] __TAURI_INTERNALS__:', !!(window as any).__TAURI_INTERNALS__);
@@ -133,7 +135,10 @@ if (!rootElement) {
 
 console.log('[Main] Root element found, rendering App...');
 
+void (async () => {
 try {
+  await initializeGeneralSettings();
+  useChatStore.getState().setPermissionMode(useGeneralSettingsStore.getState().defaultPermissionMode);
   ReactDOM.createRoot(rootElement).render(
     <ErrorBoundary>
       <App />
@@ -149,3 +154,4 @@ try {
     <button onclick="window.location.reload()" style="margin-top:16px;padding:8px 24px;background:#4299e1;color:white;border:none;border-radius:6px;cursor:pointer;">Reload</button>
   </div>`;
 }
+})();

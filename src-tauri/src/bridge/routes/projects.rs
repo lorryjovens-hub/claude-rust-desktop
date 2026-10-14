@@ -114,19 +114,38 @@ struct ChatInput {
     model: Option<String>,
     #[serde(default)]
     workspace_mode: conversations::WorkspaceMode,
+    branch: Option<String>,
+    #[serde(default)]
+    use_worktree: bool,
+}
+
+async fn git_branches(Path(id): Path<String>, State(state): State<AppState>) -> ApiResult {
+    let result = database(&state, move |conn| {
+        let project = projects::require_trusted(conn, &id)?;
+        crate::worktree::session::branches(std::path::Path::new(project.workspace_path.as_deref().ok_or_else(|| anyhow::anyhow!("Project has no folder"))?))
+    }).await?;
+    Ok(Json(json!(result)))
 }
 
 async fn create_chat(Path(id): Path<String>, State(state): State<AppState>, Json(input): Json<ChatInput>) -> ApiResult {
     let result = database(&state, move |conn| {
-        let tx = conn.unchecked_transaction()?;
         let project = projects::require_trusted(conn, &id)?;
-        let conversation_id = uuid::Uuid::new_v4().to_string();
-        let now = chrono::Utc::now().to_rfc3339();
-        conversations::insert_conversation(&tx, &conversation_id, input.title.as_deref(), input.model.as_deref(), None, project.workspace_path.as_deref(), Some(&id), false, false, false, &now, &now, 0)?;
-        conversations::set_workspace_mode(&tx, &conversation_id, input.workspace_mode.as_str())?;
-        let conversation = conversations::get_conversation(&tx, &conversation_id)?;
-        tx.commit()?;
-        Ok(conversation)
+        anyhow::ensure!(!project.is_archived, "Select an active project");
+        let source = project.workspace_path.as_deref().ok_or_else(|| anyhow::anyhow!("Project has no folder"))?;
+        let prepared = crate::worktree::session::prepare(std::path::Path::new(source), input.branch.as_deref(), input.use_worktree)?;
+        let saved = (|| -> anyhow::Result<_> {
+            let tx = conn.unchecked_transaction()?;
+            let conversation_id = uuid::Uuid::new_v4().to_string();
+            let now = chrono::Utc::now().to_rfc3339();
+            conversations::insert_conversation(&tx, &conversation_id, input.title.as_deref(), input.model.as_deref(), None, Some(&prepared.path.to_string_lossy()), Some(&id), false, false, false, &now, &now, 0)?;
+            prepared.save(&tx, &conversation_id, &id, source)?;
+            conversations::set_workspace_mode(&tx, &conversation_id, input.workspace_mode.as_str())?;
+            let conversation = conversations::get_conversation(&tx, &conversation_id)?;
+            tx.commit()?;
+            Ok(conversation)
+        })();
+        if saved.is_err() { prepared.cleanup(); }
+        saved
     }).await?;
     Ok(Json(json!(result)))
 }
@@ -136,5 +155,6 @@ pub fn routes() -> Router<AppState> {
         .route("/api/projects", get(list).post(create))
         .route("/api/projects/{id}", get(detail).patch(update).delete(remove))
         .route("/api/projects/{id}/trust", post(trust))
+        .route("/api/projects/{id}/git/branches", get(git_branches))
         .route("/api/projects/{id}/conversations", get(chats).post(create_chat))
 }

@@ -1,7 +1,9 @@
 import React from 'react';
+import WorkDetails from '../trajectory/WorkDetails';
+import ResponseFooter from './ResponseFooter';
+import { useGeneralSettingsStore } from '../../stores/useGeneralSettingsStore';
+import { openChatLink } from '../../utils/chatLinks';
 import {
-  ChevronDown,
-  FileText,
   RotateCcw,
   Pencil,
   Copy,
@@ -13,10 +15,8 @@ import {
 import { invoke } from '@tauri-apps/api/core';
 import ClaudeLogo from '../../components/ClaudeLogo';
 import CodeExecution from '../../components/CodeExecution';
-import MarkdownRenderer from '../../components/MarkdownRenderer';
 import SearchProcess from '../../components/SearchProcess';
 import DocumentCreationProcess from '../../components/DocumentCreationProcess';
-import ToolDiffView, { shouldUseDiffView, hasExpandableContent, getToolStats } from '../../components/ToolDiffView';
 import DiffViewer from '../../components/DiffViewer';
 import DocumentCard, { DocumentInfo } from '../../components/DocumentCard';
 import MessageAttachments from '../../components/MessageAttachments';
@@ -36,6 +36,7 @@ export const draftsStore = new Map<string, { text: string; files: PendingFile[];
 
 /** Memoized message list — skips re-render when only inputText changes */
 interface MessageListProps {
+  conversationId?: string | null;
   messages: any[];
   loading: boolean;
   expandedMessages: Set<number>;
@@ -50,22 +51,30 @@ interface MessageListProps {
   onResend: (content: string, idx: number) => void;
   onEdit: (content: string, idx: number) => void;
   onCopy: (content: string, idx: number) => void;
-  onBranch: (idx: number) => void;
+  onBranch: (idx: number) => void | Promise<void>;
   onOpenDocument?: (doc: DocumentInfo) => void;
   onSetMessages: (messages: any[] | ((prev: any[]) => any[])) => void;
   messageContentRefs: React.MutableRefObject<Map<number, HTMLDivElement>>;
   onOpenResearch?: (msgId: string) => void;
+  onInspect?: (id: string) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 const MessageList = React.memo<MessageListProps>(({
-  messages, loading, expandedMessages, editingMessageIdx, editingContent,
+  conversationId, messages, loading, expandedMessages, editingMessageIdx, editingContent,
   copiedMessageIdx, compactStatus, onSetEditingContent, onEditCancel, onEditSave,
   onToggleExpand, onResend, onEdit, onCopy, onBranch, onOpenDocument, onSetMessages,
-  messageContentRefs, onOpenResearch, t,
+  messageContentRefs, onOpenResearch, onInspect, t,
 }) => {
+  const showCodingView = useGeneralSettingsStore(state => state.showCodingView);
   return (
-    <>
+    <div className="conversation-content" onClickCapture={event => {
+      const anchor = (event.target as HTMLElement).closest('a');
+      if (!anchor || !/^https?:\/\//i.test(anchor.href)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      void openChatLink(anchor.href).catch(error => console.error('Failed to open chat link:', error));
+    }}>
       <style>{`
         @keyframes shimmer {
           0% { background-position: 200% 0; }
@@ -189,7 +198,7 @@ const MessageList = React.memo<MessageListProps>(({
                             );
                           }
                           if (block.type === 'text' && block.text?.trim()) {
-                            return <div key={bi} className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">{block.text}</div>;
+                            return <div key={bi} className="conversation-text text-[15px] leading-relaxed whitespace-pre-wrap break-words">{block.text}</div>;
                           }
                           return null;
                         })}
@@ -199,7 +208,7 @@ const MessageList = React.memo<MessageListProps>(({
                   const displayText = extractTextContent(content); return displayText && displayText.trim() !== ''; })() && (
                   <div className="max-w-[85%] w-fit">
                     <div
-                      className="bg-[var(--msg-user-bg)] text-claude-text px-4 py-[10px] text-[15px] leading-relaxed font-sans font-[400] whitespace-pre-wrap break-words relative overflow-hidden"
+                      className="conversation-text bg-[var(--msg-user-bg)] text-claude-text px-4 py-[10px] text-[15px] leading-relaxed font-sans font-[400] whitespace-pre-wrap break-words relative overflow-hidden"
                       style={{ borderRadius: 'var(--msg-user-radius)', maxHeight: expandedMessages.has(idx) ? 'none' : '300px' }}
                       ref={(el) => { if (el) messageContentRefs.current.set(idx, el); }}
                     >
@@ -247,7 +256,6 @@ const MessageList = React.memo<MessageListProps>(({
                   <div className="flex items-center gap-0.5 overflow-hidden transition-all duration-200 ease-in-out max-w-0 opacity-0 group-hover:max-w-[200px] group-hover:opacity-100">
                     <button onClick={() => onResend(msg.content, idx)} className="p-1 text-claude-textSecondary hover:text-claude-text hover:bg-claude-hover rounded transition-colors" title="重新发送"><RotateCcw size={14} /></button>
                     <button onClick={() => onEdit(msg.content, idx)} className="p-1 text-claude-textSecondary hover:text-claude-text hover:bg-claude-hover rounded transition-colors" title="编辑"><Pencil size={14} /></button>
-                    <button onClick={() => onBranch(idx)} className="p-1 text-claude-textSecondary hover:text-claude-text hover:bg-claude-hover rounded transition-colors" title="分支"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg></button>
                     <button onClick={() => onCopy(msg.content, idx)} className="p-1 text-claude-textSecondary hover:text-claude-text hover:bg-claude-hover rounded transition-colors" title="复制">
                       {copiedMessageIdx === idx ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                     </button>
@@ -257,75 +265,6 @@ const MessageList = React.memo<MessageListProps>(({
             )
           ) : (
             <div className="px-1 text-claude-text text-[16.5px] leading-normal mt-2">
-              {msg.thinking && (
-                <div className="mb-4">
-                  <div
-                    className="flex items-center gap-2 cursor-pointer select-none group/think text-claude-textSecondary hover:text-claude-text transition-colors"
-                    onClick={() => {
-                      onSetMessages(prev =>
-                        prev.map((m, i) =>
-                          i === idx ? { ...m, isThinkingExpanded: !m.isThinkingExpanded } : m
-                        )
-                      );
-                    }}
-                  >
-                    {msg.isThinking && (
-                      <ClaudeLogo autoAnimate style={{ width: '30px', height: '30px' }} />
-                    )}
-                    <span className={`text-[14px] ${msg.isThinking ? 'animate-shimmer-text' : 'text-claude-textSecondary'}`}>
-                      {(() => {
-                        if (msg.thinking_summary) return msg.thinking_summary;
-                        const text = (msg.thinking || '').trim();
-                        const lines = text.split('\n').filter((l: string) => l.trim());
-                        const last = lines[lines.length - 1] || '';
-                        const summary = last.length > 40 ? last.slice(0, 40) + '...' : last;
-                        return summary || t('chat.thinking');
-                      })()}
-                    </span>
-                    <ChevronDown size={14} className={`transform transition-transform duration-200 ${msg.isThinkingExpanded ? 'rotate-180' : ''}`} />
-                  </div>
-
-                  {msg.isThinkingExpanded && (
-                    <div className="mt-2 ml-1 pl-4 border-l-2 border-claude-border">
-                      <div className="flex flex-col">
-                        <div className="relative">
-                          <div
-                            className="text-claude-textSecondary text-[14px] leading-normal whitespace-pre-wrap overflow-hidden"
-                            style={{ maxHeight: expandedMessages.has(idx) ? 'none' : '300px' }}
-                            ref={(el) => { if (el) messageContentRefs.current.set(idx, el); }}
-                          >
-                            {msg.thinking}
-                          </div>
-                          {!expandedMessages.has(idx) && (() => {
-                            const el = messageContentRefs.current.get(idx);
-                            return el && el.scrollHeight > 300;
-                          })() && (
-                              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-claude-bg to-transparent pointer-events-none" />
-                            )}
-                        </div>
-                        {(() => {
-                          const el = messageContentRefs.current.get(idx);
-                          const isOverflow = el && el.scrollHeight > 300;
-                          if (!isOverflow) return null;
-                          return (
-                            <div className="pt-1">
-                              <button onClick={() => onToggleExpand(idx)} className="text-[13px] text-claude-text hover:text-claude-textSecondary transition-colors font-medium">
-                                {expandedMessages.has(idx) ? 'Show less' : 'Show more'}
-                              </button>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                      {!msg.isThinking && (
-                        <div className="flex items-center gap-2 mt-2 text-claude-textSecondary">
-                          <Check size={16} />
-                          <span className="text-[14px]">Done</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
               {/* Research badge */}
               {msg.research && (
                 <button
@@ -351,179 +290,7 @@ const MessageList = React.memo<MessageListProps>(({
                   </div>
                 </button>
               )}
-              {/* Tool calls display */}
-              {msg.toolCalls && msg.toolCalls.length > 0 && (() => {
-                const FRONTEND_HIDDEN = new Set(['WebSearch', 'WebFetch']);
-                const visibleToolCalls = msg.toolCalls.filter((tc: any) => !FRONTEND_HIDDEN.has(tc.name));
-                if (visibleToolCalls.length === 0) return null;
-                const isCurrentMsg = idx === messages.length - 1;
-                const isStale = (!loading && isCurrentMsg) || (idx < messages.length - 1);
-
-                // Split text: work text (during tools) vs final text (after last tool done)
-                const fullText = extractTextContent(msg.content);
-                const offset = msg.toolTextEndOffset;
-                const hasOffset = offset && offset > 0 && offset < fullText.length;
-                const workText = hasOffset ? fullText.slice(0, offset).trim() : '';
-                const finalText = hasOffset ? fullText.slice(offset).trim() : '';
-                // Tag message for MarkdownRenderer below:
-                // - Streaming with tools: show nothing in main area (all text in tool section)
-                // - Complete with offset: show only final text
-                // - Complete without offset: show full text (fallback)
-                // During streaming: compute pending text (text after last tool's textBefore)
-                let consumedLen = 0;
-                for (const tc of visibleToolCalls) {
-                  if (tc.textBefore) consumedLen += tc.textBefore.length;
-                }
-                // Text currently being typed that hasn't been associated with a tool yet
-                const pendingWorkText_ui = isCurrentlyStreaming ? fullText.slice(consumedLen).trim() : '';
-
-                (msg as any)._finalText = isCurrentlyStreaming
-                  ? ''  // During streaming, all text goes in tool section
-                  : (hasOffset ? finalText : null);
-
-                const toolNames = visibleToolCalls.map((tc: any) => {
-                  const nameMap: Record<string, string> = {
-                    'Read': 'Read file', 'Write': 'Write file', 'Edit': 'Edit file',
-                    'Bash': 'Run command', 'ListDir': 'List directory',
-                    'MultiEdit': 'Edit files', 'Search': 'Search',
-                  };
-                  return nameMap[tc.name] || tc.name;
-                });
-                const uniqueNames = [...new Set(toolNames)];
-                const allDone = visibleToolCalls.every((tc: any) => {
-                  const rs = (tc.status === 'running' && isStale) ? 'canceled' : tc.status;
-                  return rs !== 'running';
-                });
-                const hasError = visibleToolCalls.some((tc: any) => tc.status === 'error');
-                const summary = uniqueNames.join(', ');
-
-                return (
-                  <div className="mb-4">
-                    <div className={`rounded-lg overflow-hidden ${!allDone ? 'bg-black/[0.04] dark:bg-white/[0.04]' : ''}`}>
-                    <div
-                      className="flex items-center gap-2 cursor-pointer select-none group/tool text-claude-textSecondary hover:text-claude-text transition-colors px-2 py-1.5"
-                      onClick={() => {
-                        onSetMessages(prev =>
-                          prev.map((m, i) =>
-                            i === idx ? { ...m, isToolCallsExpanded: !m.isToolCallsExpanded } : m
-                          )
-                        );
-                      }}
-                    >
-                      {!allDone && (
-                        <FileText size={16} className="text-claude-textSecondary animate-pulse" />
-                      )}
-                      {allDone && !hasError && (
-                        <Check size={16} className="text-claude-textSecondary" />
-                      )}
-                      {allDone && hasError && (
-                        <span className="text-red-400 text-[14px]">✗</span>
-                      )}
-                      <span className={`text-[14px] ${!allDone ? 'animate-shimmer-text' : 'text-claude-textSecondary'}`}>
-                        {summary}
-                      </span>
-                      <ChevronDown size={14} className={`transform transition-transform duration-200 ${(msg.isToolCallsExpanded ?? (isCurrentlyStreaming || !allDone)) ? 'rotate-180' : ''}`} />
-                    </div>
-                    </div>
-
-                    {(msg.isToolCallsExpanded ?? (isCurrentlyStreaming || !allDone)) && (
-                      <div className="mt-2 ml-1 pl-4 border-l-2 border-claude-border space-y-2">
-                        {visibleToolCalls.map((tc: any, tcIdx: number) => {
-                          const inputStr = tc.input ? (typeof tc.input === 'string' ? tc.input : JSON.stringify(tc.input, null, 2)) : '';
-                          const rawPath = tc.input?.file_path || tc.input?.path || '';
-                          const shortPath = rawPath ? rawPath.split(/[/\\]/).pop() || rawPath : '';
-                          const actionLabel: Record<string, string> = {
-                            'Read': 'Read', 'Write': 'Write', 'Edit': 'Edit',
-                            'MultiEdit': 'Edit', 'Bash': '', 'Grep': 'Search',
-                            'Glob': 'Find', 'ListDir': 'List', 'Skill': 'Skill',
-                          };
-                          const prefix = actionLabel[tc.name] ?? tc.name;
-                          const fileOrCmd = shortPath || tc.input?.command || (inputStr.length > 80 ? inputStr.slice(0, 80) + '...' : inputStr);
-                          const inputPreview = (prefix && fileOrCmd) ? `${prefix} ${fileOrCmd}` : (fileOrCmd || prefix || tc.name);
-                          const realStatus = (tc.status === 'running' && isStale) ? 'canceled' : tc.status;
-                          const expandable = hasExpandableContent(tc.name, tc.input, tc.result);
-                          const stats = getToolStats(tc.name, tc.input);
-
-                          return (
-                            <div key={tc.id || tcIdx}>
-                              {/* Interleaved text: what the model said BEFORE this tool call */}
-                              {tc.textBefore && (
-                                <div className="text-[13px] text-claude-textSecondary px-1 py-1.5 leading-relaxed">
-                                  {tc.textBefore}
-                                </div>
-                              )}
-                              {/* Tool card */}
-                              <div className="text-[13px] bg-black/5 dark:bg-black/20 rounded-lg overflow-hidden border border-black/5 dark:border-white/5 mx-1 w-full">
-                                <div
-                                  className={`flex items-center justify-between px-3 py-2 transition-colors ${expandable ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/5' : ''}`}
-                                  onClick={() => {
-                                    if (!expandable) return;
-                                    onSetMessages(prev =>
-                                      prev.map((m, i) => {
-                                        if (i !== idx) return m;
-                                        const newTc = [...m.toolCalls];
-                                        newTc[tcIdx] = { ...newTc[tcIdx], isExpanded: newTc[tcIdx].isExpanded === undefined ? true : !newTc[tcIdx].isExpanded };
-                                        return { ...m, toolCalls: newTc };
-                                      })
-                                    );
-                                  }}
-                                >
-                                  <div className="flex items-center gap-2 overflow-hidden">
-                                    {tc.name === 'Bash' ? (
-                                      <span className="text-claude-textSecondary font-mono font-bold">&gt;_</span>
-                                    ) : (
-                                      <FileText size={14} className="text-claude-textSecondary flex-shrink-0" />
-                                    )}
-                                    <span className="text-claude-text font-mono text-[12px] truncate">
-                                      {inputPreview || tc.name}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                                    {stats && realStatus !== 'running' && (
-                                      <span className="text-[11px] font-mono flex items-center gap-1.5">
-                                        {stats.added > 0 && <span className="text-green-500 dark:text-green-400">+{stats.added}</span>}
-                                        {stats.removed > 0 && <span className="text-red-500 dark:text-red-400">-{stats.removed}</span>}
-                                      </span>
-                                    )}
-                                    {realStatus === 'running' && <span className="text-claude-textSecondary text-[12px] animate-shimmer-text">Running...</span>}
-                                    {realStatus === 'error' && <span className="text-red-400/80 text-[12px]">Failed</span>}
-                                    {expandable && (
-                                      <ChevronDown size={14} className={`text-claude-textSecondary transform transition-transform duration-200 ${(tc.isExpanded ?? false) ? 'rotate-180' : ''}`} />
-                                    )}
-                                  </div>
-                                </div>
-                                {expandable && (tc.isExpanded ?? false) && (
-                                  <div className="px-2 py-2 border-t border-black/5 dark:border-white/5">
-                                    {shouldUseDiffView(tc.name, tc.input) ? (
-                                      <ToolDiffView toolName={tc.name} input={tc.input} result={tc.result} />
-                                    ) : tc.result != null ? (
-                                      <div className="px-1 text-claude-textSecondary text-[12px] font-mono max-h-[400px] overflow-y-auto whitespace-pre-wrap bg-black/5 dark:bg-black/40 rounded-md p-2">
-                                        {typeof tc.result === 'string' ? (tc.result.length > 2000 ? tc.result.slice(0, 2000) + '...' : tc.result || '(Empty output)') : JSON.stringify(tc.result).slice(0, 2000)}
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {/* Streaming: show latest text being generated */}
-                        {isCurrentlyStreaming && pendingWorkText_ui && (
-                          <div className="text-[13px] text-claude-textSecondary px-1 py-1.5 leading-relaxed animate-shimmer-text">
-                            {pendingWorkText_ui}
-                          </div>
-                        )}
-                        {allDone && !isCurrentlyStreaming && (
-                          <div className="flex items-center gap-2 text-claude-textSecondary pt-1 pb-1">
-                            <Check size={14} />
-                            <span className="text-[13px]">Done</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
+              <WorkDetails message={msg} index={idx} live={isCurrentlyStreaming} onInspect={onInspect} />
               {msg.searchStatus && (!msg.searchLogs || msg.searchLogs.length === 0) && (!msg.content || msg.content.length === (msg._contentLenBeforeSearch || 0)) && loading && idx === messages.length - 1 && (
                 <div className="flex items-center justify-center gap-2 text-[15px] font-medium mb-4 w-full">
                   <Globe size={18} className="text-claude-textSecondary" />
@@ -541,8 +308,7 @@ const MessageList = React.memo<MessageListProps>(({
                 <DocumentCreationProcess drafts={normalizeDocumentDrafts(msg)} />
               )}
 
-              <MarkdownRenderer content={(msg as any)._finalText ?? extractTextContent(msg.content)} citations={msg.citations} isStreaming={isCurrentlyStreaming} />
-              {(msg as any).codeDiffs && (msg as any).codeDiffs.length > 0 && (
+              {showCodingView && (msg as any).codeDiffs && (msg as any).codeDiffs.length > 0 && (
                 <div className="mt-2 mb-1 space-y-2">
                   {(msg as any).codeDiffs.map((diff: any) => (
                     <DiffViewer
@@ -623,16 +389,20 @@ const MessageList = React.memo<MessageListProps>(({
                 </div>
               )}
               {loading && idx === messages.length - 1 && !msg.content && !msg.thinking && !msg.searchStatus && normalizeDocumentDrafts(msg).length === 0 && !(msg.toolCalls && msg.toolCalls.length > 0) && (
-                <span className="inline-block ml-1 align-middle" style={{ verticalAlign: 'middle' }}>
-                  <ClaudeLogo breathe style={{ width: '40px', height: '40px', display: 'inline-block' }} />
-                </span>
+                <div role="status" className="flex items-center gap-2 ml-1 text-[14px] text-claude-textSecondary font-sans">
+                  <span aria-hidden="true" className="shrink-0"><ClaudeLogo breathe style={{ width: '40px', height: '40px' }} /></span>
+                  <span>Working on it...</span>
+                </div>
               )}
               {loading && idx === messages.length - 1 && !msg.isThinking && (msg.content || (msg.searchStatus && msg.content)) && (
                 <span className="inline-block ml-1 align-middle" style={{ verticalAlign: 'middle' }}>
                   <ClaudeLogo autoAnimate style={{ width: '40px', height: '40px', display: 'inline-block' }} />
                 </span>
               )}
-              {!loading && idx === messages.length - 1 && msg.content && (
+              {!isCurrentlyStreaming && (msg.content || msg.thinking || msg.toolCalls?.length) && (
+                <ResponseFooter key={`${conversationId || 'unsaved'}:${msg.id || idx}`} message={msg} index={idx} conversationId={conversationId} disabled={loading} onBranch={onBranch} />
+              )}
+              {!loading && idx === messages.length - 1 && msg.content && compactStatus.state === 'compacting' && (
                 <div className="flex items-start gap-4 mt-6 ml-1 mb-2">
                   <ClaudeLogo breathe={compactStatus.state === 'compacting'} style={{ width: '36px', height: '36px', flexShrink: 0, marginTop: '2px' }} />
                   {compactStatus.state === 'compacting' && <CompactingStatus />}
@@ -643,7 +413,7 @@ const MessageList = React.memo<MessageListProps>(({
         </div>
         );
       })}
-    </>
+    </div>
   );
 });
 

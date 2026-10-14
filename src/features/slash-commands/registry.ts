@@ -1,3 +1,4 @@
+import { useGeneralSettingsStore } from '../../stores/useGeneralSettingsStore';
 import { useChatStore } from '../../stores/useChatStore';
 import { useStreamingStore } from '../../stores/useStreamingStore';
 import { useProjectStore } from '../../stores/useProjectStore';
@@ -196,18 +197,7 @@ const cmdTheme: SlashCommand = () => {
   const currentTheme = localStorage.getItem('theme') || 'system';
   const themes = ['light', 'dark', 'system'];
   const nextTheme = themes[(themes.indexOf(currentTheme) + 1) % themes.length];
-  localStorage.setItem('theme', nextTheme);
-  if (nextTheme === 'dark') {
-    document.documentElement.classList.add('dark');
-  } else if (nextTheme === 'light') {
-    document.documentElement.classList.remove('dark');
-  } else {
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }
+  useGeneralSettingsStore.getState().update({ theme: nextTheme as 'light' | 'dark' | 'system' });
   sysMsg(`Theme switched to **${nextTheme}**`);
   clearInput();
   return true;

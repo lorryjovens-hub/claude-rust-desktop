@@ -97,7 +97,7 @@ const MessageActions: React.FC<MessageActionsProps> = ({
         </button>
       )}
 
-      {role === 'user' && onBranch && (
+      {role === 'assistant' && onBranch && (
         <button
           onClick={handleBranch}
           className="p-1.5 text-claude-textSecondary hover:text-claude-text hover:bg-claude-hover rounded-md transition-colors"

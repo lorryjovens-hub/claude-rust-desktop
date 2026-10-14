@@ -100,10 +100,26 @@ export async function getProjectConversations(projectId: string) {
   return res.json();
 }
 
-export async function createProjectConversation(projectId: string, title?: string, model?: string) {
+export interface ProjectGitOptions {
+  branch?: string;
+  use_worktree?: boolean;
+}
+
+export interface ProjectBranches {
+  is_repository: boolean;
+  current_branch: string | null;
+  branches: string[];
+}
+
+export async function getProjectBranches(projectId: string): Promise<ProjectBranches> {
+  const res = await request(`/projects/${projectId}/git/branches`);
+  return res.json();
+}
+
+export async function createProjectConversation(projectId: string, title?: string, model?: string, gitOptions?: ProjectGitOptions) {
   const res = await request(`/projects/${projectId}/conversations`, {
     method: 'POST',
-    body: JSON.stringify({ title, model, workspace_mode: useWorkspaceModeStore.getState().mode }),
+    body: JSON.stringify({ title, model, workspace_mode: useWorkspaceModeStore.getState().mode, ...gitOptions }),
   });
   return res.json();
 }

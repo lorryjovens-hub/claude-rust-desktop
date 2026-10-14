@@ -40,10 +40,11 @@ function getApiBase(): string {
   return `http://127.0.0.1:${DEFAULT_BRIDGE_PORT}/api`;
 }
 
-export let API_BASE = `http://127.0.0.1:${DEFAULT_BRIDGE_PORT}/api`;
+export const isTauriApp = typeof window !== 'undefined' && !!(window as any).__TAURI_INTERNALS__;
+const useDevProxy = import.meta.env.DEV && !isTauriApp;
+export let API_BASE = useDevProxy ? '/api' : `http://127.0.0.1:${DEFAULT_BRIDGE_PORT}/api`;
 export const GATEWAY_BASE = 'http://127.0.0.1:30090';
 export const CHENGDU_API = 'http://127.0.0.1:30090/api';
-export const isTauriApp = typeof window !== 'undefined' && !!(window as any).__TAURI_INTERNALS__;
 
 let apiReady: Promise<void> | null = null;
 

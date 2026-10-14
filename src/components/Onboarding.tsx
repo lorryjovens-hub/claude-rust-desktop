@@ -1,3 +1,4 @@
+import { useGeneralSettingsStore } from '../stores/useGeneralSettingsStore';
 import React, { useState, useEffect } from 'react';
 import { FolderOpen } from 'lucide-react';
 import ClaudeLogo from './ClaudeLogo';
@@ -40,14 +41,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
   // Apply theme live
   useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'dark') root.classList.add('dark');
-    else if (theme === 'light') root.classList.remove('dark');
-    else {
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) root.classList.add('dark');
-      else root.classList.remove('dark');
-    }
-    localStorage.setItem('theme', theme);
+    useGeneralSettingsStore.getState().update({ theme });
   }, [theme]);
 
   const goTo = (next: number) => {

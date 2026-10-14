@@ -277,7 +277,7 @@ impl BridgeServer {
         let orchestrator = Arc::new(Mutex::new(Some(orchestrator)));
         tracing::info!(module = "Bridge", "MultiAgentOrchestrator initialized");
 
-        let memex_client = Arc::new(MemExClient::new(None));
+        let memex_client = Arc::new(MemExClient::with_path(data_dir.join("memory.sqlite3"), None));
         tracing::info!(module = "Bridge", "MemExClient initialized (backend: {})", memex_client.base_url);
 
         let api_key = uuid::Uuid::new_v4().to_string();
@@ -963,7 +963,12 @@ async fn config_get(State(state): State<AppState>) -> Json<serde_json::Value> {
     let config_manager = state.config_manager.clone();
     let manager: tokio::sync::MutexGuard<'_, Option<ConfigManager>> = config_manager.lock().await;
     if let Some(m) = manager.as_ref() {
-        return Json(serde_json::to_value(m.get_config()).unwrap_or_default());
+        let mut value = serde_json::to_value(m.get_config()).unwrap_or_default();
+        if let Some(search) = value["deepseek_search"].as_object_mut() {
+            search.remove("api_key");
+            search.insert("has_api_key".into(), serde_json::json!(!m.get_config().deepseek_search.api_key.trim().is_empty()));
+        }
+        return Json(value);
     }
     Json(serde_json::json!({}))
 }
@@ -972,7 +977,12 @@ async fn config_update(State(state): State<AppState>, Json(config): Json<AppConf
     let config_manager = state.config_manager.clone();
     let mut manager: tokio::sync::MutexGuard<'_, Option<ConfigManager>> = config_manager.lock().await;
     if let Some(m) = manager.as_mut() {
-        let _ = m.update_config(|c| *c = config);
+        let _ = m.update_config(|c| {
+            // Only /api/search-settings may modify independent search credentials.
+            let search = c.deepseek_search.clone();
+            *c = config;
+            c.deepseek_search = search;
+        });
     }
     Json(serde_json::json!({ "ok": true }))
 }
@@ -2298,32 +2308,32 @@ async fn workflow_config_set(
 async fn memory_search_handler(
     State(state): State<AppState>,
     Json(req): Json<MemorySearchRequest>,
-) -> Result<Json<Vec<MemoryItem>>, (StatusCode, String)> {
+) -> Result<Json<Vec<MemoryItem>>, (StatusCode, Json<serde_json::Value>)> {
     let memex: Arc<MemExClient> = state.memex_client.clone();
     match memex.search(&req.query, req.top_k).await {
         Ok(results) => Ok(Json(results)),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()})))),
     }
 }
 
 async fn memory_ingest_handler(
     State(state): State<AppState>,
     Json(req): Json<MemoryIngestRequest>,
-) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
     let memex: Arc<MemExClient> = state.memex_client.clone();
     match memex.ingest(&req.content, req.importance, req.metadata).await {
         Ok(()) => Ok(Json(json!({"status": "ok"}))),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()})))),
     }
 }
 
 async fn memory_stats_handler(
     State(state): State<AppState>,
-) -> Result<Json<MemoryStats>, (StatusCode, String)> {
+) -> Result<Json<MemoryStats>, (StatusCode, Json<serde_json::Value>)> {
     let memex: Arc<MemExClient> = state.memex_client.clone();
     match memex.stats().await {
         Ok(stats) => Ok(Json(stats)),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()})))),
     }
 }
 
@@ -2337,19 +2347,19 @@ async fn memory_get_config_handler(
 async fn memory_update_config_handler(
     State(state): State<AppState>,
     Json(config): Json<MemoryConfig>,
-) -> Json<serde_json::Value> {
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
     let memex: Arc<MemExClient> = state.memex_client.clone();
-    memex.update_config(config).await;
-    Json(json!({"status": "updated"}))
+    memex.update_config(config).await.map_err(|error| (StatusCode::BAD_REQUEST, Json(json!({"error": error.to_string()}))))?;
+    Ok(Json(json!({"status": "updated"})))
 }
 
 async fn memory_clear_handler(
     State(state): State<AppState>,
-) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
     let memex: Arc<MemExClient> = state.memex_client.clone();
     match memex.clear().await {
         Ok(()) => Ok(Json(json!({"status": "cleared"}))),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": e.to_string()})))),
     }
 }
 

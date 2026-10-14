@@ -1,3 +1,5 @@
+import { pendingMarkerLength } from './utils/streamMarkers';
+import { processMetadata, restoreProcessMetadata } from './features/trajectory/model';
 import { useWorkspaceModeStore, conversationWorkspaceMode } from './stores/useWorkspaceModeStore';
 import { splitModelKey } from './utils/modelConfig';
 import { getErrorMessage } from './utils/errorHelpers';
@@ -652,10 +654,10 @@ export async function getProjectConversations(projectId: string) {
   return res.json();
 }
 
-export async function createProjectConversation(projectId: string, title?: string, model?: string) {
+export async function createProjectConversation(projectId: string, title?: string, model?: string, gitOptions?: import('./api/projects').ProjectGitOptions) {
   const res = await request(`/projects/${projectId}/conversations`, {
     method: 'POST',
-    body: JSON.stringify({ title, model, workspace_mode: useWorkspaceModeStore.getState().mode }),
+    body: JSON.stringify({ title, model, workspace_mode: useWorkspaceModeStore.getState().mode, ...gitOptions }),
   });
   return res.json();
 }
@@ -663,7 +665,7 @@ export async function createProjectConversation(projectId: string, title?: strin
 // 对话相关
 export async function getConversations() {
   console.log('[API] getConversations called, isTauriApp:', isTauriApp);
-  if (isTauriApp) {
+  if (isTauriApp || useDevProxy) {
     try {
       await waitForApiReady();
       const res = await fetch(`${API_BASE}/conversations`, {
@@ -753,7 +755,7 @@ export async function createConversation(title?: string, model?: string, extras?
   const researchMode = extras?.research_mode || false;
   const workspaceMode = useWorkspaceModeStore.getState().mode;
 
-  if (isTauriApp) {
+  if (isTauriApp || useDevProxy) {
     try {
       await waitForApiReady();
       const body: any = { model: modelName, workspace_mode: workspaceMode };
@@ -806,7 +808,7 @@ export async function createConversation(title?: string, model?: string, extras?
 
 export async function getConversation(id: string) {
   console.log('[API] getConversation called for id:', id);
-  if (isTauriApp) {
+  if (isTauriApp || useDevProxy) {
     try {
       await waitForApiReady();
       const res = await fetch(`${API_BASE}/conversations/${id}`, {
@@ -817,6 +819,7 @@ export async function getConversation(id: string) {
         throw new Error('Conversation not found');
       }
       const data = await res.json();
+      const cachedMessages = getLocalMessages(id);
       console.log('[API] getConversation from SQLite, messages:', data.messages?.length || 0);
       return {
         id: data.id,
@@ -832,7 +835,7 @@ export async function getConversation(id: string) {
         created_at: data.created_at,
         updated_at: data.updated_at,
         message_count: data.message_count,
-        messages: (data.messages || []).map((m: any) => {
+        messages: (data.messages || []).map((m: any, index: number) => {
           let toolCalls: any[] = [];
           if (m.tool_calls) {
             if (typeof m.tool_calls === 'string') {
@@ -841,7 +844,8 @@ export async function getConversation(id: string) {
               toolCalls = m.tool_calls;
             }
           }
-          return {
+          return restoreProcessMetadata({
+            requestSnapshots: m.requestSnapshots,
             id: m.id,
             role: m.role || 'assistant',
             content: m.content,
@@ -850,7 +854,7 @@ export async function getConversation(id: string) {
             is_compact_boundary: m.is_compact_boundary,
             sort_order: m.sort_order,
             toolCalls,
-          };
+          }, index, cachedMessages);
         }),
       };
     } catch (e) {
@@ -869,6 +873,7 @@ export async function getConversation(id: string) {
     provider: conv.provider,
     workspace_path: conv.workspace_path,
     project_id: conv.project_id,
+    workspace_mode: conversationWorkspaceMode(conv),
     research_mode: conv.research_mode,
     pinned: conv.pinned,
     archived: conv.archived,
@@ -884,12 +889,13 @@ export async function getConversation(id: string) {
       is_compact_boundary: m.is_compact_boundary,
       sort_order: m.sort_order,
       toolCalls: m.toolCalls || [],
+      ...processMetadata(m),
     })),
   };
 }
 
 export async function deleteConversation(id: string) {
-  if (isTauriApp) {
+  if (isTauriApp || useDevProxy) {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('conversationDeleting', { detail: { id } }));
     }
@@ -921,19 +927,18 @@ export async function deleteConversation(id: string) {
 }
 
 export async function updateConversation(id: string, data: any) {
-  if (isTauriApp) {
-    try {
-      await waitForApiReady();
-      const token = getToken();
-      await fetch(`${API_BASE}/conversations/${id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
-        body: JSON.stringify(data),
-      });
-    } catch (e) {
-      console.error('[API] updateConversation failed:', e);
-    }
+  if (isTauriApp || useDevProxy) {
+    const res = await request(`/conversations/${id}`, { method: 'POST', body: JSON.stringify(data) });
+    const result = await res.json();
+    if (result.ok === false || result.error) throw new Error(result.error || 'Could not update conversation');
     return { ...data, id };
+  }
+  if ('project_id' in data) {
+    if (data.project_id) {
+      const project: Project = await getProject(data.project_id);
+      if (project.folders.some(folder => !folder.trusted)) throw new Error('Trust the project folders before moving this chat.');
+      data = { ...data, workspace_path: project.workspace_path };
+    } else data = { ...data, workspace_path: null };
   }
   updateLocalConversation(id, data);
   return { ...data, id };
@@ -1042,11 +1047,16 @@ export async function compactConversation(
 
 export async function branchConversation(
   conversationId: string,
-  fromMessageId?: string
+  fromMessageId?: string,
+  fromMessageIndex?: number
 ): Promise<{ success: boolean; new_conversation_id: string }> {
+  if (!isTauriApp && !useDevProxy) {
+    const { branchConversation: branchLocalConversation } = await import('./api/conversations');
+    return branchLocalConversation(conversationId, fromMessageId, fromMessageIndex);
+  }
   const res = await request(`/conversations/${conversationId}/branch`, {
     method: 'POST',
-    body: JSON.stringify({ from_message_id: fromMessageId }),
+    body: JSON.stringify({ from_message_id: fromMessageId, from_message_index: fromMessageIndex }),
   });
   return res.json();
 }
@@ -1116,19 +1126,20 @@ export interface ProviderModel {
   contextWindow?: number; maxTokens?: number; inputTypes?: string[];
   api?: string; reasoning?: boolean; thinkingLevelMap?: Record<string, string | null>;
 }
+export type WebSearchStrategy = 'auto' | 'openai_native' | 'anthropic_native' | 'deepseek_native' | 'public' | 'disabled' | 'dashscope' | 'bigmodel';
 export interface Provider {
   id: string; name: string; apiKey: string; baseUrl: string;
   format: 'anthropic' | 'openai' | 'harness'; category?: 'builtin' | 'custom'; builtinId?: string; models: ProviderModel[]; enabled: boolean;
   icon?: string;
   supportsWebSearch?: boolean;
-  webSearchStrategy?: 'dashscope' | 'bigmodel' | 'anthropic_native' | null;
+  webSearchStrategy?: WebSearchStrategy | null;
   webSearchTestedAt?: number;
   webSearchTestReason?: string | null;
 }
 
 export interface WebSearchTestResult {
   ok: boolean;
-  strategy?: 'dashscope' | 'bigmodel' | 'anthropic_native' | null;
+  strategy?: WebSearchStrategy | null;
   hitCount?: number;
   reason?: string;
 }
@@ -1152,6 +1163,42 @@ async function providerRequest(path: string, method = 'GET', body?: unknown) {
   try { data = JSON.parse(text); } catch { throw new Error(`本地后端暂不可用（HTTP ${response.status}），请等待项目启动后重试`); }
   if (!response.ok || data.error) throw new Error(data.error || `HTTP ${response.status}`);
   return data;
+}
+
+export interface SearchSettings {
+  baseUrl: string;
+  model: string;
+  hasApiKey: boolean;
+}
+export interface SearchSettingsUpdate {
+  baseUrl: string;
+  model: string;
+  apiKey?: string;
+  clearApiKey?: boolean;
+}
+function searchSettingsResult(data: SearchSettings): SearchSettings {
+  return { baseUrl: data.baseUrl, model: data.model, hasApiKey: data.hasApiKey };
+}
+export async function getSearchSettings(): Promise<SearchSettings> {
+  return searchSettingsResult(await providerRequest('/search-settings'));
+}
+export async function getSearchApiKey(): Promise<string> {
+  const data = await providerRequest('/search-settings/key', 'POST');
+  if (typeof data.apiKey !== 'string' || !data.apiKey) throw new Error('无法读取搜索密钥，请重试');
+  return data.apiKey;
+}
+export async function updateSearchSettings(settings: SearchSettingsUpdate): Promise<SearchSettings> {
+  return searchSettingsResult(await providerRequest('/search-settings', 'PATCH', settings));
+}
+export interface SearchSettingsTestResult {
+  ok: true;
+  model: string;
+  resultCount: number;
+  elapsedMs: number;
+  results: Array<{ title: string; url: string; snippet: string }>;
+}
+export async function testSearchSettings(settings: SearchSettingsUpdate): Promise<SearchSettingsTestResult> {
+  return providerRequest('/search-settings/test', 'POST', settings);
 }
 
 let providerMigration: Promise<void> | undefined;
@@ -1255,7 +1302,7 @@ export function reconnectStream(
               onToolUse({ type: 'input', tool_use_id: parsed.tool_use_id, tool_input: parsed.tool_input });
             }
             if (parsed.type === 'tool_use_done' && onToolUse) {
-              onToolUse({ type: 'done', tool_use_id: parsed.tool_use_id, content: parsed.content, is_error: parsed.is_error });
+              onToolUse({ type: 'done', tool_use_id: parsed.tool_use_id, tool_name: parsed.tool_name, tool_input: parsed.tool_input, content: parsed.content, is_error: parsed.is_error });
             }
             if (parsed.type === 'ask_user' && onSystem) {
               onSystem('ask_user', '', parsed);
@@ -1263,6 +1310,7 @@ export function reconnectStream(
             if (parsed.type === 'tool_permission' && onSystem) {
               onSystem('tool_permission', '', parsed);
             }
+            if (parsed.type === 'request_snapshot' && onSystem) onSystem('request_snapshot', '', parsed);
             if (parsed.type === 'message_start' && onSystem) {
               onSystem('message_start', '', parsed);
             }
@@ -1302,7 +1350,7 @@ export function reconnectStream(
 export function persistMessages(conversationId: string, messages: any[]) {
   if (isTauriApp) return;
   const mapped = messages.map((m, i) => ({
-    id: m.id || crypto.randomUUID(),
+    id: m.id || (m.id = crypto.randomUUID()),
     conversation_id: conversationId,
     role: m.role,
     content: m.content || '',
@@ -1311,6 +1359,7 @@ export function persistMessages(conversationId: string, messages: any[]) {
     is_compact_boundary: m.is_compact_boundary,
     sort_order: m.sort_order !== undefined ? m.sort_order : i,
     toolCalls: m.toolCalls || [],
+    ...processMetadata(m),
   }));
   saveLocalMessages(conversationId, mapped);
 }
@@ -1883,6 +1932,7 @@ export async function sendMessageNative(
               scheduleFlush();
             } else if (event.type === 'content_block_start') {
               if (event.content_block?.type === 'tool_use') {
+                flushPending();
                 onToolUse?.({
                   type: 'start',
                   tool_use_id: event.content_block.id || '',
@@ -1901,6 +1951,7 @@ export async function sendMessageNative(
               }
             } else if (event.type === 'content_block_stop') {
             } else if (event.type === 'tool_use_start') {
+              flushPending();
               onToolUse?.({
                 type: 'start',
                 tool_use_id: event.tool_use_id || '',
@@ -1910,6 +1961,7 @@ export async function sendMessageNative(
                 is_error: false,
               });
             } else if (event.type === 'tool_use_done') {
+              flushPending();
               onToolUse?.({
                 type: 'done',
                 tool_use_id: event.tool_use_id || '',
@@ -1919,6 +1971,9 @@ export async function sendMessageNative(
                 is_error: event.is_error === true,
               });
             } else if (event.type === 'tool_arg_delta') {
+            } else if (event.type === 'request_snapshot') {
+              flushPending();
+              onSystem?.('request_snapshot', '', event);
             } else if (event.type === 'message_start') {
               onSystem?.('message_start', '', { model: event.message?.model });
             } else if (event.type === 'message_delta') {
@@ -2163,7 +2218,7 @@ export async function sendMessage(
               appendVisibleText(inlineArtifactBuffer);
               inlineArtifactBuffer = '';
             } else {
-              const keep = Math.min(inlineArtifactBuffer.length, INLINE_ARTIFACT_OPEN.length - 1);
+              const keep = pendingMarkerLength(inlineArtifactBuffer, INLINE_ARTIFACT_OPEN);
               const emit = inlineArtifactBuffer.slice(0, inlineArtifactBuffer.length - keep);
               if (emit) appendVisibleText(emit);
               inlineArtifactBuffer = inlineArtifactBuffer.slice(inlineArtifactBuffer.length - keep);
@@ -2207,7 +2262,7 @@ export async function sendMessage(
             emitInlineArtifactDraft(true);
             activeInlineArtifact = null;
           } else {
-            const keep = Math.min(inlineArtifactBuffer.length, INLINE_ARTIFACT_CLOSE.length - 1);
+            const keep = pendingMarkerLength(inlineArtifactBuffer, INLINE_ARTIFACT_CLOSE);
             const emit = inlineArtifactBuffer.slice(0, inlineArtifactBuffer.length - keep);
             if (emit) appendInlineArtifactPreview(emit);
             inlineArtifactBuffer = inlineArtifactBuffer.slice(inlineArtifactBuffer.length - keep);
@@ -2399,6 +2454,12 @@ export async function sendMessage(
           }
 
           // Handle message_start with usage data
+          if (parsed.type === 'request_snapshot') {
+            if (!activeInlineArtifact) processInlineArtifactText('', true);
+            flushPending();
+            onSystem?.('request_snapshot', '', parsed);
+            continue;
+          }
           if (parsed.type === 'message_start') {
             if (onSystem) {
               try { onSystem('message_start', '', parsed); } catch (err) { console.error('[API] onSystem message_start callback error:', err); }
@@ -2424,13 +2485,17 @@ export async function sendMessage(
 
           // Handle tool use events
           if (parsed.type === 'tool_use_start' && onToolUse) {
+            if (!activeInlineArtifact) processInlineArtifactText('', true);
+            flushPending();
             try { onToolUse({ type: 'start', tool_use_id: parsed.tool_use_id, tool_name: parsed.tool_name, tool_input: parsed.tool_input, textBefore: parsed.textBefore || '' }); } catch (err) { console.error('[API] onToolUse start callback error:', err); }
           }
           if (parsed.type === 'tool_use_input' && onToolUse) {
             try { onToolUse({ type: 'input', tool_use_id: parsed.tool_use_id, tool_input: parsed.tool_input }); } catch (err) { console.error('[API] onToolUse input callback error:', err); }
           }
           if (parsed.type === 'tool_use_done' && onToolUse) {
-            try { onToolUse({ type: 'done', tool_use_id: parsed.tool_use_id, content: parsed.content || parsed.output, is_error: parsed.is_error }); } catch (err) { console.error('[API] onToolUse done callback error:', err); }
+            if (!activeInlineArtifact) processInlineArtifactText('', true);
+            flushPending();
+            try { onToolUse({ type: 'done', tool_use_id: parsed.tool_use_id, tool_name: parsed.tool_name, tool_input: parsed.tool_input, content: parsed.content || parsed.output, is_error: parsed.is_error }); } catch (err) { console.error('[API] onToolUse done callback error:', err); }
           }
 
           // Research mode events — forward as system events for MainContent to handle

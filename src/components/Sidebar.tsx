@@ -1,23 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useStreamingStore } from '../stores/useStreamingStore';
-import { useWorkspaceModeStore, conversationWorkspaceMode } from '../stores/useWorkspaceModeStore';
+import { useWorkspaceModeStore } from '../stores/useWorkspaceModeStore';
+import { useGeneralSettingsStore } from '../stores/useGeneralSettingsStore';
 import { useI18n } from '../hooks/useI18n';
-import { IconDotsHorizontal, IconStarOutline, IconPencil, IconTrash, IconCode } from './Icons';
-import { ChevronUp, Settings, HelpCircle, LogOut, Shield, CreditCard, Pin, PinOff, X, MessageSquare, Users } from 'lucide-react';
-import { getConversations, deleteConversation, updateConversation, getUser, getUserUsage, logout, getUserProfile } from '../api';
+import { IconCode } from './Icons';
+import { ChevronUp, Settings, HelpCircle, LogOut, Shield, CreditCard, Pin, PinOff, X, Home } from 'lucide-react';
+import { getConversations, getUser, getUserUsage, logout, getUserProfile } from '../api';
 
 import SearchModal from './SearchModal';
 import SidebarNavigation from './SidebarNavigation';
-import FileExplorer from './FileExplorer';
-import RenameModal from './RenameModal';
+import SidebarProjects from '../features/project/SidebarProjects';
 import EmbeddedBrowser from './EmbeddedBrowser';
 import SwarmCollaboration from './SwarmCollaboration';
 import H5AccessPanel from './H5AccessPanel';
 import TerminalPanel from './TerminalPanel';
 import ComputerUsePanel from './ComputerUsePanel';
 import IMIntegrationPanel from './IMIntegrationPanel';
-import McpManagementPanel from './McpManagementPanel';
 import AgentExecutionView from './AgentExecutionView';
 import KnowledgePanel from './KnowledgePanel';
 import AppStudioPanel from './AppStudioPanel';
@@ -31,7 +30,6 @@ interface SidebarProps {
   onNewChatClick?: () => void;
   onOpenSettings?: () => void;
   onOpenUpgrade?: () => void;
-  onOpenDirectory?: () => void;
   onCloseOverlays?: () => void;
   tunerConfig?: any;
   setTunerConfig?: (config: any) => void;
@@ -41,30 +39,32 @@ interface SidebarProps {
   onHelpModalChange: (open: boolean) => void;
 }
 
-const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, onOpenSettings, onOpenUpgrade, onOpenDirectory, onCloseOverlays, tunerConfig, setTunerConfig, titleBarHeight, activeConversationId, showHelpModal, onHelpModalChange: setShowHelpModal }: SidebarProps) => {
+const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, onOpenSettings, onOpenUpgrade, onCloseOverlays, tunerConfig, setTunerConfig, titleBarHeight, activeConversationId, showHelpModal, onHelpModalChange: setShowHelpModal }: SidebarProps) => {
   const { t } = useI18n();
+  const showCodingView = useGeneralSettingsStore(state => state.showCodingView);
   const navigate = useNavigate();
   const location = useLocation();
   const [chats, setChats] = useState<any[]>([]);
-  const [activeMenuIndex, setActiveMenuIndex] = useState<number | null>(null);
-  const [menuPosition, setMenuPosition] = useState<{ top: number, left: number } | null>(null);
-  const [showRenameModal, setShowRenameModal] = useState(false);
-  const [renameChatId, setRenameChatId] = useState<string | null>(null);
-  const [renameInitialTitle, setRenameInitialTitle] = useState('');
   const [userUser, setUserUser] = useState<any>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [userMenuPos, setUserMenuPos] = useState<{ bottom: number; left: number } | null>(null);
-  const [planLabel, setPlanLabel] = useState('Free plan');
+  const [planName, setPlanName] = useState('');
+  const planKeys: Record<string, string> = {
+    '体验包': 'sidebar.trailPlan',
+    '基础月卡': 'sidebar.proPlan',
+    '专业月卡': 'sidebar.maxX5Plan',
+    '尊享月卡': 'sidebar.maxX20Plan',
+  };
+  const planLabel = planName ? (planKeys[planName] ? t(planKeys[planName]) : planName) : t('sidebar.freePlan');
   const [usageData, setUsageData] = useState<{ token_used: number; token_quota: number } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const activeTab = useWorkspaceModeStore(s => s.mode);
+  const activeSection = activeTab === 'code' ? 'code' : 'home';
+  const lastHomeMode = useWorkspaceModeStore(s => s.lastHomeMode);
   const setActiveTab = useWorkspaceModeStore(s => s.setMode);
-  const isRecentsCollapsed = useWorkspaceModeStore(s => s.recentsCollapsed[s.mode]);
-  const toggleRecents = useWorkspaceModeStore(s => s.toggleRecents);
   const [showSwarm, setShowSwarm] = useState(false);
-  const [pinnedChats, setPinnedChats] = useState<Set<string>>(new Set());
   const [streamingIds, setStreamingIds] = useState<Set<string>>(new Set(useStreamingStore.getState().streamingIds));
   const [updateStatus, setUpdateStatus] = useState<{ type: string; version?: string; percent?: number } | null>(null);
   // Bridge connection status
@@ -74,7 +74,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
     import('../api').then(({ detectBridgePort }) => {
       detectBridgePort().then(port => {
         setBridgePort(port);
-        fetch(`http://127.0.0.1:${port}/api/health`).then(r => setBridgeHealthy(r.ok)).catch(() => setBridgeHealthy(false));
+        fetch(`http://127.0.0.1:${port}/health`).then(r => setBridgeHealthy(r.ok)).catch(() => setBridgeHealthy(false));
       });
     });
   }, []);
@@ -88,12 +88,11 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
   const [showTerminalPanel, setShowTerminalPanel] = useState(false);
   const [showAgentView, setShowAgentView] = useState(false);
   const [showLivePreview, setShowLivePreview] = useState(false);
-  const [showMcpPanel, setShowMcpPanel] = useState(false);
   const [showKnowledgePanel, setShowKnowledgePanel] = useState(false);
   const [showGitHubHub, setShowGitHubHub] = useState(false);
   const [showAppStudio, setShowAppStudio] = useState(false);
 
-  const openPanel = (panel: 'browser' | 'h5' | 'computerUse' | 'im' | 'terminal' | 'agent' | 'preview' | 'mcp' | 'knowledge' | 'github' | 'appstudio') => {
+  const openPanel = (panel: 'browser' | 'h5' | 'computerUse' | 'im' | 'terminal' | 'agent' | 'preview' | 'knowledge' | 'github' | 'appstudio') => {
     setShowBrowser(panel === 'browser' ? !showBrowser : false);
     setShowH5Panel(panel === 'h5' ? !showH5Panel : false);
     setShowComputerUse(panel === 'computerUse' ? !showComputerUse : false);
@@ -101,7 +100,6 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
     setShowTerminalPanel(panel === 'terminal' ? !showTerminalPanel : false);
     setShowAgentView(panel === 'agent' ? !showAgentView : false);
     setShowLivePreview(panel === 'preview' ? !showLivePreview : false);
-    setShowMcpPanel(panel === 'mcp' ? !showMcpPanel : false);
     setShowKnowledgePanel(panel === 'knowledge' ? !showKnowledgePanel : false);
     setShowGitHubHub(panel === 'github' ? !showGitHubHub : false);
     setShowAppStudio(panel === 'appstudio' ? !showAppStudio : false);
@@ -132,10 +130,15 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail?.panel === 'preview') { setShowLivePreview(true); }
+      if (detail?.panel === 'browser' && /^https?:\/\//i.test(detail.url || '')) {
+        setBrowserUrl(detail.url);
+        setShowBrowser(true);
+        if (isCollapsed) toggleSidebar();
+      }
     };
     window.addEventListener('request-open-panel', handler as EventListener);
     return () => window.removeEventListener('request-open-panel', handler as EventListener);
-  }, []);
+  }, [isCollapsed, toggleSidebar]);
 
   // Escape key closes any open panel
   useEffect(() => {
@@ -148,7 +151,6 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
         if (showTerminalPanel) setShowTerminalPanel(false);
         if (showAgentView) setShowAgentView(false);
         if (showLivePreview) setShowLivePreview(false);
-        if (showMcpPanel) setShowMcpPanel(false);
         if (showKnowledgePanel) setShowKnowledgePanel(false);
         if (showGitHubHub) setShowGitHubHub(false);
         if (showAppStudio) setShowAppStudio(false);
@@ -156,9 +158,8 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showComputerUse, showBrowser, showH5Panel, showIMPanel, showTerminalPanel, showAgentView, showLivePreview, showMcpPanel, showKnowledgePanel, showGitHubHub, showAppStudio]);
+  }, [showComputerUse, showBrowser, showH5Panel, showIMPanel, showTerminalPanel, showAgentView, showLivePreview, showKnowledgePanel, showGitHubHub, showAppStudio]);
 
-  const menuRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const userBtnRef = useRef<HTMLButtonElement>(null);
@@ -178,7 +179,6 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
   };
 
   const handleNavClick = (label: string) => {
-    if (label === 'Directory') { onOpenDirectory?.(); return; }
     NAV_ROUTES[label]?.();
   };
 
@@ -238,6 +238,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
     window.addEventListener('conversationDeleted', handleConversationDeleted);
     window.addEventListener('conversationUpdated', handleConversationUpdated);
     window.addEventListener('userProfileUpdated', handleProfileUpdate);
+    window.addEventListener('focus', fetchChats);
 
     return () => {
       window.removeEventListener('conversationTitleUpdated', handleTitleUpdate);
@@ -245,6 +246,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
       window.removeEventListener('conversationDeleted', handleConversationDeleted);
       window.removeEventListener('conversationUpdated', handleConversationUpdated);
       window.removeEventListener('userProfileUpdated', handleProfileUpdate);
+      window.removeEventListener('focus', fetchChats);
     };
   }, [refreshTrigger]);
 
@@ -260,36 +262,6 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
     }
   };
 
-  const handlePinChat = (chatId: string) => {
-    setPinnedChats(prev => {
-      const next = new Set(prev);
-      if (next.has(chatId)) next.delete(chatId);
-      else next.add(chatId);
-      return next;
-    });
-    setActiveMenuIndex(null);
-  };
-
-  const getSortedAndFilteredChats = () => {
-    const result = chats.filter(chat => conversationWorkspaceMode(chat) === activeTab);
-
-    const pinned = result.filter(c => pinnedChats.has(c.id));
-    const unpinned = result.filter(c => !pinnedChats.has(c.id));
-
-    unpinned.sort((a, b) => {
-      const aTime = new Date(a.updated_at || a.created_at || 0).getTime();
-      const bTime = new Date(b.updated_at || b.created_at || 0).getTime();
-      return bTime - aTime;
-    });
-
-    return [...pinned, ...unpinned].slice(0, 30);
-  };
-
-  const sortedChats = getSortedAndFilteredChats();
-  useEffect(() => {
-    setActiveMenuIndex(null);
-  }, [activeTab]);
-
   const fetchPlan = async () => {
     try {
       const data = await getUserUsage();
@@ -297,64 +269,9 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
         token_used: Number(data?.token_used) || 0,
         token_quota: Number(data?.token_quota) || 0,
       });
-      if (data.plan && data.plan.name) {
-        const nameMap: Record<string, string> = {
-          '体验包': t('sidebar.trailPlan'),
-          '基础月卡': t('sidebar.proPlan'),
-          '专业月卡': t('sidebar.maxX5Plan'),
-          '尊享月卡': t('sidebar.maxX20Plan'),
-        };
-        setPlanLabel(nameMap[data.plan.name] || data.plan.name);
-      } else {
-        setPlanLabel(t('sidebar.freePlan'));
-      }
+      setPlanName(data.plan?.name || '');
     } catch (e) {
       // 获取失败保持默认
-    }
-  };
-
-  const handleRenameClick = (e: React.MouseEvent, index: number) => {
-    e.stopPropagation();
-    if (chats[index]) {
-      setRenameChatId(chats[index].id);
-      setRenameInitialTitle(chats[index].title || chats[index].first_message?.slice(0, 30) || 'New Chat');
-      setShowRenameModal(true);
-    }
-    setActiveMenuIndex(null);
-  };
-
-  const handleRenameSubmit = async (newTitle: string) => {
-    if (!renameChatId) return;
-
-    try {
-      // Optimistic update
-      setChats(chats.map(c => c.id === renameChatId ? { ...c, title: newTitle } : c));
-      await updateConversation(renameChatId, { title: newTitle });
-
-      // Notify other components (like Header) about the title change if it's the active chat
-      if (location.pathname === `/chat/${renameChatId}`) {
-        window.dispatchEvent(new CustomEvent('conversationTitleUpdated'));
-      }
-    } catch (err) {
-      console.error('Failed to rename chat:', err);
-      // Revert on failure
-      fetchChats();
-    }
-    setShowRenameModal(false);
-    setRenameChatId(null);
-  };
-
-  const handleDeleteChat = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      await deleteConversation(id);
-      setChats(chats.filter(c => c.id !== id));
-      setActiveMenuIndex(null);
-      if (location.pathname === `/chat/${id}`) {
-        navigate('/');
-      }
-    } catch (err) {
-      console.error(err);
     }
   };
 
@@ -365,9 +282,6 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
       if (userBtnRef.current && userBtnRef.current.contains(event.target as Node)) {
         return;
       }
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setActiveMenuIndex(null);
-      }
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setShowUserMenu(false);
       }
@@ -375,11 +289,10 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
 
     // Close on scroll
     const handleScroll = () => {
-      if (activeMenuIndex !== null) setActiveMenuIndex(null);
       if (showUserMenu) setShowUserMenu(false);
     };
 
-    if (activeMenuIndex !== null || showUserMenu) {
+    if (showUserMenu) {
       document.addEventListener('click', handleClickOutside);
       // Attach scroll listener to the sidebar scroll container
       const scrollEl = scrollRef.current;
@@ -393,44 +306,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
       scrollEl?.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
     };
-  }, [activeMenuIndex, showUserMenu]);
-
-  const handleMenuClick = (e: React.MouseEvent, index: number) => {
-    e.stopPropagation();
-    e.preventDefault();
-
-    if (activeMenuIndex === index) {
-      setActiveMenuIndex(null);
-      return;
-    }
-
-    const button = e.currentTarget as HTMLElement;
-    const buttonRect = button.getBoundingClientRect();
-    const parentElement = button.parentElement;
-
-    let leftPos = buttonRect.right - 200; // Fallback to button alignment
-
-    if (parentElement) {
-      const parentRect = parentElement.getBoundingClientRect();
-      // Align right edge of menu (200px wide) with the right edge of the chat item container
-      leftPos = parentRect.right - 200;
-    }
-
-    const menuHeight = 120; // Approximate height of the menu
-    let topPos = buttonRect.bottom + 4;
-
-    // Check if menu would overflow bottom of viewport
-    if (topPos + menuHeight > window.innerHeight) {
-      // Position above the button instead
-      topPos = buttonRect.top - menuHeight - 4;
-    }
-
-    setMenuPosition({
-      top: topPos,
-      left: leftPos,
-    });
-    setActiveMenuIndex(index);
-  };
+  }, [showUserMenu]);
 
   return (
     <>
@@ -445,15 +321,18 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
       >
         {!isCollapsed && (
           <div className="flex-shrink-0 border-b border-claude-border px-2 py-2 mt-1.5">
-            <div className="flex gap-1" role="group" aria-label="Workspace mode">
+            <div className="flex rounded-lg bg-[var(--bg-mode-tabs)] p-0.5" role="group" aria-label={t('sidebar.workspaceMode')}>
               {[
-                { id: 'chat' as const, icon: <MessageSquare size={17} />, label: 'Chat' },
-                { id: 'cowork' as const, icon: <Users size={17} />, label: 'Cowork' },
-                { id: 'code' as const, icon: <IconCode size={17} />, label: 'Code' },
+                { id: 'home' as const, icon: <Home size={15} />, label: t('sidebar.homeMode') },
+                { id: 'code' as const, icon: <IconCode size={15} />, label: t('sidebar.code') },
               ].map(tab => (
-                <button key={tab.id} type="button" aria-pressed={activeTab === tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 min-h-10 py-2 px-1.5 rounded-lg border text-[14px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757] ${activeTab === tab.id ? 'bg-[#D97757]/15 border-[#D97757]/50 text-claude-text shadow-sm' : 'border-transparent text-claude-textSecondary hover:bg-claude-hover hover:text-claude-text'}`}>
+                <button key={tab.id} type="button" aria-pressed={activeSection === tab.id}
+                  onClick={() => {
+                    if (tab.id === activeSection) return;
+                    setActiveTab(tab.id === 'code' ? 'code' : lastHomeMode);
+                    handleNewChat();
+                  }}
+                  className={`flex-1 flex items-center justify-center gap-1.5 h-7 px-1.5 rounded-md text-[13px] font-normal text-claude-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-claude-textSecondary ${activeSection === tab.id ? 'bg-[var(--bg-mode-tab-active)] shadow-sm' : 'hover:bg-claude-btnHover'}`}>
                   {tab.icon}{tab.label}
                 </button>
               ))}
@@ -462,95 +341,10 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
         )}
         <div ref={scrollRef} className="flex-1 overflow-y-auto sidebar-scroll min-h-0 px-2 pt-3 pb-4">
           <SidebarNavigation collapsed={isCollapsed} onNewChat={handleNewChat} onSearch={() => setShowSearch(true)} onPanel={panel => openPanel(panel as Parameters<typeof openPanel>[0])} onNavigate={handleNavClick} onSwarm={() => setShowSwarm(true)} />
-          {!isCollapsed && <div className="flex items-center justify-between px-2 pt-3 pb-2">
-            <span className="text-[13px] font-medium text-claude-textSecondary">Recents</span>
-            <button type="button" onClick={() => toggleRecents(activeTab)} className="text-xs text-claude-textSecondary hover:text-claude-text">{isRecentsCollapsed ? 'Show' : 'Hide'}</button>
-          </div>}
-          {/* Recents List */}
-          <div data-recents-mode={activeTab} className={`space-y-0.5 pb-2 transition-all duration-200 ${isCollapsed || isRecentsCollapsed ? 'opacity-0 hidden h-0 overflow-hidden' : 'opacity-100'}`}>
-            {sortedChats.map((chat, index) => {
-              const isActive = location.pathname === `/chat/${chat.id}`;
-              const isPinned = pinnedChats.has(chat.id);
-              return (
-                <div
-                  key={chat.id}
-                  onClick={() => { onCloseOverlays?.(); navigate(`/chat/${chat.id}`); }}
-                  className={`
-                    relative group flex items-center w-full rounded-lg transition-colors cursor-pointer min-h-[32px]
-                    ${isActive || chats[activeMenuIndex ?? -1]?.id === chat.id ? 'bg-claude-hover' : 'hover:bg-claude-hover'}
-                  `}
-                  style={{
-                    paddingTop: `${tunerConfig?.recentsItemPy || 6}px`,
-                    paddingBottom: `${tunerConfig?.recentsItemPy || 6}px`,
-                    paddingLeft: `${tunerConfig?.recentsPl || 12}px`,
-                    paddingRight: `${tunerConfig?.recentsPl || 12}px`
-                  }}
-                >
-                  {isPinned && (
-                    <span className="flex-shrink-0 mr-1.5">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-yellow-400/70">
-                        <path d="M12 17v5"/><path d="M9 10.5 3 17l3 3 6.5-6.5"/><path d="m14.5 6.5 3 3-6 6-3-3 6-6z"/>
-                      </svg>
-                    </span>
-                  )}
-                  {/* Streaming indicator — single breathing dot */}
-                  {streamingIds.has(chat.id) && (
-                    <span
-                      className="flex-shrink-0 mr-2 w-[7px] h-[7px] rounded-full bg-neutral-700 dark:bg-neutral-300 animate-pulse"
-                      style={{ animationDuration: '1.6s' }}
-                    />
-                  )}
-                  {/* Chat Title */}
-                  <div className="flex-1 min-w-0 pr-6">
-                    <div
-                      className="text-claude-text truncate leading-snug"
-                      style={{ fontSize: `${tunerConfig?.recentsFontSize || 13}px` }}
-                    >
-                      {chat.title || chat.first_message?.slice(0, 30) || 'New Chat'}
-                    </div>
-                    {chat.project_name && (
-                      <div className="text-[11px] text-claude-textSecondary truncate leading-snug mt-0.5 opacity-60">
-                        {chat.project_name}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Three Dots Button */}
-                  <button
-                    onClick={(e) => handleMenuClick(e, chats.findIndex(c => c.id === chat.id))}
-                    className={`
-                      absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-claude-textSecondary hover:text-claude-text transition-all
-                      ${chats[activeMenuIndex ?? -1]?.id === chat.id ? 'opacity-100 block' : 'opacity-0 group-hover:opacity-100 hidden group-hover:block'}
-                    `}
-                  >
-                    <IconDotsHorizontal size={16} />
-                  </button>
-                </div>
-              );
-            })}
-            {chats.filter(chat => conversationWorkspaceMode(chat) === activeTab).length > 30 && (
-              <button
-                onClick={() => { onCloseOverlays?.(); navigate('/chats'); }}
-                className="w-full flex items-center gap-2 rounded-lg hover:bg-claude-hover transition-colors text-claude-textSecondary hover:text-claude-text"
-                style={{
-                  paddingTop: `${tunerConfig?.recentsItemPy || 6}px`,
-                  paddingBottom: `${tunerConfig?.recentsItemPy || 6}px`,
-                  paddingLeft: `${tunerConfig?.recentsPl || 12}px`,
-                }}
-              >
-                <IconDotsHorizontal size={18} className="opacity-60" />
-                <span style={{ fontSize: `${tunerConfig?.recentsFontSize || 13}px` }} className="leading-tight">{t('sidebar.allChats')}</span>
-              </button>
-            )}
-          </div>
-          {!isCollapsed && activeTab === 'cowork' && (
-            <div className="mt-3 border-t border-claude-border pt-3" data-sidebar-panel="cowork">
+          {!isCollapsed && <SidebarProjects chats={chats} streamingIds={streamingIds} onOpenChat={id => { onCloseOverlays?.(); navigate(`/chat/${id}`); }} />}
+          {!isCollapsed && activeTab === 'work' && (
+            <div className="mt-3 border-t border-claude-border pt-3" data-sidebar-panel="work">
               <SwarmCollaboration />
-            </div>
-          )}
-          {!isCollapsed && activeTab === 'code' && (
-            <div className="mt-3 border-t border-claude-border pt-3" data-sidebar-panel="code">
-              <FileExplorer />
             </div>
           )}
         </div>
@@ -633,7 +427,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
                   className="font-medium text-claude-text leading-tight"
                   style={{ fontSize: `${tunerConfig?.userNameSize || 15}px`, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}
                 >
-                  {userUser?.display_name || userUser?.full_name || userUser?.nickname || 'User'}
+                  {userUser?.display_name || userUser?.full_name || userUser?.nickname || t('sidebar.user')}
                 </div>
                 {localStorage.getItem('user_mode') === 'selfhosted' ? (
                   <div className="text-[13px] text-claude-textSecondary mt-1 leading-tight">{t('sidebar.selfHosted')}</div>
@@ -664,7 +458,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
             >
               {/* User info header */}
               <div className="px-4 py-2.5 border-b border-claude-border">
-                <div className="text-[13px] font-medium text-claude-text">{userUser?.display_name || userUser?.full_name || userUser?.nickname || 'User'}</div>
+                <div className="text-[13px] font-medium text-claude-text">{userUser?.display_name || userUser?.full_name || userUser?.nickname || t('sidebar.user')}</div>
                 <div className="text-[12px] text-claude-textSecondary mt-0.5">{userUser?.email || ''}</div>
               </div>
               {/* Menu items */}
@@ -717,54 +511,6 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
         </div>
       </div >
 
-      {/* Fixed Context Menu Portal */}
-      {
-        activeMenuIndex !== null && menuPosition && chats[activeMenuIndex] && (
-          <div
-            ref={menuRef}
-            className="fixed z-50 bg-claude-input border border-claude-border rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.08)] py-1.5 flex flex-col w-[200px]"
-            style={{
-              top: `${menuPosition.top}px`,
-              left: `${menuPosition.left}px`
-            }}
-          >
-            <button
-              onClick={(e) => handlePinChat(chats[activeMenuIndex].id)}
-              className="flex items-center gap-3 px-3 py-2 hover:bg-claude-hover text-left w-full transition-colors group"
-            >
-              {pinnedChats.has(chats[activeMenuIndex].id) ? (
-                <PinOff size={16} className="text-yellow-400/80 group-hover:text-yellow-400" />
-              ) : (
-                <Pin size={16} className="text-claude-textSecondary group-hover:text-yellow-400" />
-              )}
-              <span className="text-[13px] text-claude-text">
-                {pinnedChats.has(chats[activeMenuIndex].id) ? (t('sidebar.unpin') || '取消置顶') : (t('sidebar.pin') || '置顶')}
-              </span>
-            </button>
-            <button className="flex items-center gap-3 px-3 py-2 hover:bg-claude-hover text-left w-full transition-colors group">
-              <IconStarOutline size={16} className="text-claude-textSecondary group-hover:text-claude-text" />
-              <span className="text-[13px] text-claude-text">{t('sidebar.star')}</span>
-            </button>
-            <button
-              onClick={(e) => handleRenameClick(e, activeMenuIndex as number)}
-              className="flex items-center gap-3 px-3 py-2 hover:bg-claude-hover text-left w-full transition-colors group"
-            >
-              <IconPencil size={16} className="text-claude-textSecondary group-hover:text-claude-text" />
-              <span className="text-[13px] text-claude-text">{t('sidebar.rename')}</span>
-            </button>
-            <div className="h-[1px] bg-claude-border my-1 mx-3" />
-            <button
-              onClick={(e) => handleDeleteChat(chats[activeMenuIndex].id, e)}
-              className="flex items-center gap-3 px-3 py-2 hover:bg-claude-hover text-left w-full transition-colors group"
-            >
-              <IconTrash size={16} className="text-[#B9382C]" />
-              <span className="text-[13px] text-[#B9382C]">{t('sidebar.delete')}</span>
-            </button>
-          </div>
-        )
-      }
-      {/* Fixed Layout Tuner (Removed) */}
-
       <SearchModal
         isOpen={showSearch}
         onClose={() => setShowSearch(false)}
@@ -784,6 +530,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
           }}
         >
           <EmbeddedBrowser
+            key={browserUrl}
             initialUrl={browserUrl}
             onClose={() => setShowBrowser(false)}
             className="flex-1"
@@ -840,7 +587,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
       )}
 
       {/* Agent View Panel */}
-      {showAgentView && !isCollapsed && (
+      {showCodingView && showAgentView && !isCollapsed && (
         <div
           className="fixed z-40 border-l border-claude-border bg-claude-bg flex flex-col shadow-2xl transition-all duration-300 ease-in-out"
           style={{
@@ -868,14 +615,6 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
           }}
         >
           <LivePreviewRenderer onClose={() => setShowLivePreview(false)} />
-        </div>
-      )}
-
-      {/* MCP Management Panel */}
-      {showMcpPanel && !isCollapsed && (
-        <div className="fixed z-40 border-l border-claude-border bg-claude-sidebar flex flex-col shadow-2xl transition-all duration-300 ease-in-out"
-          style={{ top: `${titleBarHeight || 44}px`, left: `${tunerConfig?.sidebarWidth || 280}px`, width: 'min(500px, 50vw)', height: `calc(100vh - ${titleBarHeight || 44}px)`, borderRadius: '0 12px 12px 0' }}>
-          <McpManagementPanel onClose={() => setShowMcpPanel(false)} />
         </div>
       )}
 
@@ -910,15 +649,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar, refreshTrigger, onNewChatClick, o
         </div>
       </div>}
       {/* Rename Modal */}
-      <RenameModal
-        isOpen={showRenameModal}
-        onClose={() => {
-          setShowRenameModal(false);
-          setRenameChatId(null);
-        }}
-        onSave={handleRenameSubmit}
-        initialTitle={renameInitialTitle}
-      />
+
 
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (

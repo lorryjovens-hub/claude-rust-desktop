@@ -58,13 +58,11 @@ use native_engine::provider_manager::ProviderManager;
 use native_engine::session_manager::SessionManager;
 use mcp::McpServerManager;
 use permissions::PermissionManager;
-use memory::MemExClient;
 use tauri::Manager;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Notify;
 use tokio::sync::Mutex;
-use tokio::process::Child;
 
 fn init_tracing() {
     use tracing_subscriber::{fmt, EnvFilter, layer::SubscriberExt, Registry};
@@ -133,13 +131,6 @@ async fn cleanup_all_processes(app_handle: &tauri::AppHandle) {
         }
     }
 
-    if let Some(memex_state) = app_handle.try_state::<Arc<Mutex<Option<Child>>>>() {
-        if let Some(mut child) = memex_state.lock().await.take() {
-            tracing::info!(module = "Shutdown", "Killing MemEx Python backend...");
-            let _ = child.kill().await;
-        }
-    }
-
     tracing::info!(module = "Shutdown", "All processes cleaned up.");
 }
 
@@ -197,7 +188,6 @@ fn main() {
         .manage(Arc::new(Mutex::new(None::<Arc<Mutex<ProviderManager>>>)))
         .manage(Arc::new(Mutex::new(None::<Arc<Mutex<McpServerManager>>>)))
         .manage(Arc::new(std::sync::Mutex::new(None::<String>)))
-        .manage(Arc::new(Mutex::new(None::<Child>)))
         .manage(Arc::new(Mutex::new(None::<SessionManager>)))
         .manage(Arc::new(Mutex::new(None::<Arc<PermissionManager>>)))
         .setup(|app| {
@@ -546,67 +536,6 @@ fn main() {
                 });
             }
 
-            let memex_client = MemExClient::new(None);
-            let memex_base_url = memex_client.base_url.clone();
-            let memex_child_store = app.state::<Arc<Mutex<Option<Child>>>>().inner().clone();
-
-            tauri::async_runtime::spawn(async move {
-                tracing::info!(module = "MemEx", "Attempting to start Python backend on port 8765...");
-
-                let is_running = reqwest::Client::new()
-                    .get(format!("{}/health", memex_base_url))
-                    .send()
-                    .await
-                    .map(|r| r.status().is_success())
-                    .unwrap_or(false);
-
-                if is_running {
-                    tracing::info!(module = "MemEx", "Backend already running on port 8765");
-                    return;
-                }
-
-                let memex_script = std::env::current_dir()
-                    .unwrap_or_default()
-                    .join("memex")
-                    .join("api.py");
-
-                if !memex_script.exists() {
-                    tracing::warn!(module = "MemEx", "Python backend script not found at {:?}. Memory features will be disabled.", memex_script);
-                    return;
-                }
-
-                let python_cmd = if cfg!(windows) { "python" } else { "python3" };
-                match tokio::process::Command::new(python_cmd)
-                    .arg(&memex_script)
-                    .stdout(std::process::Stdio::null())
-                    .stderr(std::process::Stdio::null())
-                    .kill_on_drop(true)
-                    .spawn()
-                {
-                    Ok(child) => {
-                        tracing::info!(module = "MemEx", "Python backend started on port 8765");
-                        memex_child_store.lock().await.replace(child);
-                        for i in 0..10 {
-                            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-                            if reqwest::Client::new()
-                                .get(format!("{}/health", memex_base_url))
-                                .send()
-                                .await
-                                .map(|r| r.status().is_success())
-                                .unwrap_or(false)
-                            {
-                                tracing::info!(module = "MemEx", "Backend healthy after {} seconds", i + 1);
-                                return;
-                            }
-                        }
-                        tracing::warn!(module = "MemEx", "Backend health check timeout, memory features may be limited");
-                    }
-                    Err(e) => {
-                        tracing::error!(module = "MemEx", error = %e);
-                    }
-                }
-            });
-
             let db_manager_for_scheduler = match app.try_state::<Arc<crate::db::DbManager>>() {
                 Some(state) => state.inner().clone(),
                 None => {
@@ -834,6 +763,9 @@ fn main() {
             commands::remove_always_allow_rule,
             commands::get_always_allow_rules,
             commands::set_permission_mode,
+            commands::general_settings::read_general_settings,
+            commands::general_settings::write_general_settings,
+            commands::general_settings::open_general_settings,
             // Computer Use commands
             commands::computer_use_screenshot,
             commands::computer_use_mouse_click,

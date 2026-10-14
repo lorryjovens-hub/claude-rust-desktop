@@ -3,10 +3,12 @@ import { Plus, Trash2, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { getProviders, createProvider, updateProvider, deleteProvider, fetchProviderModels, Provider, ProviderModel } from '../api';
 import catalog from '../data/providerCatalog.json';
 import { formatTokenLimit, parseTokenLimit } from '../utils/modelConfig';
+import { inferModelCapabilities, mergeDiscoveredModel } from '../utils/modelCapabilities';
+import ModeModelDefaults from './ModeModelDefaults';
 
 const inputClass = 'w-full bg-transparent border border-claude-border rounded-lg px-3 py-2 text-[13px] text-claude-text outline-none focus:border-[#387ee0]';
 const buttonClass = 'px-3 py-2 rounded-lg border border-claude-border text-[13px] hover:bg-claude-hover disabled:opacity-40';
-const emptyProvider = (): Provider => ({ id: '', name: '', baseUrl: '', apiKey: '', format: 'openai', category: 'custom', enabled: true, models: [] });
+const emptyProvider = (): Provider => ({ id: '', name: '', baseUrl: '', apiKey: '', format: 'openai', category: 'custom', enabled: true, models: [], webSearchStrategy: 'auto' });
 
 function TokenField({ label, value, onChange }: { label: string; value?: number; onChange: (value?: number) => void }) {
   const [text, setText] = useState(formatTokenLimit(value));
@@ -71,14 +73,19 @@ export default function ProviderSettings() {
       const models = draft.category === 'builtin'
         ? (catalog.providers.find(p => p.id === draft.builtinId)?.models || []) as ProviderModel[]
         : await fetchProviderModels(selectedId!);
-      edit({ models: models.map(m => ({ ...m, ...draft.models.find(old => old.id === m.id) })) }); setPage(0);
-      setNotice('模型已载入，点击保存应用修改');
+      edit({ models: models.map(m => mergeDiscoveredModel(m, draft.models.find(old => old.id === m.id))) }); setPage(0);
+      setNotice('模型已载入并自动识别输入类型和上下文，点击保存应用修改');
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   };
-  const updateModel = (index: number, patch: Partial<ProviderModel>) => { if (draft) edit({ models: draft.models.map((m, i) => i === index ? { ...m, ...patch } : m) }); };
+  const updateModel = (index: number, patch: Partial<ProviderModel>) => { if (draft) edit({ models: draft.models.map((m, i) => {
+    if (i !== index) return m;
+    const updated = { ...m, ...patch };
+    return patch.id !== undefined || patch.name !== undefined ? { ...updated, ...inferModelCapabilities(updated) } : updated;
+  }) }); };
   const visibleModels = draft?.models.map((m, index) => ({ m, index })).filter(({ m }) => `${m.id} ${m.name}`.toLowerCase().includes(search.toLowerCase())) || [];
 
   return <div>
+    <ModeModelDefaults providers={providers} />
     {error && <div role="alert" className="mb-4 rounded-lg bg-red-500/10 text-red-500 p-3 text-sm">{error}</div>}
     <div className="flex gap-6 min-h-[400px] animate-fade-in">
       <div className="w-[240px] shrink-0 flex flex-col gap-2">
@@ -103,9 +110,22 @@ export default function ProviderSettings() {
           <label className="block text-xs text-claude-textSecondary">API 地址<input required={draft.category !== 'builtin'} type="url" aria-label="API 地址" className={`${inputClass} mt-1 font-mono`} value={draft.baseUrl} onChange={e => edit({ baseUrl: e.target.value })} placeholder="https://api.example.com/v1" /></label>
           <label className="block text-xs text-claude-textSecondary">API 密钥<span className="flex items-center gap-2 mt-1"><input aria-label="API 密钥" type={showKey ? 'text' : 'password'} className={inputClass} value={draft.apiKey || ''} onChange={e => edit({ apiKey: e.target.value })} placeholder={draft.category === 'builtin' ? 'API key，留空则使用环境认证' : 'API key（本地免认证服务可留空）'} autoComplete="off" /><button type="button" aria-label="显示或隐藏密钥" onClick={() => setShowKey(!showKey)}>{showKey ? <EyeOff size={16} /> : <Eye size={16} />}</button></span></label>
           <label className="block text-xs text-claude-textSecondary">Protocol{draft.category === 'builtin' ? <div className="mt-2 text-claude-text">{[...new Set(draft.models.map(m => m.api))].filter(Boolean).join(', ') || '供应商原生协议'}</div> : <select aria-label="Protocol" className={`${inputClass} mt-1`} value={draft.format} onChange={e => edit({ format: e.target.value as Provider['format'] })}><option value="openai">OpenAI 兼容</option><option value="anthropic">Anthropic</option></select>}</label>
+          <div>
+            <label className="block text-xs text-claude-textSecondary">联网搜索<select aria-label="联网搜索" aria-describedby="web-search-help" className={`${inputClass} mt-1`} value={draft.webSearchStrategy || 'auto'} onChange={e => edit({ webSearchStrategy: e.target.value as Provider['webSearchStrategy'] })}>
+              <option value="auto">自动使用模型供应商搜索（默认）</option>
+              <option value="openai_native">OpenAI 原生搜索</option>
+              <option value="anthropic_native">Anthropic 原生搜索</option>
+              <option value="deepseek_native">DeepSeek 原生搜索</option>
+              <option value="public">公共网页搜索（DuckDuckGo / Bing）</option>
+              <option value="disabled">关闭联网搜索</option>
+              {(draft.webSearchStrategy === 'dashscope' || draft.webSearchStrategy === 'bigmodel') && <option value={draft.webSearchStrategy}>{draft.webSearchStrategy}（旧配置，请重新选择）</option>}
+            </select></label>
+            <p id="web-search-help" className="mt-2 text-xs text-claude-textSecondary">自动模式下的 DeepSeek 模型和手动选择 DeepSeek 原生搜索，均使用系统设置 → 联网搜索中的独立地址、模型和密钥。其他原生搜索使用此供应商的 API 地址和认证。搜索可能产生额外费用；服务不支持时会提示错误，不会自动改用公共搜索。</p>
+          </div>
           <div className="border-t border-claude-border pt-4 space-y-3">
             <div className="flex items-center gap-2"><h4 className="text-sm font-medium flex-1">模型列表</h4><button type="button" disabled={busy || (adding && draft.category !== 'builtin')} onClick={fetchModels} className={buttonClass}><RefreshCw size={12} className="inline mr-1" />获取模型列表</button><button type="button" onClick={() => { edit({ models: [...draft.models, { id: `model-${Date.now()}`, name: '新模型', enabled: true, inputTypes: ['text'], api: draft.category === 'builtin' ? draft.models[0]?.api : undefined }] }); setSearch(''); setPage(Math.floor(draft.models.length / pageSize)); }} className={buttonClass}>添加模型</button></div>
             <input aria-label="搜索模型" className={inputClass} value={search} placeholder="搜索模型" onChange={e => { setSearch(e.target.value); setPage(0); }} />
+            <p className="text-xs text-claude-textSecondary">修改模型 ID / 名称或获取列表时，自动识别 Text / Image 输入能力和上下文；接口参数优先，缺失时参考模型目录与名称。无法识别的上下文留空，可手动调整。</p>
             {visibleModels.slice(page * pageSize, (page + 1) * pageSize).map(({ m, index }) => <div key={index} className="border border-claude-border rounded-xl p-3 space-y-3">
               <div className="flex gap-2 items-center"><input type="checkbox" aria-label={`启用 ${m.name}`} checked={m.enabled !== false} onChange={e => updateModel(index, { enabled: e.target.checked })} /><input required aria-label="模型 ID" className={inputClass} value={m.id} onChange={e => updateModel(index, { id: e.target.value })} /><input required aria-label="模型名称" className={inputClass} value={m.name} onChange={e => updateModel(index, { name: e.target.value })} /><button type="button" aria-label={`删除模型 ${m.name}`} onClick={() => { edit({ models: draft.models.filter((_, i) => i !== index) }); setPage(0); }}><Trash2 size={14} /></button></div>
               <div className="grid grid-cols-2 gap-2"><TokenField label="Context window" value={m.contextWindow} onChange={value => updateModel(index, { contextWindow: value })} /><TokenField label="Max output tokens" value={m.maxTokens} onChange={value => updateModel(index, { maxTokens: value })} /></div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Clock, Edit, Trash2, Play, ToggleLeft, ToggleRight } from 'lucide-react';
 import { TaskInfo } from '../utils/tauriAPI';
+import { useI18n } from '../hooks/useI18n';
 
 interface TaskRowProps {
   task: TaskInfo;
@@ -10,16 +11,16 @@ interface TaskRowProps {
   onExecute: () => void;
 }
 
-function formatLastRun(lastRunAt: string | null, lastRunStatus: string | null): string {
-  if (!lastRunAt) return 'Not yet run';
+function formatLastRun(lastRunAt: string, lastRunStatus: string | null, language: string): string {
   const date = new Date(lastRunAt);
-  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const mon = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  const time = date.toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' });
+  const mon = date.toLocaleDateString(language, { month: 'short', day: 'numeric' });
   const status = lastRunStatus === 'success' ? '✓' : lastRunStatus === 'failed' ? '✗' : '';
   return `${status} ${mon} ${time}`;
 }
 
 export default function TaskRow({ task, onToggle, onEdit, onDelete, onExecute }: TaskRowProps) {
+  const { t, locale } = useI18n();
   const statusColor = task.is_enabled
     ? 'text-green-600 dark:text-green-400'
     : 'text-claude-textSecondary';
@@ -36,12 +37,12 @@ export default function TaskRow({ task, onToggle, onEdit, onDelete, onExecute }:
 
       <div className="flex items-center gap-1 text-[11px] text-claude-textSecondary shrink-0">
         <Clock size={12} />
-        <span>{formatLastRun(task.last_run_at, task.last_run_status)}</span>
+        <span>{task.last_run_at ? formatLastRun(task.last_run_at, task.last_run_status, locale) : t('tasks.notRun')}</span>
       </div>
 
       <div className="flex items-center gap-0.5 shrink-0">
         <span className={`text-[11px] px-1.5 py-0.5 rounded ${statusColor} bg-claude-hover`}>
-          {task.is_enabled ? 'Enabled' : 'Disabled'}
+          {task.is_enabled ? t('tasks.enabled') : t('tasks.disabled')}
         </span>
       </div>
 
@@ -49,28 +50,28 @@ export default function TaskRow({ task, onToggle, onEdit, onDelete, onExecute }:
         <button
           onClick={() => onToggle(task.id, !task.is_enabled)}
           className="p-1.5 rounded-md hover:bg-claude-btn-hover text-claude-textSecondary hover:text-claude-text transition-colors"
-          title={task.is_enabled ? 'Disable' : 'Enable'}
+          title={task.is_enabled ? t('tasks.disable') : t('tasks.enable')}
         >
           {task.is_enabled ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
         </button>
         <button
           onClick={onExecute}
           className="p-1.5 rounded-md hover:bg-claude-btn-hover text-claude-textSecondary hover:text-green-600 transition-colors"
-          title="Execute now"
+          title={t('tasks.execute')}
         >
           <Play size={14} />
         </button>
         <button
           onClick={onEdit}
           className="p-1.5 rounded-md hover:bg-claude-btn-hover text-claude-textSecondary hover:text-claude-text transition-colors"
-          title="Edit"
+          title={t('sidebar.edit')}
         >
           <Edit size={14} />
         </button>
         <button
           onClick={onDelete}
           className="p-1.5 rounded-md hover:bg-claude-btn-hover text-claude-textSecondary hover:text-red-500 transition-colors"
-          title="Delete"
+          title={t('common.delete')}
         >
           <Trash2 size={14} />
         </button>

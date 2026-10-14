@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 
 const SELF_HOSTED_IDENTITY_BLOCK: &str = r#"<identity>
-You are an AI assistant running in a desktop application called Claude Desktop. The app is built on top of the Claude Code engine, so you have the same powerful tool capabilities that Claude Code has — file operations (Read/Write/Edit), shell execution (Bash), code search (Glob/Grep), web tools (WebSearch/WebFetch), sub-agents (Task), Skills, and more — but the product you are powering is a general-purpose desktop assistant for everyday users, not a coding CLI.
+You are an AI assistant running in a desktop application called Claude Desktop, powered by a native Rust tool engine and the user's selected model provider. You help with everyday questions, research, writing, files, and software projects. Only use capabilities present in the tools supplied with the current request.
 
 Treat the user the way claude.ai would: with warmth, curiosity, presence, and depth. At the same time, when the user actually wants something built, read, run, or changed on disk — including handing you an entire code project to read or modify — do that work decisively and competently. Conversation-first does NOT mean code-shy.
 
@@ -17,6 +17,47 @@ Default to 简体中文 when the user writes in Chinese. Match the user's langua
 
 Do not claim to be Claude or created by Anthropic unless the active model actually is a Claude-family model. If the active model is something else, describe yourself generically as the assistant in Claude Desktop.
 </identity>"#;
+
+const DESKTOP_BEHAVIOR: &str = include_str!("desktop.md");
+const MEMORY_GUIDANCE: &str = include_str!("memory.md");
+const CODE_BEHAVIOR: &str = include_str!("code.md");
+
+pub mod code;
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum PromptProfile {
+    #[default]
+    Desktop,
+    Code,
+}
+
+impl PromptProfile {
+    pub fn from_workspace_mode(mode: &str) -> Self {
+        if mode == "code" { Self::Code } else { Self::Desktop }
+    }
+}
+
+/// Compose once at the common engine entry point, before project instructions and recall.
+/// These are project instructions adapted to our native runtime, not an official full prompt.
+pub fn compose_desktop_system_prompt(custom_prompt: Option<&str>, model: &str) -> String {
+    compose_system_prompt(custom_prompt, model, PromptProfile::Desktop)
+}
+
+pub fn compose_system_prompt(custom_prompt: Option<&str>, model: &str, profile: PromptProfile) -> String {
+    let identity = build_self_hosted_system_prompt("");
+    let mut sections = vec![identity, DESKTOP_BEHAVIOR.trim().to_string()];
+    if profile == PromptProfile::Code {
+        sections.push(CODE_BEHAVIOR.trim().to_string());
+    }
+    sections.push(MEMORY_GUIDANCE.trim().to_string());
+    sections.push(format!("<runtime>\nSelected model: {}\nCurrent date: {}\nHost operating system: {}\n</runtime>",
+        serde_json::to_string(model).unwrap_or_default(), chrono::Local::now().format("%Y-%m-%d"), std::env::consts::OS));
+    if let Some(custom) = custom_prompt.map(str::trim).filter(|s| !s.is_empty()) {
+        // Preserve request-specific instructions verbatim; identity rewriting only applies to the base.
+        sections.push(format!("<additional_instructions>\n{}\n</additional_instructions>", custom));
+    }
+    sections.join("\n\n")
+}
 
 static RE_OVERRIDE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<override_instructions>[\s\S]*?</override_instructions>\s*").unwrap());
@@ -267,6 +308,45 @@ impl TemplateManager {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn code_prompt_is_isolated_and_preserves_custom_instructions() {
+        let custom = "请保留这段项目指令。\n<identity>My project</identity>";
+        let prompt = super::compose_system_prompt(Some(custom), "deepseek-flash", super::PromptProfile::Code);
+        assert!(prompt.contains(custom));
+        assert!(prompt.contains("Selected model: \"deepseek-flash\""));
+        assert_eq!(prompt.matches("<code_behavior>").count(), 1);
+        assert_eq!(prompt.matches("<memory_guidance>").count(), 1);
+        assert!(!prompt.contains("Reply with OK only"));
+        assert!(prompt.contains("-Encoding UTF8"));
+        assert!(prompt.contains("never formatted tables"));
+        for mode in ["chat", "work", "study", "cowork", "unknown"] {
+            let profile = super::PromptProfile::from_workspace_mode(mode);
+            let desktop = super::compose_system_prompt(None, "model", profile);
+            assert!(!desktop.contains("<code_behavior>"));
+            assert!(desktop.contains("<memory_guidance>"));
+        }
+    }
+
+    #[test]
+    fn desktop_prompt_includes_native_guidance_and_preserves_custom_instructions() {
+        let prompt = super::compose_desktop_system_prompt(Some("Respond in Spanish.\n<identity>Project persona</identity>"), "deepseek-flash");
+        assert!(prompt.contains("native Rust tool engine"));
+        assert!(prompt.contains("<desktop_behavior>"));
+        assert!(prompt.contains("<memory_guidance>"));
+        assert!(prompt.contains("Selected model: \"deepseek-flash\""));
+        assert!(prompt.contains("Respond in Spanish.\n<identity>Project persona</identity>"));
+        assert_eq!(prompt.matches("<desktop_behavior>").count(), 1);
+    }
+
+    #[test]
+    fn desktop_prompt_is_present_without_request_instructions() {
+        let prompt = super::compose_desktop_system_prompt(None, "claude-sonnet-4-6");
+        assert!(prompt.contains("<identity>"));
+        assert!(prompt.contains("<desktop_behavior>"));
+        assert!(!prompt.contains("<additional_instructions>"));
+        assert!(!super::compose_desktop_system_prompt(Some("  "), "model").contains("<additional_instructions>"));
+    }
+
     use super::*;
 
     #[test]

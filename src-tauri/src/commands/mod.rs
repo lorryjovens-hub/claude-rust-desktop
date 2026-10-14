@@ -19,6 +19,7 @@ use crate::slash_commands::{SlashCommand, SlashCommandRegistry};
 use crate::cost_tracker::{CostSummary, CostTracker, SessionCost};
 
 pub mod bridge;
+pub mod general_settings;
 pub mod feishu_chat;
 pub use bridge::*;
 use anyhow::Result;

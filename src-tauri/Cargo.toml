@@ -72,6 +72,7 @@ tokio-tungstenite = { version = "0.24", features = ["rustls-tls-webpki-roots"] }
 prometheus = "0.13"
 ed25519-dalek = { version = "2", features = ["std"] }
 serde_yaml = "0.9"
+scraper = "0.24"
 
 [dev-dependencies]
 tempfile = "3"

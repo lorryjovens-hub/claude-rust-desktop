@@ -294,6 +294,7 @@ impl OpenAIClient {
             "max_tokens": max_tokens,
             "messages": body_messages,
             "stream": true,
+            "stream_options": { "include_usage": true },
         });
 
         if !tools.is_empty() {

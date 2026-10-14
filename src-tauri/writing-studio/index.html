@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A focused AI writing studio powered by Claude." />
+    <title>Prose — AI writing studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Prose home">
+          <span class="brand-mark"><i></i><i></i><i></i></span>
+          <span>Prose</span>
+        </a>
+        <div class="document-title-wrap">
+          <input id="documentTitle" class="document-title" value="The case for slower mornings" aria-label="Document title" />
+          <span id="saveStatus" class="save-status"><span></span> Saved</span>
+        </div>
+        <div class="top-actions">
+          <button id="themeButton" class="icon-button" title="Toggle theme" aria-label="Toggle theme">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.64 5.64l1.42 1.42m9.88 9.88 1.42 1.42m0-12.72-1.42 1.42M7.06 16.94l-1.42 1.42"/><circle cx="12" cy="12" r="4"/></svg>
+          </button>
+          <button id="shareButton" class="button ghost">
+            <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.5-4.4M8.2 13.2l7.5 4.4"/></svg>
+            Share
+          </button>
+          <button id="exportButton" class="button dark">
+            Export
+            <svg viewBox="0 0 24 24"><path d="M12 4v12m0 0 5-5m-5 5-5-5M5 20h14"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="editor-panel">
+          <div class="toolbar" role="toolbar" aria-label="Text formatting">
+            <select id="textStyle" aria-label="Text style">
+              <option value="p">Body</option>
+              <option value="h2">Heading</option>
+              <option value="blockquote">Quote</option>
+            </select>
+            <span class="toolbar-divider"></span>
+            <button data-command="bold" aria-label="Bold"><strong>B</strong></button>
+            <button data-command="italic" aria-label="Italic"><em>I</em></button>
+            <button data-command="underline" aria-label="Underline"><u>U</u></button>
+            <span class="toolbar-divider"></span>
+            <button data-command="insertUnorderedList" aria-label="Bullet list">
+              <svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
+            </button>
+            <button data-command="insertOrderedList" aria-label="Numbered list">
+              <svg viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10M4 5h1v3M4 11h2l-2 3h2M4 17h2v3H4"/></svg>
+            </button>
+            <span class="toolbar-divider"></span>
+            <button data-command="undo" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 7 4 12l5 5M5 12h9a5 5 0 0 1 5 5"/></svg></button>
+            <button data-command="redo" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 7 5 5-5 5m4-5h-9a5 5 0 0 0-5 5"/></svg></button>
+            <div class="toolbar-spacer"></div>
+            <button id="focusButton" aria-label="Focus mode" title="Focus mode"><svg viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5m13 5h5v-5"/></svg></button>
+          </div>
+
+          <article class="paper">
+            <div id="editor" class="editor" contenteditable="true" spellcheck="true" aria-label="Writing editor">
+              <p>There is a particular kind of quiet that exists only before the rest of the world wakes up. The streets are still, the inbox is silent, and for a brief while, time feels like it belongs entirely to you.</p>
+              <p>I used to think that productive mornings meant getting as much done as possible before 9 a.m. I would wake up, immediately reach for my phone, and begin answering emails before I'd even left bed. It felt efficient. It also left me exhausted before the day had properly begun.</p>
+              <p>Over the past year, I've been experimenting with something different: doing less in the morning, but doing it with more attention.</p>
+              <h2>Attention is a finite resource</h2>
+              <p>We tend to treat attention as though it renews endlessly throughout the day. It doesn't. Every notification we check, every decision we make, and every context switch takes something from a limited reserve.</p>
+              <p>When we spend that reserve reactively—responding to whatever is loudest or most urgent—we give away the best part of our thinking before we've decided what deserves it.</p>
+              <p>A slower morning isn't about laziness. It's about being deliberate with the first and often clearest hours of the day.</p>
+            </div>
+          </article>
+
+          <footer class="editor-footer">
+            <div class="stats"><span id="wordCount">0 words</span><span id="charCount">0 characters</span><span id="readTime">1 min read</span></div>
+            <button id="analyzeButton" class="analyze-button">
+              <svg viewBox="0 0 24 24"><path d="m12 3 1.4 4.1L17.5 8.5l-4.1 1.4L12 14l-1.4-4.1-4.1-1.4 4.1-1.4L12 3Z"/><path d="m18.5 14 .8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z"/></svg>
+              <span>Review with Claude</span>
+              <kbd>⌘ ↵</kbd>
+            </button>
+          </footer>
+        </section>
+
+        <aside class="assistant-panel">
+          <div class="assistant-header">
+            <div>
+              <div class="eyebrow"><span class="ai-dot"></span> AI EDITOR</div>
+              <h1>Suggestions</h1>
+            </div>
+            <button id="panelToggle" class="icon-button" title="Collapse suggestions" aria-label="Collapse suggestions"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+          </div>
+
+          <div class="score-card">
+            <div class="score-ring" id="scoreRing"><strong id="scoreValue">86</strong><small>/ 100</small></div>
+            <div><span>Writing score</span><strong id="scoreLabel">Strong writing</strong><p id="scoreSummary">Clear, confident, and easy to follow. A few refinements can make it even sharper.</p></div>
+          </div>
+
+          <div class="goals-wrap">
+            <button id="goalsToggle" class="goals-toggle"><span><svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg> Editing goals</span><svg class="chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+            <div id="goalsPanel" class="goals-panel">
+              <label for="goalsInput">What should Claude optimize for?</label>
+              <textarea id="goalsInput">Professional, clear, concise, and natural. Preserve a warm, thoughtful voice.</textarea>
+            </div>
+          </div>
+
+          <div class="suggestions-meta">
+            <span><strong id="suggestionCount">3</strong> suggestions</span>
+            <button id="acceptAllButton">Accept all</button>
+          </div>
+
+          <div id="suggestionsList" class="suggestions-list"></div>
+
+          <div id="emptyState" class="empty-state" hidden>
+            <div>✓</div><h3>Your writing looks polished</h3><p>Claude didn't find any high-value changes to recommend.</p>
+          </div>
+
+          <div class="assistant-footer">
+            <span><i></i> Powered by Claude</span>
+            <button id="settingsButton" class="icon-button" title="API setup" aria-label="API setup"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1V21h-4v-.09a1.7 1.7 0 0 0-1.1-1.51 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1-.4H3v-4h.09A1.7 1.7 0 0 0 4.6 8.5a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1V3h4v.09A1.7 1.7 0 0 0 15.5 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9c.15.39.36.73.6 1 .26.29.62.43 1 .4h.09v4H21a1.7 1.7 0 0 0-1.6 1.1Z"/></svg></button>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status"></div>
+    <div id="modal" class="modal-backdrop" hidden>
+      <div class="modal">
+        <button id="modalClose" class="modal-close">×</button>
+        <span class="modal-icon">✦</span>
+        <h2>Connect Claude</h2>
+        <p>For security, your Anthropic key is read by the local Node server—not the browser.</p>
+        <pre>ANTHROPIC_API_KEY=sk-ant-... npm run dev</pre>
+        <p class="muted">Optionally set <code>CLAUDE_MODEL</code> to choose another compatible model.</p>
+        <button id="modalDone" class="button dark wide">Got it</button>
+      </div>
+    </div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

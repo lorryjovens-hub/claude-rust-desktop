@@ -1,6 +1,7 @@
 pub mod schema;
 pub mod conversation_repo;
 pub mod message_repo;
+pub mod request_repo;
 pub mod project_repo;
 pub mod task_repo;
 pub mod diff_repo;
@@ -25,7 +26,9 @@ impl DbManager {
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)?;
         }
-        let manager = SqliteConnectionManager::file(&path);
+        let manager = SqliteConnectionManager::file(&path).with_init(|conn| {
+            conn.execute_batch("PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")
+        });
         let pool = Pool::builder()
             .max_size(10)
             .min_idle(Some(2))

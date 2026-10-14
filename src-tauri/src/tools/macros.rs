@@ -84,7 +84,7 @@ pub fn execute_smart_edit(input: Value, cwd: &str) -> Result<Value> {
         re.replace(&content, replacement).to_string()
     };
 
-    fs::write(&path, &new_content)?;
+    super::utf8::write_utf8(std::path::Path::new(&path), &new_content)?;
     Ok(json!({"success": true, "matches": match_count, "file": path}))
 }
 

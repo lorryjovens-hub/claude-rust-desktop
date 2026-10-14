@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Search, Trash2, Sparkles, LayoutGrid, FileText,
   ChevronRight, ChevronDown, Folder, File, MoreHorizontal, Info, Eye, Code,
-  Settings, Check, MessageSquare, ClipboardList, Upload, Github, X, FolderPlus
+  Settings, Check, MessageSquare, ClipboardList, Upload, Github, X, FolderPlus, Server, Puzzle
 } from 'lucide-react';
 import MarkdownRenderer, { CodeBlock } from './MarkdownRenderer';
 import { getSkills, getSkillDetail, getSkillFile, createSkill, updateSkill, deleteSkill, toggleSkill, getGithubStatus, getGithubAuthUrl, disconnectGithub } from '../api';
@@ -15,6 +15,8 @@ import customizeIconImg from '../assets/icons/customize-icon.png';
 import customizeMainImg from '../assets/icons/customize-main.png';
 import createSkillsImg from '../assets/icons/create-skills.png';
 import { useI18n } from '../hooks/useI18n';
+import McpSettingsPage from './McpSettingsPage';
+import PluginsPage from './PluginsPage';
 
 interface Skill {
   id: string;
@@ -195,10 +197,10 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({
   );
 };
 
-const CustomizePage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void }) => {
+const CustomizePage = ({ onCreateWithClaude, onBack }: { onCreateWithClaude?: () => void; onBack?: () => void }) => {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'overview' | 'skills' | 'connectors'>('overview');
+  const [tab, setTab] = useState<'overview' | 'skills' | 'mcp' | 'connectors' | 'plugins'>('overview');
   const [examples, setExamples] = useState<Skill[]>([]);
   const [mySkills, setMySkills] = useState<Skill[]>([]);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
@@ -411,13 +413,14 @@ const CustomizePage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void
   );
 
   return (
-    <div className="flex h-full w-full bg-claude-bg text-claude-text font-sans">
+    <div className="flex h-full min-h-0 w-full overflow-hidden bg-claude-bg text-claude-text font-sans">
 
       {/* 1. Left Navigation (Fixed width) */}
-      <div className="w-[240px] border-r border-claude-border flex flex-col pt-4 pb-4 flex-shrink-0 bg-claude-bg">
+      <div className="w-[160px] xl:w-[200px] 2xl:w-[240px] border-r border-claude-border flex flex-col pt-4 pb-4 flex-shrink-0 bg-claude-bg">
         <div className="px-4 mb-6">
           <button onClick={() => {
             if (tab !== 'overview') setTab('overview');
+            else if (onBack) onBack();
             else navigate(-1);
           }}
             className="flex items-center gap-2 text-claude-text font-medium hover:text-claude-text/80 transition-colors">
@@ -425,23 +428,33 @@ const CustomizePage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void
             <span className="text-lg font-semibold">{t('customize.title')}</span>
           </button>
         </div>
-        <nav className="flex-1 px-2 space-y-1">
-          <button onClick={() => setTab('skills')}
+        <nav aria-label={t('customize.title')} className="flex-1 px-2 space-y-1 overflow-y-auto">
+          <button aria-current={tab === 'skills' ? 'page' : undefined} onClick={() => setTab('skills')}
             className={`w-full flex items-center gap-3 px-3 py-2 text-[15px] font-medium rounded-lg transition-colors ${tab === 'skills' ? 'bg-claude-hover text-claude-text' : 'text-claude-text hover:bg-claude-hover'}`}>
             <img src={skillsImg} alt="" className="w-[22px] h-[22px] dark:invert" />
             {t('customize.skills')}
           </button>
-          <button onClick={() => setTab('connectors')}
+          <button aria-current={tab === 'mcp' ? 'page' : undefined} onClick={() => setTab('mcp')}
+            className={`w-full flex items-center gap-3 px-3 py-2 text-[15px] font-medium rounded-lg transition-colors ${tab === 'mcp' ? 'bg-claude-hover text-claude-text' : 'text-claude-text hover:bg-claude-hover'}`}>
+            <Server size={22} />
+            MCP
+          </button>
+          <button aria-current={tab === 'connectors' ? 'page' : undefined} onClick={() => setTab('connectors')}
             className={`w-full flex items-center gap-3 px-3 py-2 text-[15px] font-medium rounded-lg transition-colors ${tab === 'connectors' ? 'bg-claude-hover text-claude-text' : 'text-claude-text hover:bg-claude-hover'}`}>
             <img src={connectorsImg} alt="" className="w-[22px] h-[22px] dark:invert" />
             {t('customize.connectors')}
+          </button>
+          <button aria-current={tab === 'plugins' ? 'page' : undefined} onClick={() => setTab('plugins')}
+            className={`w-full flex items-center gap-3 px-3 py-2 text-[15px] font-medium rounded-lg transition-colors ${tab === 'plugins' ? 'bg-claude-hover text-claude-text' : 'text-claude-text hover:bg-claude-hover'}`}>
+            <Puzzle size={22} />
+            {t('customize.plugins')}
           </button>
         </nav>
       </div>
 
       {/* 2. Middle Column: Skills List or Connectors List */}
       {tab === 'skills' ? (
-        <div className="w-[300px] border-r border-claude-border flex flex-col flex-shrink-0 bg-claude-bg">
+        <div className="w-[220px] 2xl:w-[300px] border-r border-claude-border flex flex-col flex-shrink-0 bg-claude-bg">
           {/* Header */}
           <div className="h-14 px-4 flex items-center justify-between border-b border-claude-border">
             <span className="font-semibold text-claude-text">{t('customize.skills')}</span>
@@ -577,7 +590,7 @@ const CustomizePage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void
           </div>
         </div>
       ) : tab === 'connectors' ? (
-        <div className="w-[300px] border-r border-claude-border flex flex-col flex-shrink-0 bg-claude-bg">
+        <div className="w-[220px] 2xl:w-[300px] border-r border-claude-border flex flex-col flex-shrink-0 bg-claude-bg">
           <div className="h-14 px-4 flex items-center justify-between border-b border-claude-border">
             <span className="font-semibold text-claude-text">{t('customize.connectors')}</span>
           </div>
@@ -634,8 +647,12 @@ const CustomizePage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void
 
       {/* 3. Right Column: Detail / Create / Overview */}
       <div className="flex-1 flex flex-col min-w-0">
-        {tab === 'overview' ? (
-          <div className="flex flex-col items-center justify-center h-full max-w-2xl mx-auto px-6 py-12">
+        {tab === 'mcp' ? (
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 lg:p-8"><McpSettingsPage /></div>
+        ) : tab === 'plugins' ? (
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 lg:p-8"><PluginsPage /></div>
+        ) : tab === 'overview' ? (
+          <div className="flex flex-col items-center h-full overflow-y-auto max-w-2xl mx-auto px-6 py-12">
             <div className="mb-6">
               <img src={customizeMainImg} alt="Customize" className="w-[140px] h-auto dark:invert opacity-90" />
             </div>
@@ -678,6 +695,17 @@ const CustomizePage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void
                   <ArrowLeft size={16} className="rotate-180 text-claude-textSecondary" />
                 </div>
               </button>
+              {([
+                { id: 'mcp', icon: Server, label: t('settings.mcpServers') },
+                { id: 'plugins', icon: Puzzle, label: t('customize.plugins') },
+              ] as const).map(item => (
+                <button key={item.id} onClick={() => setTab(item.id)}
+                  className="w-full flex items-center gap-4 p-4 border border-claude-border bg-black/[0.02] dark:bg-white/[0.04] rounded-[24px] hover:bg-claude-hover transition-colors text-left">
+                  <item.icon size={28} className="shrink-0 text-claude-textSecondary" />
+                  <span className="font-medium text-[15.5px]">{item.label}</span>
+                  <ChevronRight size={16} className="ml-auto text-claude-textSecondary" />
+                </button>
+              ))}
             </div>
           </div>
         ) : tab === 'connectors' ? (

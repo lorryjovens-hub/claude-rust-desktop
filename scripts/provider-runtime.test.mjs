@@ -23,7 +23,8 @@ test('built-in DeepSeek sends configured limits, effort and credential to select
     res.writeHead(200, { 'Content-Type': 'text/event-stream' });
     for (const data of [
       { choices: [{ index: 0, delta: { role: 'assistant', content: 'mock reply' }, finish_reason: null }] },
-      { choices: [{ index: 0, delta: {}, finish_reason: 'stop' }], usage: { prompt_tokens: 10, completion_tokens: 2, total_tokens: 12 } },
+      { choices: [{ index: 0, delta: {}, finish_reason: 'stop' }], usage: { prompt_tokens: 10, completion_tokens: 305, total_tokens: 315,
+        prompt_tokens_details: { cached_tokens: 6 }, completion_tokens_details: { reasoning_tokens: 44 } } },
     ]) res.write(`data: ${JSON.stringify({ id: 'test', object: 'chat.completion.chunk', created: 1, model: 'deepseek-v4-flash', ...data })}\n\n`);
     res.end('data: [DONE]\n\n');
   });
@@ -44,6 +45,13 @@ test('built-in DeepSeek sends configured limits, effort and credential to select
       if (effort !== 'off') assert.equal(request.body.reasoning_effort, effort);
       assert.ok(events.some(event => event.choices[0].delta.content === 'mock reply'));
       assert.ok(events.at(-1).provider_content);
+      assert.equal(events.at(-1).id, 'test');
+      assert.equal(events.at(-1).model, 'deepseek-v4-flash');
+      assert.equal(events.at(-1).usage.prompt_tokens, 10);
+      assert.equal(events.at(-1).usage.completion_tokens, 305);
+      assert.equal(events.at(-1).usage.completion_tokens_details.reasoning_tokens, 44);
+      assert.equal(events.at(-1).usage.prompt_tokens_details.cached_tokens, 6);
+      assert.equal(events.at(-1).usage.provider_usage.input, 4);
     }
   } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
 });

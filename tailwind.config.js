@@ -24,8 +24,8 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Figtree', 'sans-serif'],
-        serif: ['Source Serif 4', 'serif'],
+        sans: ['Anthropic Sans', 'Figtree Variable', 'Figtree', 'system-ui', 'Microsoft YaHei', 'sans-serif'],
+        serif: ['Anthropic Serif', 'Source Serif 4 Variable', 'Source Serif 4', 'serif'],
         system: ['system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', '"Open Sans"', '"Helvetica Neue"', 'sans-serif'],
       }
     }

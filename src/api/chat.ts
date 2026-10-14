@@ -1,3 +1,4 @@
+import { pendingMarkerLength } from '../utils/streamMarkers';
 import { getErrorMessage } from '../utils/errorHelpers';
 import { API_BASE, getToken, detectBridgePort, isTauriApp, isBridgeReachable, resetBridgeReachableCache, getUserModeForConversation, resolveEnvCreds } from './client';
 
@@ -729,7 +730,7 @@ export async function sendMessage(
               appendVisibleText(inlineArtifactBuffer);
               inlineArtifactBuffer = '';
             } else {
-              const keep = Math.min(inlineArtifactBuffer.length, INLINE_ARTIFACT_OPEN.length - 1);
+              const keep = pendingMarkerLength(inlineArtifactBuffer, INLINE_ARTIFACT_OPEN);
               const emit = inlineArtifactBuffer.slice(0, inlineArtifactBuffer.length - keep);
               if (emit) appendVisibleText(emit);
               inlineArtifactBuffer = inlineArtifactBuffer.slice(inlineArtifactBuffer.length - keep);
@@ -773,7 +774,7 @@ export async function sendMessage(
             emitInlineArtifactDraft(true);
             activeInlineArtifact = null;
           } else {
-            const keep = Math.min(inlineArtifactBuffer.length, INLINE_ARTIFACT_CLOSE.length - 1);
+            const keep = pendingMarkerLength(inlineArtifactBuffer, INLINE_ARTIFACT_CLOSE);
             const emit = inlineArtifactBuffer.slice(0, inlineArtifactBuffer.length - keep);
             if (emit) appendInlineArtifactPreview(emit);
             inlineArtifactBuffer = inlineArtifactBuffer.slice(inlineArtifactBuffer.length - keep);
@@ -973,12 +974,16 @@ export async function sendMessage(
             }
 
             if (parsed.type === 'tool_use_start' && onToolUse) {
+              if (!activeInlineArtifact) processInlineArtifactText('', true);
+              flushPending();
               try { onToolUse({ type: 'start', tool_use_id: parsed.tool_use_id, tool_name: parsed.tool_name, tool_input: parsed.tool_input, textBefore: parsed.textBefore || '' }); } catch (err) { console.error('[API] onToolUse start callback error:', err); }
             }
             if (parsed.type === 'tool_use_input' && onToolUse) {
               try { onToolUse({ type: 'input', tool_use_id: parsed.tool_use_id, tool_input: parsed.tool_input }); } catch (err) { console.error('[API] onToolUse input callback error:', err); }
             }
             if (parsed.type === 'tool_use_done' && onToolUse) {
+              if (!activeInlineArtifact) processInlineArtifactText('', true);
+              flushPending();
               try { onToolUse({ type: 'done', tool_use_id: parsed.tool_use_id, content: parsed.content || parsed.output, is_error: parsed.is_error }); } catch (err) { console.error('[API] onToolUse done callback error:', err); }
             }
 

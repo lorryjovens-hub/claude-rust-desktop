@@ -249,7 +249,7 @@ const ChatsPage = () => {
     }
   };
 
-  const modeChats = chats.filter(chat => conversationWorkspaceMode(chat) === workspaceMode);
+  const modeChats = chats.filter(chat => (conversationWorkspaceMode(chat) === 'code') === (workspaceMode === 'code'));
   const filteredChats = modeChats.filter(chat =>
     (chat.title || 'New Chat').toLowerCase().includes(searchQuery.toLowerCase())
   );

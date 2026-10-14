@@ -83,6 +83,7 @@ async fn conversation_get(Path(id): Path<String>, State(state): State<AppState>)
                 let tool_calls = crate::db::message_repo::get_tool_calls_for_message(conn, &msg.id)
                     .unwrap_or_default();
                 let mut msg_json = serde_json::to_value(msg).unwrap_or(serde_json::json!({}));
+                msg_json["requestSnapshots"] = crate::db::message_repo::get_request_snapshots(conn, &msg.id).unwrap_or_else(|_| serde_json::json!([]));
                 if !tool_calls.is_empty() {
                     // Format as the frontend expects: array of { name, input (parsed), result, status }
                     let formatted_tool_calls: Vec<serde_json::Value> = tool_calls.iter().map(|tc| {
@@ -90,7 +91,7 @@ async fn conversation_get(Path(id): Path<String>, State(state): State<AppState>)
                             .and_then(|s| serde_json::from_str(s).ok())
                             .unwrap_or(serde_json::json!({}));
                         serde_json::json!({
-                            "id": tc.id,
+                            "id": tc.id.strip_prefix(&format!("{}:", msg.id)).unwrap_or(&tc.id),
                             "name": tc.name,
                             "input": input_parsed,
                             "result": tc.output,
@@ -114,6 +115,8 @@ async fn conversation_get(Path(id): Path<String>, State(state): State<AppState>)
             "project_id": conv.project_id,
             "workspace_mode": conv.workspace_mode,
             "research_mode": conv.research_mode,
+            "pinned": conv.pinned,
+            "archived": conv.archived,
             "created_at": conv.created_at,
             "updated_at": conv.updated_at,
             "message_count": conv.message_count,
@@ -130,35 +133,51 @@ async fn conversation_update(Path(id): Path<String>, State(state): State<AppStat
     let id_clone = id.clone();
     let result = tokio::task::spawn_blocking(move || {
         db.with_conn(|conn: &rusqlite::Connection| {
+            let transaction = conn.unchecked_transaction()?;
+            let conn = &transaction;
+            anyhow::ensure!(crate::db::conversation_repo::get_conversation(conn, &id_clone)?.is_some(), "Conversation not found");
+            if let Some(mode) = body.get("workspace_mode") {
+                let mode: crate::db::conversation_repo::WorkspaceMode = serde_json::from_value(mode.clone())?;
+                crate::db::conversation_repo::set_workspace_mode(conn, &id_clone, mode.as_str())?;
+                crate::db::conversation_repo::update_conversation_timestamp(conn, &id_clone, &chrono::Utc::now().to_rfc3339())?;
+            }
+            if let Some(pinned) = body.get("pinned").and_then(|v| v.as_bool()) {
+                crate::db::conversation_repo::pin_conversation(conn, &id_clone, pinned)?;
+            }
+            if let Some(archived) = body.get("archived").and_then(|v| v.as_bool()) {
+                crate::db::conversation_repo::archive_conversation(conn, &id_clone, archived)?;
+            }
             if let Some(project_id) = body.get("project_id") {
                 if let Some(project_id) = project_id.as_str() {
                     let project = crate::db::project_repo::require_trusted(conn, project_id)?;
-                    conn.execute("UPDATE conversations SET project_id = ?1, workspace_path = ?2, updated_at = ?3 WHERE id = ?4",
+                    conn.execute("DELETE FROM conversation_worktrees WHERE conversation_id = ?1 AND project_id != ?2", rusqlite::params![&id_clone, project_id])?;
+                    conn.execute("UPDATE conversations SET project_id = ?1, workspace_path = COALESCE((SELECT path FROM conversation_worktrees WHERE conversation_id = ?4), ?2), updated_at = ?3 WHERE id = ?4",
                         rusqlite::params![project_id, project.workspace_path, chrono::Utc::now().to_rfc3339(), &id_clone])?;
                 } else if project_id.is_null() {
+                    conn.execute("DELETE FROM conversation_worktrees WHERE conversation_id = ?1", rusqlite::params![&id_clone])?;
                     conn.execute("UPDATE conversations SET project_id = NULL, workspace_path = NULL WHERE id = ?1", rusqlite::params![&id_clone])?;
                 }
             }
             if let Some(title) = body.get("title").and_then(|v| v.as_str()) {
-                let _ = conn.execute(
+                conn.execute(
                     "UPDATE conversations SET title = ?1, updated_at = ?2 WHERE id = ?3",
                     rusqlite::params![title, chrono::Utc::now().to_rfc3339(), &id_clone],
-                );
+                )?;
             }
             if let Some(model) = body.get("model").and_then(|v| v.as_str()) {
-                let _ = conn.execute(
+                conn.execute(
                     "UPDATE conversations SET model = ?1, updated_at = ?2 WHERE id = ?3",
                     rusqlite::params![model, chrono::Utc::now().to_rfc3339(), &id_clone],
-                );
+                )?;
             }
             if let Some(workspace) = body.get("workspace_path").and_then(|v| v.as_str()) {
-                let _ = conn.execute(
+                conn.execute(
                     "UPDATE conversations SET workspace_path = ?1, updated_at = ?2 WHERE id = ?3",
                     rusqlite::params![workspace, chrono::Utc::now().to_rfc3339(), &id_clone],
-                );
+                )?;
             }
             if let Some(messages) = body.get("messages").and_then(|v| v.as_array()) {
-                let tx = conn.unchecked_transaction()?;
+                let tx = conn;
                 crate::db::message_repo::delete_messages_from(&tx, &id_clone, 0)?;
                 for (idx, msg) in messages.iter().enumerate() {
                     // Safe: unwrap_or generates a fresh UUID when msg has no id field
@@ -174,8 +193,8 @@ async fn conversation_update(Path(id): Path<String>, State(state): State<AppStat
                     crate::db::message_repo::insert_message(&tx, &msg_id, &id_clone, role, &content, None, &now, false, idx as i64)?;
                 }
                 crate::db::conversation_repo::increment_message_count(&tx, &id_clone)?;
-                tx.commit()?;
             }
+            transaction.commit()?;
             Ok::<(), anyhow::Error>(())
         })
     }).await;
@@ -277,6 +296,7 @@ async fn conversation_messages_tail_delete(
 #[derive(Deserialize)]
 struct BranchRequest {
     from_message_id: Option<String>,
+    from_message_index: Option<usize>,
 }
 
 async fn conversation_branch_handler(
@@ -287,28 +307,7 @@ async fn conversation_branch_handler(
     let db = state.db_manager.clone();
     let result = tokio::task::spawn_blocking(move || {
         db.with_conn(|conn| {
-            let new_id = uuid::Uuid::new_v4().to_string();
-            let now = chrono::Utc::now().to_rfc3339();
-            let source = crate::db::conversation_repo::get_conversation(conn, &id)?;
-            let title = source.as_ref().and_then(|c| c.title.as_deref()).unwrap_or("Branched conversation");
-            let model = source.as_ref().and_then(|c| c.model.as_deref());
-            crate::db::conversation_repo::insert_conversation(
-                conn, &new_id, Some(&format!("{} (branch)", title)), model, None, None, None, false, false, false, &now, &now, 0,
-            )?;
-            crate::db::conversation_repo::set_workspace_mode(conn, &new_id, source.as_ref().map(|c| c.workspace_mode.as_str()).unwrap_or("chat"))?;
-            let mut messages = crate::db::message_repo::get_messages_by_conversation(conn, &id)?;
-            if let Some(mid) = req.from_message_id.as_deref() {
-                if let Some(m) = crate::db::message_repo::get_message(conn, mid)? {
-                    messages.retain(|msg| msg.sort_order < m.sort_order);
-                }
-            }
-            for msg in &messages {
-                let msg_id = uuid::Uuid::new_v4().to_string();
-                crate::db::message_repo::insert_message(
-                    conn, &msg_id, &new_id, &msg.role, &msg.content, msg.thinking.as_deref(), &msg.created_at, msg.is_compact_boundary, msg.sort_order,
-                )?;
-            }
-            Ok::<String, anyhow::Error>(new_id)
+            crate::db::conversation_repo::branch_conversation(conn, &id, req.from_message_id.as_deref(), req.from_message_index)
         })
     }).await;
     match result {

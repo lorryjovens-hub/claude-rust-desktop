@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { useI18n } from '../hooks/useI18n';
+import { useUIStore } from '../stores/useUIStore';
 
 describe('useI18n', () => {
   beforeEach(() => {
     localStorage.clear();
+    useUIStore.getState().setLanguage('en');
   });
 
   it('should return t function, language, and setLanguage', () => {
@@ -33,7 +35,8 @@ describe('useI18n', () => {
 
   it('should set language correctly', () => {
     const { result } = renderHook(() => useI18n());
-    result.current.setLanguage('zh');
+    act(() => result.current.setLanguage('zh'));
     expect(localStorage.setItem).toHaveBeenCalledWith('app_language', 'zh');
+    expect(result.current.t('common.cancel')).toBe('取消');
   });
 });

@@ -1,0 +1,30 @@
+@font-face {
+  font-family: 'Anthropic Sans';
+  src: url('../assets/fonts/AnthropicSans-Roman.woff2') format('woff2');
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+  font-feature-settings: 'dlig' 0;
+}
+@font-face {
+  font-family: 'Anthropic Sans';
+  src: url('../assets/fonts/AnthropicSans-Italic.woff2') format('woff2');
+  font-weight: 300 800;
+  font-style: italic;
+  font-display: swap;
+  font-feature-settings: 'dlig' 0;
+}
+@font-face {
+  font-family: 'Anthropic Serif';
+  src: url('../assets/fonts/AnthropicSerif-Roman.woff2') format('woff2');
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Anthropic Serif';
+  src: url('../assets/fonts/AnthropicSerif-Italic.woff2') format('woff2');
+  font-weight: 300 800;
+  font-style: italic;
+  font-display: swap;
+}

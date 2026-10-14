@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Search, Plus, ChevronDown, ArrowLeft, MoreVertical, Star, ArrowUp, FileText, Trash, Pencil, MessageSquare, X, Upload, Check, AudioLines, ChevronRight, Archive } from 'lucide-react';
+import { Search, Plus, ChevronDown, MoreVertical, Star, ArrowUp, FileText, Trash, Pencil, MessageSquare, X, Upload, Check, AudioLines, ChevronRight, Archive } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Paperclip, ListCollapse } from 'lucide-react';
 import { getProjects, getProject, updateProject, deleteProject, uploadProjectFile, deleteProjectFile, createProjectConversation, deleteConversation, getSkills, Project, ProjectFile } from '../api';
-import ModelSelector, { SelectableModel } from './ModelSelector';
+import ModelSelector from './ModelSelector';
+import { useModelCatalog } from '../features/model-catalog/useModelCatalog';
+import { useChatStore } from '../stores/useChatStore';
 import { IconPlus } from './Icons';
 import CreateProjectDialog from '../features/project/CreateProjectDialog';
 import ProjectWorkspaceBar from '../features/project/ProjectWorkspaceBar';
@@ -45,36 +47,19 @@ const ProjectsPage = () => {
   const plusMenuRef = useRef<HTMLDivElement>(null);
   const plusBtnRef = useRef<HTMLButtonElement>(null);
 
-  const isSelfHostedMode = localStorage.getItem('user_mode') === 'selfhosted';
-  const selectorModels = useMemo<SelectableModel[]>(() => {
-    if (isSelfHostedMode) {
-      try {
-        const chatModels = JSON.parse(localStorage.getItem('chat_models') || '[]');
-        if (chatModels.length > 0) {
-          const tierDescMap: Record<string, string> = {
-            'opus': 'Most capable for ambitious work',
-            'sonnet': 'Most efficient for everyday tasks',
-            'haiku': 'Fastest for quick answers',
-          };
-          return chatModels.map((m: any) => ({
-            id: m.id,
-            name: m.name || m.id,
-            enabled: 1,
-            tier: m.tier || 'extra',
-            description: m.tier && tierDescMap[m.tier] ? tierDescMap[m.tier] : undefined,
-          }));
-        }
-      } catch (_) { }
+  const viewingIdRef = useRef<string | null>(null);
+  const { selectorModels, isModelSelectable, resolveModelForNewChat } = useModelCatalog(viewingIdRef);
+  const currentModelString = useChatStore(s => s.currentModel);
+  const setCurrentModelString = useChatStore(s => s.setCurrentModel);
+  const reasoningMode = useChatStore(s => s.reasoningMode);
+  const setReasoningMode = useChatStore(s => s.setReasoningMode);
+  useEffect(() => {
+    if (selectorModels.length && !isModelSelectable(currentModelString)) {
+      setCurrentModelString(resolveModelForNewChat(currentModelString));
     }
-    return [
-      { id: 'claude-opus-4-6', name: 'Opus 4.6', enabled: 1, description: 'Most capable for ambitious work' },
-      { id: 'claude-sonnet-4-6', name: 'Sonnet 4.6', enabled: 1, description: 'Most efficient for everyday tasks' },
-      { id: 'claude-haiku-4-5-20251001', name: 'Haiku 4.5', enabled: 1, description: 'Fastest for quick answers' },
-    ];
-  }, [isSelfHostedMode]);
-  const [currentModelString, setCurrentModelString] = useState(localStorage.getItem('default_model') || 'claude-sonnet-4-6');
+  }, [currentModelString, selectorModels, isModelSelectable, resolveModelForNewChat, setCurrentModelString]);
   const handleModelChange = (newModelString: string) => {
-    setCurrentModelString(newModelString);
+    if (isModelSelectable(newModelString)) setCurrentModelString(newModelString);
   };
 
   const ensureProjectReady = async () => {
@@ -89,7 +74,7 @@ const ProjectsPage = () => {
   };
 
   const handleChatSubmit = async () => {
-    if (!message.trim() || !currentProject) return;
+    if (!message.trim() || !currentProject || !isModelSelectable(currentModelString)) return;
     try {
       if (!await ensureProjectReady()) return;
       const conv = await createProjectConversation(currentProject.id, message.slice(0, 50), currentModelString);
@@ -263,20 +248,9 @@ const ProjectsPage = () => {
     return (
       <div className="flex-1 h-full bg-claude-bg overflow-y-auto">
         <div className="max-w-[800px] mx-auto px-8 py-12">
-          <ProjectWorkspaceBar projectId={currentProject.id} menuPlacement="below" onSelect={project => { setSearchParams({ project: project.id }); loadProject(project.id); }} />
           {projectError && <p role="alert" className="my-3 text-sm text-red-500">{projectError}</p>}
           {projectToTrust && <TrustProjectDialog project={projectToTrust} onClose={() => setProjectToTrust(null)} onTrusted={project => { setProjectToTrust(null); loadProject(project.id); }} />}
-          <div className="mb-4">
-            <button
-              onClick={() => { setSearchParams({}); setCurrentProject(null); loadProjects(); }}
-              className="flex items-center gap-1.5 text-[14px] text-claude-textSecondary hover:text-claude-text transition-colors font-medium -ml-1"
-            >
-              <ArrowLeft size={16} />
-              {t('customize.allProjects')}
-            </button>
-          </div>
-
-          <div className="flex items-start justify-between mb-8 gap-4">
+          <div className="flex items-start justify-between mb-4 gap-4">
             <div className="flex-1 min-w-0">
               {editingName ? (
                 <div className="flex items-center gap-2">
@@ -304,6 +278,10 @@ const ProjectsPage = () => {
             <div className="flex items-center gap-1 text-claude-textSecondary mt-2 flex-shrink-0">
               <button className="p-1 hover:text-claude-text hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors"><MoreVertical size={18} /></button>
             </div>
+          </div>
+
+          <div className="mb-4">
+            <ProjectWorkspaceBar projectId={currentProject.id} menuPlacement="below" onSelect={project => { setSearchParams({ project: project.id }); loadProject(project.id); }} />
           </div>
 
           <div className="space-y-4">
@@ -393,11 +371,14 @@ const ProjectsPage = () => {
                     currentModelString={currentModelString}
                     models={selectorModels}
                     onModelChange={handleModelChange}
+                    effort={reasoningMode}
+                    onEffortChange={setReasoningMode}
                     isNewChat={true}
                   />
                   <button
                     onClick={handleChatSubmit}
-                    disabled={!message.trim()}
+                    aria-label="Send message"
+                    disabled={!message.trim() || !isModelSelectable(currentModelString)}
                     className="p-2 bg-[#C6613F] text-white rounded-lg hover:bg-[#D97757] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <ArrowUp size={22} strokeWidth={2.5} />

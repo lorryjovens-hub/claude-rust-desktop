@@ -60,11 +60,21 @@ export async function run(request) {
     if (event.type === 'start') chunk({ role: 'assistant' });
     if (event.type === 'text_delta') chunk({ content: event.delta });
     if (event.type === 'thinking_delta') chunk({ reasoning_content: event.delta });
+    if (event.type === 'toolcall_start') chunk({}, null, { response_content_started: true });
     if (event.type === 'toolcall_end') chunk({ tool_calls: [{ index: toolIndex++, id: event.toolCall.id, type: 'function', function: { name: event.toolCall.name, arguments: JSON.stringify(event.toolCall.arguments) } }] });
     if (event.type === 'error') throw new Error(event.error.errorMessage || 'Provider stream failed');
     if (event.type === 'done') {
       const finish = event.reason === 'toolUse' ? 'tool_calls' : event.reason === 'length' ? 'length' : 'stop';
-      chunk({}, finish, { provider_content: event.message, usage: { prompt_tokens: event.message.usage.input, completion_tokens: event.message.usage.output, total_tokens: event.message.usage.totalTokens } });
+      chunk({}, event.message.rawStopReason || finish, { id: event.message.responseId,
+        model: event.message.responseModel || event.message.model, provider_content: event.message, usage: {
+        prompt_tokens: event.message.usage.input + event.message.usage.cacheRead + event.message.usage.cacheWrite,
+        completion_tokens: event.message.usage.output,
+        total_tokens: event.message.usage.totalTokens,
+        ...(event.message.usage.reasoning != null ? { completion_tokens_details: { reasoning_tokens: event.message.usage.reasoning } } : {}),
+        prompt_tokens_details: { cached_tokens: event.message.usage.cacheRead },
+        cache_creation_input_tokens: event.message.usage.cacheWrite,
+        provider_usage: event.message.usage,
+      } });
     }
   }
 }

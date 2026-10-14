@@ -1,0 +1,22 @@
+[
+  { "id": "en", "locale": "en-US", "nativeName": "English (United States)", "direction": "ltr" },
+  { "id": "zh", "locale": "zh-CN", "nativeName": "简体中文（中国大陆）", "direction": "ltr" },
+  { "id": "zh-TW", "locale": "zh-TW", "nativeName": "繁體中文（台灣）", "direction": "ltr" },
+  { "id": "fr-FR", "locale": "fr-FR", "nativeName": "Français (France)", "direction": "ltr" },
+  { "id": "de-DE", "locale": "de-DE", "nativeName": "Deutsch (Deutschland)", "direction": "ltr" },
+  { "id": "hi-IN", "locale": "hi-IN", "nativeName": "हिन्दी (भारत)", "direction": "ltr" },
+  { "id": "id-ID", "locale": "id-ID", "nativeName": "Bahasa Indonesia (Indonesia)", "direction": "ltr" },
+  { "id": "it-IT", "locale": "it-IT", "nativeName": "Italiano (Italia)", "direction": "ltr" },
+  { "id": "ja-JP", "locale": "ja-JP", "nativeName": "日本語（日本）", "direction": "ltr" },
+  { "id": "ko-KR", "locale": "ko-KR", "nativeName": "한국어 (대한민국)", "direction": "ltr" },
+  { "id": "pt-BR", "locale": "pt-BR", "nativeName": "Português (Brasil)", "direction": "ltr" },
+  { "id": "es-419", "locale": "es-419", "nativeName": "Español (Latinoamérica)", "direction": "ltr" },
+  { "id": "es-ES", "locale": "es-ES", "nativeName": "Español (España)", "direction": "ltr" },
+  { "id": "ru-RU", "locale": "ru-RU", "nativeName": "Русский (Россия)", "direction": "ltr" },
+  { "id": "ar-SA", "locale": "ar-SA", "nativeName": "العربية (السعودية)", "direction": "rtl" },
+  { "id": "nl-NL", "locale": "nl-NL", "nativeName": "Nederlands (Nederland)", "direction": "ltr" },
+  { "id": "pl-PL", "locale": "pl-PL", "nativeName": "Polski (Polska)", "direction": "ltr" },
+  { "id": "tr-TR", "locale": "tr-TR", "nativeName": "Türkçe (Türkiye)", "direction": "ltr" },
+  { "id": "vi-VN", "locale": "vi-VN", "nativeName": "Tiếng Việt (Việt Nam)", "direction": "ltr" },
+  { "id": "th-TH", "locale": "th-TH", "nativeName": "ไทย (ประเทศไทย)", "direction": "ltr" }
+]

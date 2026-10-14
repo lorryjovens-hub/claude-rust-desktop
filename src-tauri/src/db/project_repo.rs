@@ -191,7 +191,7 @@ pub fn set_folders(conn: &Connection, id: &str, paths: &[String]) -> Result<()> 
         conn.execute("INSERT INTO project_folders (project_id, path, trusted, sort_order) VALUES (?1, ?2, ?3, ?4)", params![id, path, trusted, index as i64])?;
     }
     conn.execute("UPDATE projects SET workspace_path = ?1, updated_at = ?2 WHERE id = ?3", params![paths[0], chrono::Utc::now().to_rfc3339(), id])?;
-    conn.execute("UPDATE conversations SET workspace_path = ?1 WHERE project_id = ?2", params![paths[0], id])?;
+    conn.execute("UPDATE conversations SET workspace_path = ?1 WHERE project_id = ?2 AND id NOT IN (SELECT conversation_id FROM conversation_worktrees)", params![paths[0], id])?;
     Ok(())
 }
 

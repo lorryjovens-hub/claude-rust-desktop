@@ -319,25 +319,34 @@ impl QueryEngine {
         Ok(())
     }
 
-    pub async fn send_message(&self, mut request: ChatRequest) -> Result<mpsc::Receiver<EngineEvent>> {
+    pub async fn send_message(&self, request: ChatRequest) -> Result<mpsc::Receiver<EngineEvent>> {
+        self.send_message_with_history(request, true).await
+    }
+
+    /// The desktop SSE route owns its assistant row so snapshots and results share one ID.
+    pub async fn send_message_with_history(&self, mut request: ChatRequest, save_response: bool) -> Result<mpsc::Receiver<EngineEvent>> {
         let conv_id = request.conversation_id.clone();
         let db = self.db_manager.clone();
         let project_conv_id = conv_id.clone();
-        let project = tokio::task::spawn_blocking(move || db.with_conn(|conn| -> Result<_> {
-            let conversation = crate::db::conversation_repo::get_conversation(conn, &project_conv_id)?;
-            match conversation.and_then(|c| c.project_id) {
-                Some(id) => Ok(Some(crate::db::project_repo::require_trusted(conn, &id)?)),
-                None => Ok(None),
-            }
+        let workspaces_root = self.workspaces_dir.clone();
+        let requested_workspace = request.workspace_path.clone();
+        let (workspace, project, prompt_profile) = tokio::task::spawn_blocking(move || db.with_conn(|conn| {
+            let (workspace, project) = super::workspace::resolve_workspace(conn, &workspaces_root, &project_conv_id, requested_workspace.as_deref())?;
+            let profile = super::workspace::conversation_prompt_profile(conn, &project_conv_id)?;
+            Ok::<_, anyhow::Error>((workspace, project, profile))
         })).await???;
+        request.system_prompt = Some(crate::prompt::compose_system_prompt(
+            request.system_prompt.as_deref(), &request.model, prompt_profile,
+        ));
+        let workspace_path = workspace.to_string_lossy().into_owned();
+        request.workspace_path = Some(workspace_path.clone());
+        request.system_prompt.get_or_insert_with(String::new).push_str(&format!("\nWorking directory: {workspace_path}\n"));
         if let Some(project) = project {
-            request.workspace_path = project.workspace_path;
             let folders = project.folders.iter().map(|f| f.path.as_str()).collect::<Vec<_>>();
             let context = format!("\nProject: {}\nProject source folders (the first is the working directory):\n{}\nProject instructions:\n{}", project.name, serde_json::to_string(&folders)?, project.instructions.unwrap_or_default());
             request.system_prompt.get_or_insert_with(String::new).push_str(&context);
         }
         let model = request.model.clone();
-        let workspace_path = request.workspace_path.clone().unwrap_or_else(|| ".".to_string());
 
         tracing::info!(module = "EngineCore", "send_message: conv_id={}, model={}, workspace={}", conv_id, model, workspace_path);
 
@@ -417,6 +426,8 @@ impl QueryEngine {
             if estimated + max_tokens as u64 > context as u64 { anyhow::bail!("Input plus output budget exceeds the configured context window; compact the conversation or lower max output tokens"); }
         }
 
+        let search_config_path = self.provider_manager.lock().await.config_path()
+            .parent().unwrap_or(std::path::Path::new(".")).join("config.json");
         let mut executor = ToolLoopExecutor::new(
             provider,
             request.messages,
@@ -426,6 +437,11 @@ impl QueryEngine {
             workspace_path.clone(),
             reasoning_mode.clone(),
         )
+        .with_prompt_profile(prompt_profile)
+        .with_memex(crate::memory::MemExClient::with_path(
+            self.workspaces_dir.parent().unwrap_or(&self.workspaces_dir).join("memory.sqlite3"), None,
+        ))
+        .with_search_config_path(search_config_path)
         .with_conv_id(conv_id.clone())
         .with_answer_waiters(self.answer_waiters.clone())
         .with_permission_manager(self.permission_manager.clone())
@@ -476,7 +492,7 @@ impl QueryEngine {
             match exec_result {
                 Ok((full_text, _stop_reason)) => {
                     tracing::info!(module = "EngineCore", "Executor completed for {}, full_text_len={}", conv_id_clone, full_text.len());
-                    if !full_text.is_empty() {
+                    if save_response && !full_text.is_empty() {
                         let conv_id = conv_id_clone.clone();
                         let _ = tokio::task::spawn_blocking(move || {
                             db.with_conn(|conn| {

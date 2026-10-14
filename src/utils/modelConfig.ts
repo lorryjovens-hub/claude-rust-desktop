@@ -1,5 +1,10 @@
 export type Effort = 'off' | 'low' | 'high' | 'max';
 
+const modelNameCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+export function compareModelNames(a: { name: string; id: string }, b: { name: string; id: string }): number {
+  return modelNameCollator.compare(a.name, b.name) || modelNameCollator.compare(a.id, b.id);
+}
+
 export function parseTokenLimit(value: string): number | undefined {
   if (!value.trim()) return undefined;
   const match = value.trim().match(/^(\d+(?:\.\d+)?)\s*([km])?$/i);

@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import CreateProjectDialog from './CreateProjectDialog';
 import ProjectWorkspaceBar from './ProjectWorkspaceBar';
 import { createProject, getProject, getProjects, trustProjectFolders, updateProject } from '../../api';
+import { useWorkspaceModeStore } from '../../stores/useWorkspaceModeStore';
 
 vi.mock('../../api', () => ({
   createProject: vi.fn(), getProject: vi.fn(), getProjects: vi.fn(),
@@ -16,6 +17,7 @@ const project = {
 
 beforeEach(() => {
   vi.resetAllMocks();
+  useWorkspaceModeStore.setState({ mode: 'chat', lastCodeProjectId: null });
   vi.mocked(getProjects).mockResolvedValue([project]);
   vi.mocked(getProject).mockResolvedValue(project);
 });
@@ -58,6 +60,12 @@ describe('project creation and trust', () => {
 });
 
 describe('chat project folders', () => {
+  it('remembers the displayed Code project for the next new chat', async () => {
+    useWorkspaceModeStore.getState().setMode('code');
+    render(<ProjectWorkspaceBar projectId={project.id} onSelect={vi.fn()} />);
+    await waitFor(() => expect(useWorkspaceModeStore.getState().lastCodeProjectId).toBe(project.id));
+  });
+
   it('prevents removing the last folder', async () => {
     render(<ProjectWorkspaceBar projectId={project.id} onSelect={vi.fn()} />);
     expect(await screen.findByRole('button', { name: `Remove folder ${project.workspace_path}` })).toBeDisabled();

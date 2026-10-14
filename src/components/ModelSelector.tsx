@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Check, ChevronRight, ArrowLeft } from 'lucide-react';
-import { Effort, splitModelKey } from '../utils/modelConfig';
+import { compareModelNames, Effort, splitModelKey } from '../utils/modelConfig';
 
 export interface SelectableModel {
   id: string; name: string; enabled: number; providerId?: string; providerName?: string;
@@ -28,6 +28,7 @@ export default function ModelSelector({ currentModelString, models, onModelChang
     const group = model.providerId || model.providerName || 'Models';
     groups.set(group, [...(groups.get(group) || []), model]);
   }
+  for (const items of groups.values()) items.sort(compareModelNames);
   const row = 'w-full flex items-center justify-between gap-4 px-3 py-2 text-sm rounded-lg hover:bg-claude-hover text-left';
   return <div ref={ref} className="relative inline-block">
     <button aria-label="模型与 Effort" title={selected?.providerName} className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg hover:bg-claude-hover" onClick={() => { setUp(dropdownPosition === 'top' || (dropdownPosition !== 'bottom' && window.innerHeight - (ref.current?.getBoundingClientRect().bottom || 0) < 350)); setOpen(!open); setPanel('main'); setSearch(''); }}><span className="max-w-[200px] truncate">{label}</span><ChevronDown size={14} /></button>

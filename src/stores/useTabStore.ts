@@ -12,8 +12,6 @@ export interface TabItem {
   lastActiveAt: number;
 }
 
-const MAX_TABS = 10;
-
 interface TabState {
   openTabs: TabItem[];
   activeTabId: string | null;
@@ -48,19 +46,6 @@ export const useTabStore = create<TabState>((set, get) => ({
       }
     }
 
-    if (openTabs.length >= MAX_TABS) {
-      const oldestNonPinned = openTabs
-        .filter(t => !t.pinned)
-        .sort((a, b) => a.lastActiveAt - b.lastActiveAt)[0];
-
-      if (oldestNonPinned) {
-        get().closeTab(oldestNonPinned.id);
-      } else {
-        const oldest = openTabs.sort((a, b) => a.lastActiveAt - b.lastActiveAt)[0];
-        if (oldest) get().closeTab(oldest.id);
-      }
-    }
-
     const id = tab.id || generateTabId();
     const now = Date.now();
     const newTab: TabItem = {
@@ -75,10 +60,10 @@ export const useTabStore = create<TabState>((set, get) => ({
       lastActiveAt: now,
     };
 
-    set((state) => ({
-      openTabs: [...state.openTabs, newTab],
+    set({
+      openTabs: [newTab],
       activeTabId: id,
-    }));
+    });
 
     return id;
   },
@@ -159,6 +144,6 @@ export const useTabStore = create<TabState>((set, get) => ({
   },
 
   canOpenTab: () => {
-    return get().openTabs.length < MAX_TABS;
+    return true; // Opening a conversation replaces the active one.
   },
 }));

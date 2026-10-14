@@ -3,6 +3,8 @@
 //! magic numbers live here now.
 
 pub mod api_endpoints;
+mod deepseek_search;
+pub use deepseek_search::DeepSeekSearchConfig;
 
 use anyhow::Result;
 use once_cell::sync::OnceCell;
@@ -251,6 +253,8 @@ pub struct ProviderConfig {
 pub struct AppConfig {
     pub providers: Vec<ProviderConfig>,
     #[serde(default)]
+    pub deepseek_search: DeepSeekSearchConfig,
+    #[serde(default)]
     pub default_provider_id: Option<String>,
     #[serde(default)]
     pub theme: Option<String>,
@@ -262,6 +266,7 @@ impl Default for AppConfig {
     fn default() -> Self {
         Self {
             providers: Vec::new(),
+            deepseek_search: DeepSeekSearchConfig::default(),
             default_provider_id: None,
             theme: None,
             language: None,
