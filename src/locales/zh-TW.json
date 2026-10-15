@@ -1,42 +1,42 @@
 {
   "sessionGit": {
     "search": "搜尋分支…",
-    "searchFiles": "篩選變更檔案…",
+    "searchFiles": "篩選變更的檔案…",
     "viewChanges": "檢視變更",
     "refreshChanges": "重新整理變更",
     "workingTree": "工作目錄",
     "explorer": "在檔案總管中顯示",
     "github": "在 GitHub 開啟儲存庫",
     "copyPath": "複製路徑",
-    "changeFolder": "更換專案目錄…",
+    "changeFolder": "更換資料夾…",
     "terminal": "在終端機中開啟",
     "copyBranch": "複製分支名稱",
-    "copyFailed": "無法複製至剪貼簿",
-    "prHint": "開啟 GitHub 的 PR 建立頁面",
-    "prOptions": "Pull request 選項",
-    "hideWorkspace": "收合工作區列",
+    "copyFailed": "無法複製到剪貼簿",
+    "prHint": "在 GitHub 開啟 PR 頁面",
+    "prOptions": "提取要求選項",
+    "hideWorkspace": "隱藏工作區列",
     "showWorkspace": "顯示工作區",
     "loadingDiff": "正在載入變更…",
-    "noChanges": "目前工作目錄沒有變更。",
+    "noChanges": "此工作目錄沒有變更。",
     "noMatches": "沒有符合的檔案。",
-    "noTextDiff": "相對 HEAD 無文字差異（空檔案、屬性變更或暫存內容被工作目錄修改抵消）。",
-    "expand": "切換面板大小",
-    "status_modified": "修改",
-    "status_added": "新增",
-    "status_deleted": "刪除",
+    "noTextDiff": "與 HEAD 沒有文字差異（空檔案、中繼資料或暫存變更被工作目錄變更抵銷）。",
+    "expand": "展開或收合面板",
+    "status_modified": "已修改",
+    "status_added": "已新增",
+    "status_deleted": "已刪除",
     "status_untracked": "未追蹤",
     "status_conflict": "衝突",
-    "status_type": "類型變更",
-    "settings": "工作階段目錄",
+    "status_type": "類型已變更",
+    "settings": "對話工作區",
     "branch": "分支",
-    "worktree": "啟用 worktree",
+    "worktree": "使用 worktree",
     "refresh": "重新整理分支",
     "loading": "正在載入分支…",
-    "notRepository": "非 Git 儲存庫",
+    "notRepository": "不是 Git 儲存庫",
     "currentHead": "目前 HEAD（分離狀態）",
-    "unavailable": "此目錄可以正常開始工作階段；分支與 worktree 功能需要 Git 儲存庫。",
-    "branchHint": "套用至專案的第一個目錄，傳送訊息時切換至所選本機分支。",
-    "worktreeHint": "根據所選分支的提交建立獨立工作階段分支，不複製未提交修改；專案中的其他目錄仍共用。"
+    "unavailable": "可以在此啟動對話。分支和 worktree 需要 Git 儲存庫。",
+    "branchHint": "適用於專案的第一個資料夾。傳送訊息時會將此資料夾切換至所選本機分支。",
+    "worktreeHint": "從所選提交建立獨立的對話分支。不複製未提交的變更；專案中的其他資料夾仍共用。"
   },
   "general": {
     "showUsage": "用量統計",
@@ -508,16 +508,34 @@
   "customize": {
     "title": "自訂",
     "plugins": "外掛程式",
-    "pluginsDescription": "瀏覽外掛程式分類，暫不支援安裝和啟用。",
+    "pluginsDescription": "瀏覽外掛程式分類，並在下方管理已安裝的外掛程式。",
     "searchPlugins": "搜尋外掛程式…",
     "noPluginsFound": "沒有符合的外掛程式分類",
     "pluginCategories": {
-      "webTools": { "name": "網頁工具", "description": "瀏覽器自動化、網頁擷取與線上服務整合。" },
-      "codeTools": { "name": "程式碼工具", "description": "程式碼檢查、格式化與程式碼產生工具。" },
-      "aiModels": { "name": "AI 模型", "description": "面向專門任務的其他 AI 模型與服務。" },
-      "fileTools": { "name": "檔案工具", "description": "檔案轉換、文件處理與媒體工具。" },
-      "communication": { "name": "通訊協作", "description": "訊息、郵件與團隊協作工具。" },
-      "dataAnalytics": { "name": "資料分析", "description": "資料分析、報表與商業智慧工具。" }
+      "webTools": {
+        "name": "網頁工具",
+        "description": "瀏覽器自動化、網頁擷取與線上服務整合。"
+      },
+      "codeTools": {
+        "name": "程式碼工具",
+        "description": "程式碼檢查、格式化和產生工具。"
+      },
+      "aiModels": {
+        "name": "AI 模型",
+        "description": "用於專業任務的其他 AI 模型和服務。"
+      },
+      "fileTools": {
+        "name": "檔案工具",
+        "description": "檔案轉換、文件處理和媒體工具。"
+      },
+      "communication": {
+        "name": "通訊",
+        "description": "訊息、電子郵件和協作工具。"
+      },
+      "dataAnalytics": {
+        "name": "資料與分析",
+        "description": "資料分析、報表和商業智慧工具。"
+      }
     },
     "skills": "技能",
     "connectors": "連接器",

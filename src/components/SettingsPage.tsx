@@ -11,6 +11,7 @@ import NewTaskModal from './NewTaskModal';
 import { taskAPI, TaskInfo } from '../utils/tauriAPI';
 import { useI18n } from '../hooks/useI18n';
 import GeneralPreferences from './GeneralPreferences';
+import ServicesSettings from './ServicesSettings';
 import { version as appVersion } from '../../package.json';
 import { useGeneralSettingsStore } from '../stores/useGeneralSettingsStore';
 
@@ -23,7 +24,7 @@ const WORK_OPTIONS = [
   { value: '其他', key: 'other' },
 ];
 
-type Tab = 'about' | 'general' | 'account' | 'usage' | 'models' | 'search' | 'customize' | 'tasks';
+type Tab = 'about' | 'general' | 'account' | 'usage' | 'models' | 'search' | 'customize' | 'tasks' | 'services';
 
 const SettingsPage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void }) => {
   const { t, locale } = useI18n();
@@ -369,6 +370,9 @@ const SettingsPage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void 
             <Clock size={16} />
             {t('tasks.title')}
           </button>
+          <button onClick={() => setTab('services')} className={`text-left px-3 py-2 rounded-lg text-[15px] flex items-center gap-2 ${tab === 'services' ? 'bg-claude-btn-hover text-claude-text' : 'text-claude-textSecondary hover:bg-claude-hover'}`}>
+            <Settings size={16} />服务与团队
+          </button>
           <button onClick={() => setTab('about')} className={`text-left px-3 py-2 rounded-lg text-[15px] font-medium transition-colors flex items-center gap-2 ${tab === 'about' ? 'bg-claude-btn-hover text-claude-text' : 'text-claude-textSecondary hover:bg-claude-hover'}`}>
             <Info size={16} />{t('settings.about')}
           </button>
@@ -377,6 +381,7 @@ const SettingsPage = ({ onCreateWithClaude }: { onCreateWithClaude?: () => void 
         {/* Right Content Area */}
         <div className={`flex-1 min-w-0 ${tab === 'customize' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
           {tab === 'customize' ? <CustomizePage onBack={() => setTab('general')} onCreateWithClaude={onCreateWithClaude} /> : <div className="max-w-6xl px-6 lg:px-12 pb-32">
+            {tab === 'services' && <ServicesSettings />}
             {tab === 'general' && renderGeneral()}
             {tab === 'about' && renderAbout()}
             {tab === 'models' && <ProviderSettings />}

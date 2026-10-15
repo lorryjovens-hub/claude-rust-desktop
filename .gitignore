@@ -60,3 +60,8 @@ src-tauri/bridge_api_key.txt
 
 # Trae IDE specs (development only)
 .trae/
+
+# Unified workspace artifacts
+/target/
+/artifacts/
+legacy/**/target/

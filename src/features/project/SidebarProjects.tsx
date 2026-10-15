@@ -1029,7 +1029,10 @@ export default function SidebarProjects({
         createPortal(
           <CreateProjectDialog
             onClose={() => setCreating(false)}
-            onCreated={() => setCreating(false)}
+            onCreated={project => {
+              setCreating(false);
+              navigate("/", { state: { createdProjectId: project.id } });
+            }}
           />,
           document.body,
         )}

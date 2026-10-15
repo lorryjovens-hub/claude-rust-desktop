@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { createStreamCallbacks } from '../streaming/createStreamCallbacks';
 import { useWorkspaceModeStore } from '../../stores/useWorkspaceModeStore';
 import { persistMessages } from '../../api/conversations';
-import { buildTrace } from './model';
+import { buildTrace, processMetadata, restoreProcessMetadata } from './model';
 vi.mock('../../api', () => ({ getConversation: vi.fn(), getContextSize: vi.fn(), getAttachmentUrl: vi.fn(), compactConversation: vi.fn() }));
 vi.mock('../../api/conversations', () => ({ persistMessages: vi.fn() }));
 vi.mock('../../pyodideRunner', () => ({ executeCode: vi.fn(), sendCodeResult: vi.fn() }));
@@ -22,6 +22,19 @@ function harness() {
   return { callbacks: createStreamCallbacks(ctx), message: () => messages[messages.length - 1] };
 }
 describe('stream process recording', () => {
+  it('persists a 400 card without replacing partial output or tool history', () => {
+    const { callbacks: c, message } = harness();
+    c.onDelta('Before.', 'Before.');
+    c.onToolUse({ type: 'done', tool_use_id: 'read', tool_name: 'Read', content: 'package.json', is_error: false });
+    c.onError('HTTP 400\n{"detail":"Unsupported model"}');
+    expect(message().content).toBe('Before.');
+    expect(message().requestError).toEqual({ status: 400, detail: '{"detail":"Unsupported model"}' });
+    expect(message().toolCalls[0].result).toBe('package.json');
+    expect(message().isThinking).toBe(false);
+    const cached = JSON.parse(JSON.stringify({ ...message(), ...processMetadata(message()) }));
+    expect(restoreProcessMetadata({ role: 'assistant', content: 'Before.' }, 0, [cached]).requestError).toEqual(message().requestError);
+    expect(vi.mocked(persistMessages).mock.lastCall?.[1].slice(-1)[0]?.requestError).toEqual(message().requestError);
+  });
   it.each(['chat', 'work', 'study', 'code'] as const)('records regular and task tool calls in %s, independently of presentation', mode => {
     useWorkspaceModeStore.setState({ mode });
     const { callbacks: c, message } = harness();

@@ -354,7 +354,7 @@ async fn conversation_answer_handler(
             let engine_guard: tokio::sync::MutexGuard<'_, Option<NativeEngine>> = native_engine.lock().await;
             if let Some(engine) = engine_guard.as_ref() {
                 let answer_str = serde_json::to_string(&answers).unwrap_or_default();
-                match engine.resume_with_answer(&id, answer_str).await {
+                match engine.resume_with_answer(&req.request_id, answer_str).await {
                     Ok(()) => Ok(Json(serde_json::json!({ "ok": true }))),
                     Err(e) => {
                         tracing::error!(module = "AskUser", "Native engine answer failed: {}", e);
@@ -434,7 +434,7 @@ async fn conversation_permission_handler(
     let engine_guard: tokio::sync::MutexGuard<'_, Option<NativeEngine>> = native_engine.lock().await;
     if let Some(engine) = engine_guard.as_ref() {
         let answer = if behavior == "allow" { "allow".to_string() } else { "deny".to_string() };
-        match engine.resume_with_answer(&id, answer).await {
+        match engine.resume_with_answer(&req.request_id, answer).await {
             Ok(()) => Ok(Json(serde_json::json!({ "ok": true }))),
             Err(e) => {
                 tracing::error!(module = "Permission", "Native engine answer failed: {}", e);

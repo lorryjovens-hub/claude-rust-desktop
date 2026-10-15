@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$pkg = Get-Content "package.json" -Raw | ConvertFrom-Json
+$pkg = Get-Content "package.json" -Encoding UTF8 -Raw | ConvertFrom-Json
 $version = $pkg.version
 
 Write-Host "[release] Starting release for v$version" -ForegroundColor Cyan
@@ -26,8 +26,11 @@ if (-not $SkipBuild) {
     Write-Host "[release] Building release package..." -ForegroundColor Cyan
     npx tauri build 2>&1 | ForEach-Object { Write-Host "  $_" }
     
-    $exePath = "src-tauri\target\release\claude-desktop-tauri.exe"
-    $msiPath = Get-ChildItem "src-tauri\target\release\bundle\msi\*.msi" -ErrorAction SilentlyContinue | Select-Object -First 1
+    $metadataJson = cargo metadata --no-deps --format-version 1
+    if ($LASTEXITCODE -ne 0) { throw "Cannot determine Cargo output directory" }
+    $targetDir = ($metadataJson | ConvertFrom-Json).target_directory
+    $exePath = Join-Path $targetDir "release\claude-desktop-tauri.exe"
+    $msiPath = Get-ChildItem (Join-Path $targetDir "release\bundle\msi\*.msi") -ErrorAction SilentlyContinue | Select-Object -First 1
     
     if (Test-Path $exePath) {
         $size = (Get-Item $exePath).Length / 1MB

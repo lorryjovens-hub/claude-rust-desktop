@@ -25,6 +25,7 @@ import AddFromGithubModal from './AddFromGithubModal';
 import CompactingStatus from '../features/compact/CompactingStatus';
 import CompactDialog from '../features/compact/CompactDialog';
 import CreateProjectDialog from '../features/project/CreateProjectDialog';
+import { useCreatedProject } from '../features/project/useCreatedProject';
 import ProjectWorkspaceBar from '../features/project/ProjectWorkspaceBar';
 import SessionGitSettings, { type SessionGitSelection } from '../features/project/SessionGitSettings';
 import ConversationWorkspaceBar from '../features/project/ConversationWorkspaceBar';
@@ -1703,6 +1704,8 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
     setEditingMessageIdx(null);
   }, [navigate, setMessages, setLoading, setConversationTitle, setInputText, setPendingFiles, setEditingMessageIdx, setCurrentProjectId, setPendingProjectId]);
 
+  useCreatedProject(handleNewChat);
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -1797,6 +1800,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
   // Shared overlays rendered in both MODE 1 and MODE 2
   const sharedProjectOverlays = (
     <>
+      <VoiceInput isOpen={showVoicePanel} onResult={handleVoiceResult} onClose={closeVoicePanel} />
       {showNewProjectDialog && (
         <CreateProjectDialog onCreated={async project => {
           setProjectList(prev => [project, ...prev.filter(p => p.id !== project.id)]);
@@ -2079,7 +2083,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
             style={{ maxWidth: `${inputBarWidth}px` }}
           >
             <div className="w-full relative group" ref={inputWrapperRef}>
-              {activeId && isCodeMode && currentProjectId ? <ConversationWorkspaceBar key={activeId} id={activeId} projectId={currentProjectId} data={conversationGit.data} error={conversationGit.error} disabled={loading || modeChanging} onSelect={handleAttachToProject} onViewChanges={() => { setShowGitChanges(true); conversationGit.refresh(); }} onRefresh={conversationGit.refresh} /> :
+              {activeId && isCodeMode && currentProjectId ? <ConversationWorkspaceBar key={`workspace:${activeId}`} id={activeId} projectId={currentProjectId} data={conversationGit.data} error={conversationGit.error} disabled={loading || modeChanging} onSelect={handleAttachToProject} onViewChanges={() => { setShowGitChanges(true); conversationGit.refresh(); }} onRefresh={conversationGit.refresh} /> :
                 <ProjectWorkspaceBar projectId={activeId ? currentProjectId : pendingProjectId} onSelect={handleAttachToProject} disabled={loading || modeChanging}>
                   {!activeId && isCodeMode && pendingProjectId && <SessionGitSettings key={`${pendingProjectId}:${resetKey}`} projectId={pendingProjectId} disabled={loading || modeChanging} initialSelection={sessionGit} onChange={setSessionGit} />}
                 </ProjectWorkspaceBar>}
@@ -2237,7 +2241,7 @@ const MainContent = ({ onNewChat, resetKey, tunerConfig, onOpenDocument, onArtif
                 </div>
               </div>
               {modeError && <p role="alert" className="text-xs text-red-500">{modeError}</p>}
-              {showUsage && messages.some(message => message.role === 'user') && <SessionUsageBar key={activeId || 'new'} messages={messages} contextLimit={selectorModels.find(model => model.id === currentModelString)?.contextWindow} />}
+              {showUsage && messages.some(message => message.role === 'user') && <SessionUsageBar key={`usage:${activeId || 'new'}`} messages={messages} contextLimit={selectorModels.find(model => model.id === currentModelString)?.contextWindow} />}
               {!isCodeMode && showAiDisclaimer && <p className="pt-2 pb-2 text-center text-[12px] text-claude-textSecondary font-sans">Claude is AI and can make mistakes. Please double-check responses.</p>}
               {false && (
                 <div className="mx-4 flex items-center justify-between px-4 py-1.5 bg-claude-bgSecondary border-x border-b border-claude-border rounded-b-xl text-claude-textSecondary text-xs pointer-events-auto">

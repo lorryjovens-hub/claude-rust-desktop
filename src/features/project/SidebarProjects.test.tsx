@@ -6,11 +6,13 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import SidebarProjects from "./SidebarProjects";
 import { SidebarChat, useSidebarPreferences } from "./sidebarModel";
 import { useWorkspaceModeStore } from "../../stores/useWorkspaceModeStore";
 import {
+  createProject,
+  trustProjectFolders,
   deleteProject,
   getConversation,
   getProjects,
@@ -88,6 +90,7 @@ const setup = async (initial = chats) => {
   const open = vi.fn();
   const result = render(
     <MemoryRouter>
+      <LocationState />
       <SidebarProjects
         chats={initial}
         streamingIds={new Set()}
@@ -98,6 +101,10 @@ const setup = async (initial = chats) => {
   await screen.findByRole("button", { name: "Desktop" });
   return { ...result, open };
 };
+function LocationState() {
+  const location = useLocation();
+  return <output data-testid="location">{JSON.stringify({ path: location.pathname, state: location.state })}</output>;
+}
 const chatMenu = (title = "Project task") =>
   fireEvent.click(
     within(screen.getByRole("region", { name: "Projects" })).getByRole("button", { name: `Chat options for ${title}` }),
@@ -108,6 +115,22 @@ const projectMenu = () =>
   );
 
 describe("project sidebar", () => {
+  it("opens Chat with the created project after folder trust succeeds", async () => {
+    vi.mocked(createProject).mockResolvedValue({ ...project, folders: [{ path: project.workspace_path, trusted: false }] });
+    vi.mocked(trustProjectFolders).mockResolvedValue(project);
+    await setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Create project' }));
+    const dialog = screen.getByRole('dialog', { name: 'Create project' });
+    fireEvent.change(within(dialog).getByLabelText('Folder path'), { target: { value: project.workspace_path } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Add' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Create project' }));
+    const trust = await screen.findByRole('button', { name: 'Trust folder' });
+    expect(screen.getByTestId('location')).not.toHaveTextContent('createdProjectId');
+    fireEvent.click(trust);
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('"state":{"createdProjectId":"p1"}'));
+    expect(screen.getByTestId('location')).toHaveTextContent('"path":"/"');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
   it.each(["chat", "work", "study", "code"] as const)("keeps empty Recents visible in %s", async mode => {
     useWorkspaceModeStore.setState({ mode });
     await setup([]);

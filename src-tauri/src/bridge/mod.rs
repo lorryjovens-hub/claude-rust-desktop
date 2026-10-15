@@ -177,6 +177,7 @@ pub type AppStateTuple = (
 pub struct BridgeServer {
     engine_pool: Arc<Mutex<EnginePool>>,
     native_engine: Arc<Mutex<Option<NativeEngine>>>,
+    permission_manager: Arc<PermissionManager>,
     mcp_server_manager: Arc<McpServerManager>,
     stream_manager: Arc<Mutex<StreamManager>>,
     research_mode: Arc<Mutex<HashMap<String, bool>>>,
@@ -203,11 +204,11 @@ pub struct BridgeServer {
 
 impl BridgeServer {
     pub fn new(data_dir: PathBuf, db_manager: Arc<DbManager>) -> Self {
-        let _skills_dir = data_dir.join("skills");
+        let skills_dir = data_dir.join("skills");
         let log_dir = data_dir.join("logs");
         let analytics_dir = data_dir.join("analytics");
 
-        let skill_manager = SkillsManager::new();
+        let skill_manager = SkillsManager::with_path(skills_dir);
         if let Err(e) = skill_manager.install_bundled_skills() {
             tracing::error!(module = "Bridge", error = %e);
         }
@@ -255,13 +256,16 @@ impl BridgeServer {
         let file_cache = Arc::new(FileCache::new());
         tracing::info!(module = "Bridge", "FileCache initialized");
 
-        let native_engine = Arc::new(Mutex::new(Some(NativeEngine::new(
-            provider_manager,
+        let skill_manager = Arc::new(Mutex::new(skill_manager));
+        let mcp_server_manager = Arc::new(McpServerManager::new(config_dir.join("mcp-servers.json")));
+        let native_engine = Arc::new(Mutex::new(Some(crate::runtime::create_engine(
+            &crate::runtime::RuntimePaths { data_dir: data_dir.clone() },
             db_manager.clone(),
-            data_dir.join("workspaces"),
-            permission_manager,
+            provider_manager,
+            permission_manager.clone(),
             file_cache.clone(),
-        ))));
+        ).with_skills_manager(skill_manager.clone())
+         .with_mcp_registry(Arc::new(crate::mcp::McpToolRegistry::new(mcp_server_manager.clone()))))));
         tracing::info!(module = "Bridge", "NativeEngine initialized");
 
         let config_path = std::path::Path::new("config/orchestration.toml");
@@ -303,11 +307,12 @@ impl BridgeServer {
         Self {
             engine_pool: Arc::new(Mutex::new(EnginePool::new())),
             native_engine,
-            mcp_server_manager: Arc::new(McpServerManager::new(config_dir.join("mcp-servers.json"))),
+            permission_manager,
+            mcp_server_manager,
             stream_manager: Arc::new(Mutex::new(StreamManager::new())),
             research_mode: Arc::new(Mutex::new(HashMap::new())),
             config_manager,
-            skill_manager: Arc::new(Mutex::new(skill_manager)),
+            skill_manager,
             db_manager,
             task_executor: Arc::new(Mutex::new(Some(task_executor))),
             process_manager: Arc::new(Mutex::new(ProcessManager::new())),
@@ -365,9 +370,7 @@ impl BridgeServer {
             git_integration: Arc::new(GitIntegration::new(
                 std::env::current_dir().unwrap_or_default(),
             )),
-            permission_manager: Arc::new(PermissionManager::new(
-                Arc::new(crate::permissions::AuditLogger::new(1000)),
-            )),
+            permission_manager: self.permission_manager.clone(),
         };
         tracing::info!(module = "Bridge", "Database manager ready");
 

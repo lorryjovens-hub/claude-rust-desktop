@@ -37,6 +37,11 @@ $cargo = Get-Content $cargoPath -Raw
 $cargo = $cargo -replace "version = `"$currentVersion`"", "version = `"$newVersion`""
 Set-Content $cargoPath $cargo -Encoding UTF8NoBOM
 
+# Shared core and CLI inherit the workspace version.
+$workspaceCargo = Get-Content "Cargo.toml" -Raw
+$workspaceCargo = $workspaceCargo -replace "version = `"$currentVersion`"", "version = `"$newVersion`""
+[IO.File]::WriteAllText((Join-Path (Get-Location) "Cargo.toml"), $workspaceCargo, [Text.UTF8Encoding]::new($false))
+
 $tauri = Get-Content $tauriPath -Raw | ConvertFrom-Json
 $tauri.version = $newVersion
 $tauri | ConvertTo-Json -Depth 100 | Set-Content $tauriPath -Encoding UTF8

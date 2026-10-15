@@ -330,7 +330,7 @@ export function buildTrace(messages: any[], loading = false): TraceRecord[] {
 
 export function processMetadata(message: any) {
   return { processSteps: message.processSteps, processStartedAt: message.processStartedAt,
-    processEndedAt: message.processEndedAt, toolTextEndOffset: message.toolTextEndOffset, requestSnapshots: message.requestSnapshots };
+    processEndedAt: message.processEndedAt, toolTextEndOffset: message.toolTextEndOffset, requestSnapshots: message.requestSnapshots, requestError: message.requestError };
 }
 function canonical(value: any): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;

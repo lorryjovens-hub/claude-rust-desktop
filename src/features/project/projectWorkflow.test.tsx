@@ -23,7 +23,7 @@ beforeEach(() => {
 });
 
 describe('project creation and trust', () => {
-  it('requires a name and folder, creates before requesting consent, and does not trust on cancel', async () => {
+  it('requires a folder, preserves an explicit name, and does not trust on cancel', async () => {
     const onCreated = vi.fn();
     const onClose = vi.fn();
     vi.mocked(createProject).mockResolvedValue(project);
@@ -42,6 +42,40 @@ describe('project creation and trust', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onClose).toHaveBeenCalledOnce();
     expect(trustProjectFolders).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['C:\\work\\项目目录', '', '项目目录'],
+    ['C:\\work\\first\\', '   ', 'first'],
+    ['/home/work/example/', '', 'example'],
+    ['\\\\server\\share\\folder\\', '', 'folder'],
+    ['C:\\work\\first', '  Custom name  ', 'Custom name'],
+  ])('creates from %s with name %j as %s', async (path, name, expected) => {
+    vi.mocked(createProject).mockResolvedValue(project);
+    render(<CreateProjectDialog onCreated={vi.fn()} onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText('Project name'), { target: { value: name } });
+    fireEvent.change(screen.getByLabelText('Folder path'), { target: { value: path } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+    const submit = screen.getByRole('button', { name: 'Create project' });
+    expect(submit).toBeEnabled();
+    fireEvent.click(submit);
+    await screen.findByText('Trust this folder?');
+    expect(createProject).toHaveBeenCalledWith(expected, '', [path]);
+  });
+
+  it('uses the first remaining folder when several folders are selected', async () => {
+    vi.mocked(createProject).mockResolvedValue(project);
+    render(<CreateProjectDialog onCreated={vi.fn()} onClose={vi.fn()} />);
+    for (const path of ['C:\\work\\first', 'C:\\work\\second']) {
+      fireEvent.change(screen.getByLabelText('Folder path'), { target: { value: path } });
+      fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+    }
+    expect(screen.getByLabelText('Project name')).toHaveAttribute('placeholder', 'first');
+    fireEvent.click(screen.getByRole('button', { name: 'Remove C:\\work\\first' }));
+    expect(screen.getByLabelText('Project name')).toHaveAttribute('placeholder', 'second');
+    fireEvent.click(screen.getByRole('button', { name: 'Create project' }));
+    await screen.findByText('Trust this folder?');
+    expect(createProject).toHaveBeenCalledWith('second', '', ['C:\\work\\second']);
   });
 
   it('selects the project only after explicit trust succeeds', async () => {

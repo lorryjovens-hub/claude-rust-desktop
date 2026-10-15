@@ -467,6 +467,36 @@
     "topK": "Top K"
   },
   "customize": {
+    "pluginCategories": {
+      "webTools": {
+        "name": "Alat web",
+        "description": "Otomatisasi peramban, pengambilan data web, dan integrasi layanan daring."
+      },
+      "codeTools": {
+        "name": "Alat pemrograman",
+        "description": "Alat pemeriksaan, pemformatan, dan pembuatan kode."
+      },
+      "aiModels": {
+        "name": "Model AI",
+        "description": "Model dan layanan AI tambahan untuk tugas khusus."
+      },
+      "fileTools": {
+        "name": "Alat berkas",
+        "description": "Konversi berkas, pemrosesan dokumen, dan alat media."
+      },
+      "communication": {
+        "name": "Komunikasi",
+        "description": "Alat pesan, email, dan kolaborasi."
+      },
+      "dataAnalytics": {
+        "name": "Data dan analitik",
+        "description": "Alat analisis data, pelaporan, dan intelijen bisnis."
+      }
+    },
+    "noPluginsFound": "Tidak ada kategori plugin yang cocok",
+    "searchPlugins": "Cari plugin…",
+    "pluginsDescription": "Jelajahi kategori dan kelola plugin terpasang di bawah.",
+    "plugins": "Plugin",
     "title": "Sesuaikan",
     "skills": "Keterampilan",
     "connectors": "Konektor",
@@ -660,5 +690,44 @@
     "title": "Paket Peningkatan",
     "currentPlan": "Rencana Saat Ini",
     "availablePlans": "Paket yang Tersedia"
+  },
+  "sessionGit": {
+    "search": "Cari cabang…",
+    "searchFiles": "Filter berkas yang berubah…",
+    "viewChanges": "Lihat perubahan",
+    "refreshChanges": "Segarkan perubahan",
+    "workingTree": "Pohon kerja",
+    "explorer": "Tampilkan di Explorer",
+    "github": "Buka repositori di GitHub",
+    "copyPath": "Salin jalur",
+    "changeFolder": "Ganti folder…",
+    "terminal": "Buka di terminal",
+    "copyBranch": "Salin nama cabang",
+    "copyFailed": "Tidak dapat menyalin ke papan klip",
+    "prHint": "Buka halaman PR di GitHub",
+    "prOptions": "Opsi pull request",
+    "hideWorkspace": "Sembunyikan bilah ruang kerja",
+    "showWorkspace": "Tampilkan ruang kerja",
+    "loadingDiff": "Memuat perubahan…",
+    "noChanges": "Tidak ada perubahan di pohon kerja ini.",
+    "noMatches": "Tidak ada berkas yang cocok.",
+    "noTextDiff": "Tidak ada perbedaan teks dari HEAD (berkas kosong, metadata, atau perubahan staging yang dibatalkan oleh perubahan lokal).",
+    "expand": "Perluas atau ciutkan panel",
+    "status_modified": "Diubah",
+    "status_added": "Ditambahkan",
+    "status_deleted": "Dihapus",
+    "status_untracked": "Belum dilacak",
+    "status_conflict": "Konflik",
+    "status_type": "Jenis berubah",
+    "settings": "Ruang kerja sesi",
+    "branch": "Cabang",
+    "worktree": "Gunakan worktree",
+    "refresh": "Segarkan cabang",
+    "loading": "Memuat cabang…",
+    "notRepository": "Bukan repositori Git",
+    "currentHead": "HEAD saat ini (terlepas)",
+    "unavailable": "Anda dapat memulai sesi di sini. Cabang dan worktree memerlukan repositori Git.",
+    "branchHint": "Berlaku untuk folder pertama proyek. Saat mengirim, folder ini beralih ke cabang lokal yang dipilih.",
+    "worktreeHint": "Membuat cabang sesi terisolasi dari commit yang dipilih. Perubahan yang belum di-commit tidak disalin; folder proyek lainnya tetap dibagikan."
   }
 }

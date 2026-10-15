@@ -467,6 +467,36 @@
     "topK": "Top K"
   },
   "customize": {
+    "pluginCategories": {
+      "webTools": {
+        "name": "Ferramentas web",
+        "description": "Automação do navegador, extração de dados da web e integração com serviços online."
+      },
+      "codeTools": {
+        "name": "Ferramentas de programação",
+        "description": "Ferramentas para análise, formatação e geração de código."
+      },
+      "aiModels": {
+        "name": "Modelos de IA",
+        "description": "Modelos e serviços de IA adicionais para tarefas especializadas."
+      },
+      "fileTools": {
+        "name": "Ferramentas de arquivos",
+        "description": "Conversão de arquivos, processamento de documentos e ferramentas de mídia."
+      },
+      "communication": {
+        "name": "Comunicação",
+        "description": "Ferramentas de mensagens, e-mail e colaboração."
+      },
+      "dataAnalytics": {
+        "name": "Dados e análises",
+        "description": "Ferramentas de análise de dados, relatórios e inteligência de negócios."
+      }
+    },
+    "noPluginsFound": "Nenhuma categoria correspondente",
+    "searchPlugins": "Buscar plugins…",
+    "pluginsDescription": "Explore categorias e gerencie os plugins instalados abaixo.",
+    "plugins": "Plugins",
     "title": "Personalizar",
     "skills": "Habilidades",
     "connectors": "Conectores",
@@ -660,5 +690,44 @@
     "title": "Plano de atualização",
     "currentPlan": "Plano Atual",
     "availablePlans": "Planos Disponíveis"
+  },
+  "sessionGit": {
+    "search": "Buscar branches…",
+    "searchFiles": "Filtrar arquivos alterados…",
+    "viewChanges": "Ver alterações",
+    "refreshChanges": "Atualizar alterações",
+    "workingTree": "Árvore de trabalho",
+    "explorer": "Mostrar no Explorador",
+    "github": "Abrir repositório no GitHub",
+    "copyPath": "Copiar caminho",
+    "changeFolder": "Alterar pasta…",
+    "terminal": "Abrir no terminal",
+    "copyBranch": "Copiar nome da branch",
+    "copyFailed": "Não foi possível copiar para a área de transferência",
+    "prHint": "Abrir página do PR no GitHub",
+    "prOptions": "Opções de pull request",
+    "hideWorkspace": "Ocultar barra do espaço de trabalho",
+    "showWorkspace": "Mostrar espaço de trabalho",
+    "loadingDiff": "Carregando alterações…",
+    "noChanges": "Nenhuma alteração nesta árvore de trabalho.",
+    "noMatches": "Nenhum arquivo correspondente.",
+    "noTextDiff": "Nenhuma diferença de texto em relação ao HEAD (arquivo vazio, metadados ou alterações preparadas anuladas por alterações locais).",
+    "expand": "Expandir ou recolher painel",
+    "status_modified": "Modificado",
+    "status_added": "Adicionado",
+    "status_deleted": "Excluído",
+    "status_untracked": "Não rastreado",
+    "status_conflict": "Conflito",
+    "status_type": "Tipo alterado",
+    "settings": "Espaço de trabalho da sessão",
+    "branch": "Branch",
+    "worktree": "Usar worktree",
+    "refresh": "Atualizar branches",
+    "loading": "Carregando branches…",
+    "notRepository": "Não é um repositório Git",
+    "currentHead": "HEAD atual (desanexado)",
+    "unavailable": "Você pode iniciar uma sessão aqui. Branches e worktrees exigem um repositório Git.",
+    "branchHint": "Aplica-se à primeira pasta do projeto. Ao enviar, essa pasta muda para a branch local selecionada.",
+    "worktreeHint": "Cria uma branch de sessão isolada a partir do commit selecionado. Alterações não confirmadas não são copiadas; outras pastas do projeto continuam compartilhadas."
   }
 }

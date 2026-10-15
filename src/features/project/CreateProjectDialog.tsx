@@ -14,11 +14,13 @@ export default function CreateProjectDialog({ onCreated, onClose }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [created, setCreated] = useState<Project | null>(null);
+  const defaultName = folders[0]?.split(/[\\/]/).filter(Boolean).pop() || folders[0] || '';
+  const projectName = name.trim() || defaultName;
   const create = async () => {
-    if (!name.trim() || !folders.length || busy) return;
+    if (!projectName || !folders.length || busy) return;
     setBusy(true); setError('');
     try {
-      const project = await createProject(name.trim(), '', folders);
+      const project = await createProject(projectName, '', folders);
       window.dispatchEvent(new Event('projectsChanged'));
       setCreated(project);
     } catch (error) { setError(error instanceof Error ? error.message : String(error)); }
@@ -31,12 +33,12 @@ export default function CreateProjectDialog({ onCreated, onClose }: {
         <h2 id="create-project-title" className="text-xl font-semibold text-claude-text">{t('sidebar.createProject')}</h2>
         <button type="button" disabled={busy} aria-label={t('projectDialogs.closeCreate')} onClick={onClose} className="text-claude-textSecondary"><X size={18} /></button>
       </div>
-      <input autoFocus aria-label={t('projectDialogs.name')} placeholder={t('projectDialogs.name')} value={name} disabled={busy} onChange={e => setName(e.target.value)} className="w-full mb-4 rounded-xl border border-claude-border bg-claude-input px-4 py-3 text-sm text-claude-text outline-none focus:border-blue-500" />
+      <input autoFocus aria-label={t('projectDialogs.name')} placeholder={defaultName || t('projectDialogs.name')} value={name} disabled={busy} onChange={e => setName(e.target.value)} className="w-full mb-4 rounded-xl border border-claude-border bg-claude-input px-4 py-3 text-sm text-claude-text outline-none focus:border-blue-500" />
       <FolderFields folders={folders} onChange={setFolders} disabled={busy} />
       {error && <p role="alert" className="mt-3 text-sm text-red-500">{error}</p>}
       <div className="flex justify-end gap-3 mt-6">
         <button type="button" disabled={busy} onClick={onClose} className="px-4 py-2 text-sm text-claude-textSecondary">{t('common.cancel')}</button>
-        <button type="submit" disabled={busy || !name.trim() || !folders.length} className="rounded-xl bg-claude-text px-4 py-2 text-sm font-medium text-claude-bg disabled:opacity-40">{busy ? t('projectDialogs.creating') : t('sidebar.createProject')}</button>
+        <button type="submit" disabled={busy || !projectName || !folders.length} className="rounded-xl bg-claude-text px-4 py-2 text-sm font-medium text-claude-bg disabled:opacity-40">{busy ? t('projectDialogs.creating') : t('sidebar.createProject')}</button>
       </div>
     </form>
   </div>;

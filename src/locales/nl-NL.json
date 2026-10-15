@@ -467,6 +467,36 @@
     "topK": "Top K"
   },
   "customize": {
+    "pluginCategories": {
+      "webTools": {
+        "name": "Webhulpmiddelen",
+        "description": "Browserautomatisering, webscraping en integratie met onlinediensten."
+      },
+      "codeTools": {
+        "name": "Programmeergereedschap",
+        "description": "Hulpmiddelen voor codecontrole, opmaak en codegeneratie."
+      },
+      "aiModels": {
+        "name": "AI-modellen",
+        "description": "Aanvullende AI-modellen en diensten voor gespecialiseerde taken."
+      },
+      "fileTools": {
+        "name": "Bestandshulpmiddelen",
+        "description": "Bestandsconversie, documentverwerking en mediahulpmiddelen."
+      },
+      "communication": {
+        "name": "Communicatie",
+        "description": "Hulpmiddelen voor berichten, e-mail en samenwerking."
+      },
+      "dataAnalytics": {
+        "name": "Gegevens en analyse",
+        "description": "Hulpmiddelen voor gegevensanalyse, rapportage en bedrijfsinformatie."
+      }
+    },
+    "noPluginsFound": "Geen overeenkomende plug-incategorieën",
+    "searchPlugins": "Plug-ins zoeken…",
+    "pluginsDescription": "Bekijk categorieën en beheer hieronder geïnstalleerde plug-ins.",
+    "plugins": "Plug-ins",
     "title": "Aanpassen",
     "skills": "Vaardigheden",
     "connectors": "Connectoren",
@@ -660,5 +690,44 @@
     "title": "Upgradeplan",
     "currentPlan": "Huidig plan",
     "availablePlans": "Beschikbare plannen"
+  },
+  "sessionGit": {
+    "search": "Branches zoeken…",
+    "searchFiles": "Gewijzigde bestanden filteren…",
+    "viewChanges": "Wijzigingen bekijken",
+    "refreshChanges": "Wijzigingen vernieuwen",
+    "workingTree": "Werkboom",
+    "explorer": "Tonen in Verkenner",
+    "github": "Repository openen op GitHub",
+    "copyPath": "Pad kopiëren",
+    "changeFolder": "Map wijzigen…",
+    "terminal": "Openen in terminal",
+    "copyBranch": "Branchnaam kopiëren",
+    "copyFailed": "Kopiëren naar klembord mislukt",
+    "prHint": "PR-pagina openen op GitHub",
+    "prOptions": "Pullrequestopties",
+    "hideWorkspace": "Werkbalk van werkruimte verbergen",
+    "showWorkspace": "Werkruimte tonen",
+    "loadingDiff": "Wijzigingen laden…",
+    "noChanges": "Geen wijzigingen in deze werkboom.",
+    "noMatches": "Geen overeenkomende bestanden.",
+    "noTextDiff": "Geen tekstverschil met HEAD (leeg bestand, metagegevens of klaargezette wijzigingen die door lokale wijzigingen zijn opgeheven).",
+    "expand": "Paneel uit- of inklappen",
+    "status_modified": "Gewijzigd",
+    "status_added": "Toegevoegd",
+    "status_deleted": "Verwijderd",
+    "status_untracked": "Niet gevolgd",
+    "status_conflict": "Conflict",
+    "status_type": "Type gewijzigd",
+    "settings": "Werkruimte van sessie",
+    "branch": "Branch",
+    "worktree": "Worktree gebruiken",
+    "refresh": "Branches vernieuwen",
+    "loading": "Branches laden…",
+    "notRepository": "Geen Git-repository",
+    "currentHead": "Huidige HEAD (losgekoppeld)",
+    "unavailable": "Je kunt hier een sessie starten. Branches en worktrees vereisen een Git-repository.",
+    "branchHint": "Geldt voor de eerste projectmap. Bij verzenden wordt deze map naar de geselecteerde lokale branch omgeschakeld.",
+    "worktreeHint": "Maakt een geïsoleerde sessiebranch vanuit de geselecteerde commit. Niet vastgelegde wijzigingen worden niet gekopieerd; andere projectmappen blijven gedeeld."
   }
 }

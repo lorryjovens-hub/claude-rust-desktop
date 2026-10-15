@@ -23,6 +23,25 @@ export default defineConfig(({ mode }) => {
             res.end('Local development requests only');
             return;
           }
+          // Probe readiness without sending expected startup connection failures
+          // through Vite's proxy error logger. Keep the same local-access guard.
+          if (req.url.split('?')[0] === '/api/health' && req.method === 'GET') {
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Cache-Control', 'no-store');
+            void (async () => {
+              try {
+                const response = await fetch('http://127.0.0.1:30085/health', { signal: AbortSignal.timeout(2000) });
+                const health = await response.json();
+                const ready = response.ok && health.status === 'healthy' && health.database === true;
+                res.statusCode = ready ? 200 : 503;
+                res.end(JSON.stringify({ status: ready ? 'healthy' : 'starting', database: ready }));
+              } catch {
+                res.statusCode = 503;
+                res.end(JSON.stringify({ status: 'starting', database: false }));
+              }
+            })();
+            return;
+          }
           next();
         });
       },

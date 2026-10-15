@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, FileText, Check, Globe, Loader2 } from 'lucide-react';
 import ClaudeLogo from '../ClaudeLogo';
 import MarkdownRenderer from '../MarkdownRenderer';
+import RequestErrorCard from './RequestErrorCard';
 import ToolDiffView, { shouldUseDiffView, hasExpandableContent, getToolStats } from '../ToolDiffView';
 import DiffViewer from '../DiffViewer';
 import SearchProcess from '../SearchProcess';
@@ -522,6 +523,7 @@ const AssistantMessage: React.FC<AssistantMessageProps> = ({
       {renderDocumentDrafts()}
       <div className={isCurrentlyStreaming ? 'scan-light-wrapper' : ''}>
         <MarkdownRenderer content={(msg as any)._finalText ?? extractTextContent(msg.content)} citations={msg.citations} isStreaming={isCurrentlyStreaming} />
+        {msg.requestError && <RequestErrorCard error={msg.requestError} />}
         {isCurrentlyStreaming && <span className="typing-cursor" />}
       </div>
       {renderCodeDiffs()}

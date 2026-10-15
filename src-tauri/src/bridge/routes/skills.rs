@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -8,7 +8,9 @@ use serde_json;
 use std::collections::HashMap;
 
 use super::super::AppState;
-use crate::skills::{Skill, SkillsManager, SkillExecutionContext, SuperpowersCategory};
+use crate::skills::{Skill, SkillsManager, SuperpowersCategory};
+use axum::{http::StatusCode, response::{IntoResponse, Response}};
+use crate::native_engine::engine_core::ChatRequest;
 
 async fn skills_list(State(state): State<AppState>) -> Json<serde_json::Value> {
     let skill_manager = state.skills_manager.clone();
@@ -38,6 +40,16 @@ async fn skill_get(Path(name): Path<String>, State(state): State<AppState>) -> J
     }
 }
 
+#[derive(Deserialize)]
+struct SkillFileQuery { path: String }
+async fn skill_file(Path(name): Path<String>, Query(query): Query<SkillFileQuery>, State(state): State<AppState>) -> Response {
+    let manager = state.skills_manager.lock().await;
+    match manager.get_skill_content(&name, &query.path) {
+        Ok(content) => Json(serde_json::json!({"content":content})).into_response(),
+        Err(error) => (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":error.to_string()}))).into_response(),
+    }
+}
+
 async fn skill_update(Path(name): Path<String>, State(state): State<AppState>, Json(updates): Json<HashMap<String, serde_json::Value>>) -> Json<serde_json::Value> {
     let skill_manager = state.skills_manager.clone();
     let manager: tokio::sync::MutexGuard<'_, SkillsManager> = skill_manager.lock().await;
@@ -61,10 +73,15 @@ pub struct SkillEnableRequest {
     pub enabled: bool,
 }
 
-async fn skill_enable(Path(name): Path<String>, State(state): State<AppState>, Json(_req): Json<SkillEnableRequest>) -> Json<serde_json::Value> {
+async fn skill_enable(Path(name): Path<String>, State(state): State<AppState>, Json(req): Json<SkillEnableRequest>) -> Json<serde_json::Value> {
     let skill_manager = state.skills_manager.clone();
     let manager: tokio::sync::MutexGuard<'_, SkillsManager> = skill_manager.lock().await;
-    match manager.toggle_skill(&name).await {
+    let update = async {
+        let skill = manager.get_skill_by_id(&name).await?.ok_or_else(||anyhow::anyhow!("Skill not found"))?;
+        if skill.enabled != req.enabled { manager.toggle_skill(&name).await?; }
+        anyhow::Ok(())
+    }.await;
+    match update {
         Ok(_) => Json(serde_json::json!({ "ok": true })),
         Err(e) => Json(serde_json::json!({ "error": format!("{}", e) })),
     }
@@ -73,7 +90,9 @@ async fn skill_enable(Path(name): Path<String>, State(state): State<AppState>, J
 #[derive(Deserialize)]
 pub struct SkillExecuteRequest {
     pub input: String,
-    pub conversation_id: Option<String>,
+    pub conversation_id: String,
+    pub model: String,
+    pub provider_id: Option<String>,
     pub workspace_path: Option<String>,
     pub variables: Option<serde_json::Map<String, serde_json::Value>>,
 }
@@ -82,36 +101,37 @@ async fn skill_execute(
     Path(name): Path<String>,
     State(state): State<AppState>,
     Json(req): Json<SkillExecuteRequest>,
-) -> Json<serde_json::Value> {
-    let skill_manager = state.skills_manager.clone();
-    let mcp_server_manager = state.mcp_manager.clone();
-
-    let manager: tokio::sync::MutexGuard<'_, SkillsManager> = skill_manager.lock().await;
-
-    let input = req.input.clone();
-
-    let mut context = SkillExecutionContext::default();
-    context.current_input = input.clone();
-    context.conversation_id = req.conversation_id.unwrap_or_default();
-    context.workspace_path = req.workspace_path;
-
-    if let Some(vars) = req.variables {
-        for (key, value) in vars {
-            if let Some(s) = value.as_str() {
-                context.variables.insert(key, s.to_string());
+) -> Response {
+    let prepared = async {
+        let manager = state.skills_manager.lock().await;
+        let skill = manager.get_skill_by_id(&name).await?
+            .filter(|skill| skill.enabled)
+            .ok_or_else(|| anyhow::anyhow!("Skill not found or disabled"))?;
+        let mut content = skill.content.ok_or_else(|| anyhow::anyhow!("Skill has no content"))?;
+        if let Some(variables) = req.variables {
+            for (key, value) in variables {
+                if let Some(value) = value.as_str() {
+                    content = content.replace(&format!("${{{key}}}"), value);
+                }
             }
         }
-    }
-
-    context = context.with_mcp_manager(mcp_server_manager.clone());
-
-    let mcp_tools = mcp_server_manager.get_all_tools().await;
-    context.available_mcp_tools = mcp_tools;
-
-    match manager.execute_skill(&name, &input, Some(context)).await {
-        Ok(result) => Json(serde_json::json!({ "success": true, "result": result })),
-        Err(e) => Json(serde_json::json!({ "success": false, "error": format!("{}", e) })),
-    }
+        anyhow::Ok(content)
+    }.await;
+    let content = match prepared {
+        Ok(content) => content,
+        Err(error) => return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":error.to_string()}))).into_response(),
+    };
+    // Reuse the normal SSE turn: persistence, workspace validation, permissions,
+    // cancellation and provider synchronization must remain identical to chat.
+    super::chat::chat_handler(State(state), Json(ChatRequest {
+        conversation_id: req.conversation_id,
+        messages: vec![serde_json::json!({"role":"user","content":req.input})],
+        model: req.model,
+        provider_id: req.provider_id,
+        system_prompt: Some(format!("Apply the following skill to the user's task:\n\n{content}")),
+        workspace_path: req.workspace_path,
+        effort: None, max_tokens: None, temperature: None, top_p: None, reasoning_mode: None,
+    })).await.into_response()
 }
 
 #[derive(Deserialize)]
@@ -122,9 +142,15 @@ pub struct SkillMatchRequest {
 async fn skills_match(State(state): State<AppState>, Json(req): Json<SkillMatchRequest>) -> Json<serde_json::Value> {
     let skill_manager = state.skills_manager.clone();
     let manager: tokio::sync::MutexGuard<'_, SkillsManager> = skill_manager.lock().await;
-    match manager.execute_skill("match", &req.input, None).await {
-        Ok(result) => Json(serde_json::json!({ "matched": true, "result": result })),
-        Err(_) => Json(serde_json::json!({ "matched": false })),
+    match manager.list_enabled_skills().await {
+        Ok(skills) => {
+            let input = req.input.to_lowercase();
+            let matches: Vec<_> = skills.into_iter().filter(|skill| {
+                input.contains(&skill.name.to_lowercase()) || input.contains(&skill.id.to_lowercase())
+            }).collect();
+            Json(serde_json::json!({ "matched": !matches.is_empty(), "skills": matches }))
+        }
+        Err(error) => Json(serde_json::json!({ "matched": false, "error": error.to_string() })),
     }
 }
 
@@ -307,9 +333,11 @@ pub fn routes() -> Router<AppState> {
         .route("/api/skills", get(skills_list))
         .route("/api/skills", post(skills_create))
         .route("/api/skills/{name}", get(skill_get))
-        .route("/api/skills/{name}", put(skill_update))
+        .route("/api/skills/{name}", put(skill_update).patch(skill_update))
         .route("/api/skills/{name}", delete(skill_delete))
         .route("/api/skills/{name}/enable", post(skill_enable))
+        .route("/api/skills/{name}/toggle", axum::routing::patch(skill_enable))
+        .route("/api/skills/{name}/file", get(skill_file))
         .route("/api/skills/{name}/execute", post(skill_execute))
         .route("/api/skills/match", post(skills_match))
         .route("/api/skills/design", get(design_skills_list))

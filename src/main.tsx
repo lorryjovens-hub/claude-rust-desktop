@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import BackendStartup from './components/BackendStartup';
 import './index.css';
 import { initializeGeneralSettings, useGeneralSettingsStore } from './stores/useGeneralSettingsStore';
 import { useChatStore } from './stores/useChatStore';
@@ -133,15 +134,19 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-console.log('[Main] Root element found, rendering App...');
-
-void (async () => {
-try {
+async function initializeApp() {
   await initializeGeneralSettings();
   useChatStore.getState().setPermissionMode(useGeneralSettingsStore.getState().defaultPermissionMode);
+}
+
+console.log('[Main] Root element found, waiting for backend...');
+
+try {
   ReactDOM.createRoot(rootElement).render(
     <ErrorBoundary>
-      <App />
+      <BackendStartup initialize={initializeApp}>
+        <App />
+      </BackendStartup>
     </ErrorBoundary>,
   );
   console.log('[Main] App rendered successfully');
@@ -154,4 +159,3 @@ try {
     <button onclick="window.location.reload()" style="margin-top:16px;padding:8px 24px;background:#4299e1;color:white;border:none;border-radius:6px;cursor:pointer;">Reload</button>
   </div>`;
 }
-})();

@@ -467,6 +467,36 @@
     "topK": "Top K"
   },
   "customize": {
+    "pluginCategories": {
+      "webTools": {
+        "name": "Herramientas web",
+        "description": "Automatización del navegador, extracción de datos web e integración de servicios en línea."
+      },
+      "codeTools": {
+        "name": "Herramientas de programación",
+        "description": "Herramientas de análisis, formato y generación de código."
+      },
+      "aiModels": {
+        "name": "Modelos de IA",
+        "description": "Modelos y servicios de IA adicionales para tareas especializadas."
+      },
+      "fileTools": {
+        "name": "Herramientas de archivos",
+        "description": "Conversión de archivos, procesamiento de documentos y herramientas multimedia."
+      },
+      "communication": {
+        "name": "Comunicación",
+        "description": "Herramientas de mensajería, correo electrónico y colaboración."
+      },
+      "dataAnalytics": {
+        "name": "Datos y análisis",
+        "description": "Herramientas de análisis de datos, informes e inteligencia empresarial."
+      }
+    },
+    "noPluginsFound": "No hay categorías coincidentes",
+    "searchPlugins": "Buscar complementos…",
+    "pluginsDescription": "Explora las categorías y administra los complementos instalados a continuación.",
+    "plugins": "Complementos",
     "title": "Personalizar",
     "skills": "Habilidades",
     "connectors": "Conectores",
@@ -660,5 +690,44 @@
     "title": "Plan de actualización",
     "currentPlan": "Plan actual",
     "availablePlans": "Planes disponibles"
+  },
+  "sessionGit": {
+    "search": "Buscar ramas…",
+    "searchFiles": "Filtrar archivos modificados…",
+    "viewChanges": "Ver cambios",
+    "refreshChanges": "Actualizar cambios",
+    "workingTree": "Árbol de trabajo",
+    "explorer": "Mostrar en el Explorador",
+    "github": "Abrir repositorio en GitHub",
+    "copyPath": "Copiar ruta",
+    "changeFolder": "Cambiar carpeta…",
+    "terminal": "Abrir en la terminal",
+    "copyBranch": "Copiar nombre de rama",
+    "copyFailed": "No se pudo copiar al portapapeles",
+    "prHint": "Abrir página del PR en GitHub",
+    "prOptions": "Opciones de solicitud de cambios",
+    "hideWorkspace": "Ocultar barra del espacio de trabajo",
+    "showWorkspace": "Mostrar espacio de trabajo",
+    "loadingDiff": "Cargando cambios…",
+    "noChanges": "No hay cambios en este árbol de trabajo.",
+    "noMatches": "No hay archivos coincidentes.",
+    "noTextDiff": "No hay diferencias de texto con HEAD (archivo vacío, metadatos o cambios preparados anulados por cambios locales).",
+    "expand": "Expandir o contraer panel",
+    "status_modified": "Modificado",
+    "status_added": "Agregado",
+    "status_deleted": "Eliminado",
+    "status_untracked": "Sin seguimiento",
+    "status_conflict": "Conflicto",
+    "status_type": "Tipo modificado",
+    "settings": "Espacio de trabajo de la sesión",
+    "branch": "Rama",
+    "worktree": "Usar worktree",
+    "refresh": "Actualizar ramas",
+    "loading": "Cargando ramas…",
+    "notRepository": "No es un repositorio Git",
+    "currentHead": "HEAD actual (separado)",
+    "unavailable": "Puedes iniciar una sesión aquí. Las ramas y los worktrees requieren un repositorio Git.",
+    "branchHint": "Se aplica a la primera carpeta del proyecto. Al enviar, esta carpeta cambia a la rama local seleccionada.",
+    "worktreeHint": "Crea una rama de sesión aislada a partir del commit seleccionado. No se copian los cambios sin confirmar; las demás carpetas del proyecto siguen compartidas."
   }
 }

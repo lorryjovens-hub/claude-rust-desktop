@@ -467,6 +467,36 @@
     "topK": "Top K"
   },
   "customize": {
+    "pluginCategories": {
+      "webTools": {
+        "name": "Web araçları",
+        "description": "Tarayıcı otomasyonu, web verisi toplama ve çevrimiçi hizmet entegrasyonları."
+      },
+      "codeTools": {
+        "name": "Kod araçları",
+        "description": "Kod denetleme, biçimlendirme ve oluşturma araçları."
+      },
+      "aiModels": {
+        "name": "Yapay zekâ modelleri",
+        "description": "Özel görevler için ek yapay zekâ modelleri ve hizmetleri."
+      },
+      "fileTools": {
+        "name": "Dosya araçları",
+        "description": "Dosya dönüştürme, belge işleme ve medya araçları."
+      },
+      "communication": {
+        "name": "İletişim",
+        "description": "Mesajlaşma, e-posta ve iş birliği araçları."
+      },
+      "dataAnalytics": {
+        "name": "Veri ve analiz",
+        "description": "Veri analizi, raporlama ve iş zekâsı araçları."
+      }
+    },
+    "noPluginsFound": "Eşleşen eklenti kategorisi yok",
+    "searchPlugins": "Eklenti ara…",
+    "pluginsDescription": "Kategorilere göz atın ve yüklü eklentileri aşağıdan yönetin.",
+    "plugins": "Eklentiler",
     "title": "Özelleştir",
     "skills": "Beceriler",
     "connectors": "Konektörler",
@@ -660,5 +690,44 @@
     "title": "Yükseltme Planı",
     "currentPlan": "Mevcut Plan",
     "availablePlans": "Mevcut Planlar"
+  },
+  "sessionGit": {
+    "search": "Dal ara…",
+    "searchFiles": "Değişen dosyaları filtrele…",
+    "viewChanges": "Değişiklikleri görüntüle",
+    "refreshChanges": "Değişiklikleri yenile",
+    "workingTree": "Çalışma ağacı",
+    "explorer": "Dosya Gezgini’nde göster",
+    "github": "Depoyu GitHub’da aç",
+    "copyPath": "Yolu kopyala",
+    "changeFolder": "Klasörü değiştir…",
+    "terminal": "Terminalde aç",
+    "copyBranch": "Dal adını kopyala",
+    "copyFailed": "Panoya kopyalanamadı",
+    "prHint": "PR sayfasını GitHub’da aç",
+    "prOptions": "Çekme isteği seçenekleri",
+    "hideWorkspace": "Çalışma alanı çubuğunu gizle",
+    "showWorkspace": "Çalışma alanını göster",
+    "loadingDiff": "Değişiklikler yükleniyor…",
+    "noChanges": "Bu çalışma ağacında değişiklik yok.",
+    "noMatches": "Eşleşen dosya yok.",
+    "noTextDiff": "HEAD ile metin farkı yok (boş dosya, meta veri veya yerel değişikliklerin geri aldığı hazırlanmış değişiklikler).",
+    "expand": "Paneli genişlet veya daralt",
+    "status_modified": "Değiştirildi",
+    "status_added": "Eklendi",
+    "status_deleted": "Silindi",
+    "status_untracked": "İzlenmiyor",
+    "status_conflict": "Çakışma",
+    "status_type": "Tür değişti",
+    "settings": "Oturum çalışma alanı",
+    "branch": "Dal",
+    "worktree": "Worktree kullan",
+    "refresh": "Dalları yenile",
+    "loading": "Dallar yükleniyor…",
+    "notRepository": "Git deposu değil",
+    "currentHead": "Geçerli HEAD (ayrık)",
+    "unavailable": "Burada oturum başlatabilirsiniz. Dallar ve worktree için Git deposu gerekir.",
+    "branchHint": "Projenin ilk klasörüne uygulanır. Gönderirken bu klasör seçilen yerel dala geçirilir.",
+    "worktreeHint": "Seçilen commit’ten yalıtılmış bir oturum dalı oluşturur. Commit edilmemiş değişiklikler kopyalanmaz; diğer proje klasörleri ortak kalır."
   }
 }

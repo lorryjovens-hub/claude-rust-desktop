@@ -467,6 +467,36 @@
     "topK": "Top K"
   },
   "customize": {
+    "pluginCategories": {
+      "webTools": {
+        "name": "Outils Web",
+        "description": "Automatisation du navigateur, extraction de données Web et intégration de services en ligne."
+      },
+      "codeTools": {
+        "name": "Outils de programmation",
+        "description": "Outils de vérification, de formatage et de génération de code."
+      },
+      "aiModels": {
+        "name": "Modèles d’IA",
+        "description": "Modèles et services d’IA supplémentaires pour des tâches spécialisées."
+      },
+      "fileTools": {
+        "name": "Outils de fichiers",
+        "description": "Conversion de fichiers, traitement de documents et outils multimédias."
+      },
+      "communication": {
+        "name": "Communication",
+        "description": "Outils de messagerie, de courriel et de collaboration."
+      },
+      "dataAnalytics": {
+        "name": "Données et analyses",
+        "description": "Outils d’analyse de données, de création de rapports et d’informatique décisionnelle."
+      }
+    },
+    "noPluginsFound": "Aucune catégorie correspondante",
+    "searchPlugins": "Rechercher des extensions…",
+    "pluginsDescription": "Parcourez les catégories et gérez les extensions installées ci-dessous.",
+    "plugins": "Extensions",
     "title": "Personnaliser",
     "skills": "Compétences",
     "connectors": "Connecteurs",
@@ -660,5 +690,44 @@
     "title": "Plan de mise à niveau",
     "currentPlan": "Plan actuel",
     "availablePlans": "Forfaits disponibles"
+  },
+  "sessionGit": {
+    "search": "Rechercher des branches…",
+    "searchFiles": "Filtrer les fichiers modifiés…",
+    "viewChanges": "Voir les modifications",
+    "refreshChanges": "Actualiser les modifications",
+    "workingTree": "Arbre de travail",
+    "explorer": "Afficher dans l’Explorateur",
+    "github": "Ouvrir le dépôt sur GitHub",
+    "copyPath": "Copier le chemin",
+    "changeFolder": "Changer de dossier…",
+    "terminal": "Ouvrir dans le terminal",
+    "copyBranch": "Copier le nom de la branche",
+    "copyFailed": "Impossible de copier dans le presse-papiers",
+    "prHint": "Ouvrir la page de la PR sur GitHub",
+    "prOptions": "Options de pull request",
+    "hideWorkspace": "Masquer la barre de l’espace de travail",
+    "showWorkspace": "Afficher l’espace de travail",
+    "loadingDiff": "Chargement des modifications…",
+    "noChanges": "Aucune modification dans cet arbre de travail.",
+    "noMatches": "Aucun fichier correspondant.",
+    "noTextDiff": "Aucune différence de texte avec HEAD (fichier vide, métadonnées ou modifications indexées annulées par les modifications locales).",
+    "expand": "Développer ou réduire le panneau",
+    "status_modified": "Modifié",
+    "status_added": "Ajouté",
+    "status_deleted": "Supprimé",
+    "status_untracked": "Non suivi",
+    "status_conflict": "Conflit",
+    "status_type": "Type modifié",
+    "settings": "Espace de travail de la session",
+    "branch": "Branche",
+    "worktree": "Utiliser un worktree",
+    "refresh": "Actualiser les branches",
+    "loading": "Chargement des branches…",
+    "notRepository": "Ce dossier n’est pas un dépôt Git",
+    "currentHead": "HEAD actuel (détaché)",
+    "unavailable": "Vous pouvez démarrer une session ici. Les branches et worktrees nécessitent un dépôt Git.",
+    "branchHint": "S’applique au premier dossier du projet. L’envoi bascule ce dossier vers la branche locale sélectionnée.",
+    "worktreeHint": "Crée une branche de session isolée à partir du commit sélectionné. Les modifications non validées ne sont pas copiées ; les autres dossiers du projet restent partagés."
   }
 }

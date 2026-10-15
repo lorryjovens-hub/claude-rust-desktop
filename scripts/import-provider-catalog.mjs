@@ -13,6 +13,7 @@ const providers = builtinProviders().map(p => ({
     id: m.id, name: m.name, enabled: true, contextWindow: m.contextWindow,
     maxTokens: m.maxTokens, inputTypes: m.input, api: m.api,
     reasoning: m.reasoning, thinkingLevelMap: m.thinkingLevelMap,
+    baseUrl: m.baseUrl, compat: m.compat,
   })),
 }));
 fs.mkdirSync('src/data', { recursive: true });

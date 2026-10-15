@@ -1,8 +1,8 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ProjectsPage from './ProjectsPage';
-import { createProjectConversation, getProject, getProjects, getProviders, getUserModels } from '../api';
+import { createProject, trustProjectFolders, createProjectConversation, getProject, getProjects, getProviders, getUserModels } from '../api';
 import type { Provider } from '../api';
 import { useChatStore } from '../stores/useChatStore';
 import { modelKey } from '../utils/modelConfig';
@@ -48,6 +48,21 @@ const openModels = async () => {
 };
 
 describe('project model selection', () => {
+  it('opens Chat with a newly created project selected after trust', async () => {
+    function LocationState() {
+      const location = useLocation();
+      return <output data-testid="location">{JSON.stringify({ path: location.pathname, state: location.state })}</output>;
+    }
+    vi.mocked(createProject).mockResolvedValue({ ...project, folders: [{ path: project.workspace_path, trusted: false }] });
+    vi.mocked(trustProjectFolders).mockResolvedValue(project);
+    render(<MemoryRouter initialEntries={['/projects']}><ProjectsPage /><LocationState /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: 'customize.newProject' }));
+    fireEvent.change(screen.getByLabelText('projectDialogs.folderPath'), { target: { value: project.workspace_path } });
+    fireEvent.click(screen.getByRole('button', { name: 'projectDialogs.add' }));
+    fireEvent.click(screen.getByRole('button', { name: 'sidebar.createProject' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'projectDialogs.trustOne' }));
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('"path":"/","state":{"createdProjectId":"project-1"}'));
+  });
   it('loads all 47 configured models and submits the selected provider-qualified model', async () => {
     localStorage.setItem('chat_models', JSON.stringify([{ id: 'legacy-model', name: 'Legacy model' }]));
     renderProject();

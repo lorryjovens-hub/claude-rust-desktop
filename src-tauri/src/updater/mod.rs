@@ -6,15 +6,7 @@ use std::path::PathBuf;
 
 const EMBEDDED_PUBLIC_KEY: &[u8; 32] = include_bytes!("../../update_pubkey.bin");
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UpdateInfo {
-    pub version: String,
-    pub release_date: String,
-    pub release_notes: Option<String>,
-    pub download_url: Option<String>,
-    pub is_mandatory: bool,
-    pub signature: Option<String>,
-}
+pub use claude_core::services::updates::UpdateInfo;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UpdateProgress {
@@ -48,54 +40,10 @@ impl AutoUpdater {
     }
 
     pub async fn check_for_updates(&self) -> Result<Option<UpdateInfo>> {
-        let manifest_url = format!("{}/manifest.json", self.update_url);
-
-        let response = reqwest::get(&manifest_url).await?;
-
-        if !response.status().is_success() {
-            return Ok(None);
-        }
-
-        let manifest: serde_json::Value = response.json().await?;
-
-        let latest_version = manifest["version"].as_str().unwrap_or("0.0.0");
-
-        if self.is_newer_version(latest_version) {
-            Ok(Some(UpdateInfo {
-                version: latest_version.to_string(),
-                release_date: manifest["release_date"].as_str().unwrap_or("").to_string(),
-                release_notes: manifest["release_notes"].as_str().map(|s| s.to_string()),
-                download_url: manifest["download_url"].as_str().map(|s| s.to_string()),
-                is_mandatory: manifest["is_mandatory"].as_bool().unwrap_or(false),
-                signature: manifest["signature"].as_str().map(|s| s.to_string()),
-            }))
-        } else {
-            Ok(None)
-        }
-    }
-
-    fn is_newer_version(&self, latest: &str) -> bool {
-        let current = self.current_version.trim_start_matches('v');
-        let latest = latest.trim_start_matches('v');
-
-        let current_parts: Vec<u32> = current
-            .split('.')
-            .filter_map(|s| s.parse().ok())
-            .collect();
-        let latest_parts: Vec<u32> = latest
-            .split('.')
-            .filter_map(|s| s.parse().ok())
-            .collect();
-
-        for (c, l) in current_parts.iter().zip(latest_parts.iter()) {
-            if l > c {
-                return true;
-            } else if l < c {
-                return false;
-            }
-        }
-
-        latest_parts.len() > current_parts.len()
+        claude_core::services::updates::check(
+            &format!("{}/manifest.json", self.update_url.trim_end_matches('/')),
+            &self.current_version,
+        ).await
     }
 
     pub async fn download_update(&self, url: &str, signature: Option<&str>) -> Result<PathBuf> {

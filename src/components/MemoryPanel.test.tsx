@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryPanel } from './MemoryPanel';
 import { memoryApi } from '../api/memory';
 
-vi.mock('../api/memory', () => ({ memoryApi: { stats: vi.fn(), config: vi.fn(), search: vi.fn(), ingest: vi.fn(), saveConfig: vi.fn(), clear: vi.fn() } }));
+vi.mock('../api/memory', () => ({ memoryApi: { stats: vi.fn(), config: vi.fn(), search: vi.fn(), ingest: vi.fn(), saveConfig: vi.fn(), clear: vi.fn(), exportArchive: vi.fn(), importArchive: vi.fn() } }));
 
 const config = { enabled: true, backend_url: 'local', auto_search: true, auto_ingest: true, search_top_k: 5, compression_threshold_tokens: 2500000, min_importance_threshold: 0.3 };
 
@@ -15,6 +15,22 @@ beforeEach(() => {
 });
 
 describe('long-term memory management', () => {
+  it('requires a successful preview and invalidates it when the input changes', async () => {
+    vi.mocked(memoryApi.importArchive).mockResolvedValue({ imported: 1, skipped: 0, preview: true, backup: null });
+    render(<MemoryPanel />);
+    await screen.findByText('Use PostgreSQL');
+    expect(screen.getByText('确认导入')).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('记忆导入 JSON'), { target: { value: '[]' } });
+    fireEvent.click(screen.getByText('预览导入'));
+    await waitFor(() => expect(screen.getByText('确认导入')).not.toBeDisabled());
+    expect(memoryApi.importArchive).toHaveBeenCalledWith([], true);
+    fireEvent.change(screen.getByLabelText('记忆导入 JSON'), { target: { value: '[{}]' } });
+    expect(screen.getByText('确认导入')).toBeDisabled();
+    vi.mocked(memoryApi.importArchive).mockRejectedValue(new Error('Memory ID conflict'));
+    fireEvent.click(screen.getByText('预览导入'));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Memory ID conflict');
+    expect(screen.getByText('确认导入')).toBeDisabled();
+  });
   it('loads saved memories and adds a manual memory', async () => {
     render(<MemoryPanel />);
     await screen.findByText('Use PostgreSQL');

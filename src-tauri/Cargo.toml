@@ -5,9 +5,6 @@ description = "Claude Desktop - AI assistant with native capabilities (Tauri Edi
 authors = ["you"]
 edition = "2021"
 
-[workspace]
-members = ["worker"]
-
 [lib]
 name = "claude_desktop_tauri_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
@@ -16,6 +13,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+claude-core = { path = "../crates/core" }
 tauri = { version = "2", features = ["tray-icon", "devtools"] }
 tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"

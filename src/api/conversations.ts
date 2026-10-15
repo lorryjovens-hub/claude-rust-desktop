@@ -1,3 +1,4 @@
+import { formatChatStreamError } from '../utils/chatErrors';
 import { processMetadata, restoreProcessMetadata } from '../features/trajectory/model';
 import { useWorkspaceModeStore, conversationWorkspaceMode } from '../stores/useWorkspaceModeStore';
 import { request, API_BASE, getToken, waitForApiReady, isTauriApp, getUserModeForConversation, resolveEnvCreds } from './client';
@@ -603,7 +604,7 @@ export async function reconnectStream(
               if (fullText) { onDone(fullText); return; }
             }
             if (parsed.type === 'error') {
-              onError(parsed.error || 'Stream error');
+              onError(formatChatStreamError(parsed));
               return;
             }
           } catch (_) {}

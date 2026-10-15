@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Brain, Search, Database, Trash2, Settings, RefreshCw, Clock, Star, X, Plus } from 'lucide-react';
 import { memoryApi, type MemoryConfig, type MemoryItem, type MemoryStats } from '../api/memory';
+import DreamControls from './DreamControls';
 
 const inputClass = 'w-full rounded-lg border border-claude-border bg-claude-bg px-3 py-2 text-sm text-claude-text';
 const buttonClass = 'rounded-lg bg-claude-primary px-4 py-2 text-sm text-white disabled:opacity-50';
@@ -13,12 +14,15 @@ export function MemoryPanel() {
   const [draftConfig, setDraftConfig] = useState<MemoryConfig | null>(null);
   const [showConfig, setShowConfig] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
+  const [showDream, setShowDream] = useState(false);
   const [content, setContent] = useState('');
   const [importance, setImportance] = useState(0.7);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [searchedQuery, setSearchedQuery] = useState('');
+  const [archiveText, setArchiveText] = useState('');
+  const [previewed, setPreviewed] = useState(false);
 
   const refresh = useCallback(async (search = '') => {
     const [nextStats, nextConfig, items] = await Promise.all([memoryApi.stats(), memoryApi.config(), memoryApi.search(search)]);
@@ -86,7 +90,33 @@ export function MemoryPanel() {
           <input aria-label="搜索长期记忆" value={query} onChange={e => setQuery(e.target.value)} placeholder="搜索记忆，留空查看最近保存" className={inputClass} />
           <button aria-label="搜索" disabled={busy || !config?.enabled} className={buttonClass}><Search size={16} /></button>
         </form>
+        <details className="space-y-3 rounded-lg border border-claude-border p-3">
+          <summary>导入 / 导出本机记忆</summary>
+          <p className="text-xs text-claude-textSecondary">支持旧 CLI 导出的 JSON。导入前自动备份；冲突会取消整批导入。仅影响个人记忆。</p>
+          <button className={buttonClass} disabled={busy || config?.backend_url !== 'local'} onClick={() => void run(async () => {
+            const archive = await memoryApi.exportArchive();
+            const url = URL.createObjectURL(new Blob([JSON.stringify(archive, null, 2)], { type: 'application/json' }));
+            const link = document.createElement('a'); link.href = url; link.download = 'personal-memory.json'; link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            setNotice(`已导出 ${archive.memories.length} 条记忆。`);
+          })}>导出 JSON</button>
+          <textarea aria-label="记忆导入 JSON" rows={5} className={inputClass} value={archiveText} onChange={e => { setArchiveText(e.target.value); setPreviewed(false); }} placeholder="粘贴记忆 JSON 文件内容" />
+          <div className="flex gap-2">
+            <button className={buttonClass} disabled={busy || !archiveText.trim() || config?.backend_url !== 'local'} onClick={() => void run(async () => {
+              setPreviewed(false);
+              const report = await memoryApi.importArchive(JSON.parse(archiveText), true);
+              setPreviewed(true); setNotice(`预览：新增 ${report.imported} 条，跳过 ${report.skipped} 条。尚未写入。`);
+            })}>预览导入</button>
+            <button className={buttonClass} disabled={busy || !previewed || config?.backend_url !== 'local'} onClick={() => void run(async () => {
+              const report = await memoryApi.importArchive(JSON.parse(archiveText), false);
+              setPreviewed(false); await refresh(query);
+              setNotice(`已导入 ${report.imported} 条，跳过 ${report.skipped} 条。备份：${report.backup}`);
+            })}>确认导入</button>
+          </div>
+        </details>
         <button onClick={() => setShowAdd(!showAdd)} disabled={busy || !config?.enabled} className="flex items-center gap-1 text-sm text-claude-primary disabled:opacity-40"><Plus size={16} />添加记忆</button>
+        <button className="text-sm text-claude-primary" onClick={() => setShowDream(!showDream)}>记忆整理与自动整理</button>
+        {showDream && <DreamControls onComplete={() => { void refresh(query).catch(e => setError(String(e))); }} />}
         {showAdd && <form onSubmit={e => { e.preventDefault(); void saveMemory(); }} className="space-y-3 rounded-lg border border-claude-border p-3">
           <textarea aria-label="记忆内容" maxLength={32000} required rows={4} value={content} onChange={e => setContent(e.target.value)} placeholder="例如：我偏好中文回复，项目使用 Rust 和 React。" className={inputClass} />
           <label className="flex items-center gap-3 text-xs">重要性 {importance.toFixed(1)}<input aria-label="重要性" type="range" min={config?.min_importance_threshold ?? 0} max="1" step="0.1" value={importance} onChange={e => setImportance(Number(e.target.value))} /></label>

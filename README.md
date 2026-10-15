@@ -1,3 +1,5 @@
+> CLI ? Desktop ??? Cargo workspace ?? Rust ????? CLI??????? CLI ????? [docs/cli.md](docs/cli.md)?
+
 
 
 
@@ -227,8 +229,15 @@ This launches both the Vite dev server (frontend) and the Tauri Rust backend. Th
 npx tauri build
 
 # Build artifacts are placed in:
-#   src-tauri/target/release/bundle/
+#   target/release/bundle/
 ```
+
+Build the standalone Rust CLI with `cargo build --locked -p claude-code-cli --release`.
+The executable is `target/release/claude-code.exe` on Windows and does not require Node.js.
+Node.js is still used for the Desktop frontend, npm build scripts, and optional JavaScript plugins or MCP servers.
+In an interactive CLI session, use `/provider` to configure or select a provider, `/model` to select a model,
+and `/test` to test the connection without changing conversation history. Provider credentials can be referenced
+by environment variable name; set those variables before launching the CLI.
 
 ### Running Tests
 

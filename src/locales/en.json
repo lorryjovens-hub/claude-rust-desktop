@@ -526,16 +526,34 @@
   "customize": {
     "title": "Customize",
     "plugins": "Plugins",
-    "pluginsDescription": "Browse plugin categories. Installation and enablement are not available yet.",
+    "pluginsDescription": "Browse plugin categories and manage installed plugins below.",
     "searchPlugins": "Search plugins...",
     "noPluginsFound": "No matching plugin categories",
     "pluginCategories": {
-      "webTools": { "name": "Web Tools", "description": "Browser automation, web scraping, and online service integrations." },
-      "codeTools": { "name": "Code Tools", "description": "Coding tools for linting, formatting, and code generation." },
-      "aiModels": { "name": "AI Models", "description": "Additional AI models and services for specialized tasks." },
-      "fileTools": { "name": "File Tools", "description": "File conversion, document processing, and media tools." },
-      "communication": { "name": "Communication", "description": "Messaging, email, and collaboration tools." },
-      "dataAnalytics": { "name": "Data & Analytics", "description": "Data analysis, reporting, and business intelligence tools." }
+      "webTools": {
+        "name": "Web Tools",
+        "description": "Browser automation, web scraping, and online service integrations."
+      },
+      "codeTools": {
+        "name": "Code Tools",
+        "description": "Coding tools for linting, formatting, and code generation."
+      },
+      "aiModels": {
+        "name": "AI Models",
+        "description": "Additional AI models and services for specialized tasks."
+      },
+      "fileTools": {
+        "name": "File Tools",
+        "description": "File conversion, document processing, and media tools."
+      },
+      "communication": {
+        "name": "Communication",
+        "description": "Messaging, email, and collaboration tools."
+      },
+      "dataAnalytics": {
+        "name": "Data & Analytics",
+        "description": "Data analysis, reporting, and business intelligence tools."
+      }
     },
     "skills": "Skills",
     "connectors": "Connectors",

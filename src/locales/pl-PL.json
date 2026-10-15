@@ -467,6 +467,36 @@
     "topK": "Top K"
   },
   "customize": {
+    "pluginCategories": {
+      "webTools": {
+        "name": "Narzędzia internetowe",
+        "description": "Automatyzacja przeglądarki, pobieranie danych ze stron i integracja usług online."
+      },
+      "codeTools": {
+        "name": "Narzędzia programistyczne",
+        "description": "Narzędzia do analizy, formatowania i generowania kodu."
+      },
+      "aiModels": {
+        "name": "Modele AI",
+        "description": "Dodatkowe modele i usługi AI do specjalistycznych zadań."
+      },
+      "fileTools": {
+        "name": "Narzędzia plikowe",
+        "description": "Konwersja plików, przetwarzanie dokumentów i narzędzia multimedialne."
+      },
+      "communication": {
+        "name": "Komunikacja",
+        "description": "Narzędzia do wiadomości, poczty i współpracy."
+      },
+      "dataAnalytics": {
+        "name": "Dane i analizy",
+        "description": "Narzędzia do analizy danych, raportowania i analityki biznesowej."
+      }
+    },
+    "noPluginsFound": "Brak pasujących kategorii wtyczek",
+    "searchPlugins": "Szukaj wtyczek…",
+    "pluginsDescription": "Przeglądaj kategorie i zarządzaj zainstalowanymi wtyczkami poniżej.",
+    "plugins": "Wtyczki",
     "title": "[0022] Dostosuj",
     "skills": "Umiejętności",
     "connectors": "[0358] Złącza",
@@ -660,5 +690,44 @@
     "title": "[0489] Plan aktualizacji",
     "currentPlan": "[0279] Aktualny plan",
     "availablePlans": "[0490] Dostępne plany"
+  },
+  "sessionGit": {
+    "search": "Szukaj gałęzi…",
+    "searchFiles": "Filtruj zmienione pliki…",
+    "viewChanges": "Pokaż zmiany",
+    "refreshChanges": "Odśwież zmiany",
+    "workingTree": "Drzewo robocze",
+    "explorer": "Pokaż w Eksploratorze",
+    "github": "Otwórz repozytorium w GitHub",
+    "copyPath": "Kopiuj ścieżkę",
+    "changeFolder": "Zmień folder…",
+    "terminal": "Otwórz w terminalu",
+    "copyBranch": "Kopiuj nazwę gałęzi",
+    "copyFailed": "Nie można skopiować do schowka",
+    "prHint": "Otwórz stronę PR w GitHub",
+    "prOptions": "Opcje pull requestu",
+    "hideWorkspace": "Ukryj pasek obszaru roboczego",
+    "showWorkspace": "Pokaż obszar roboczy",
+    "loadingDiff": "Wczytywanie zmian…",
+    "noChanges": "Brak zmian w tym drzewie roboczym.",
+    "noMatches": "Brak pasujących plików.",
+    "noTextDiff": "Brak różnic tekstowych względem HEAD (pusty plik, metadane lub zmiany w indeksie zniesione przez zmiany lokalne).",
+    "expand": "Rozwiń lub zwiń panel",
+    "status_modified": "Zmodyfikowany",
+    "status_added": "Dodany",
+    "status_deleted": "Usunięty",
+    "status_untracked": "Nieśledzony",
+    "status_conflict": "Konflikt",
+    "status_type": "Zmieniony typ",
+    "settings": "Obszar roboczy sesji",
+    "branch": "Gałąź",
+    "worktree": "Użyj worktree",
+    "refresh": "Odśwież gałęzie",
+    "loading": "Wczytywanie gałęzi…",
+    "notRepository": "To nie jest repozytorium Git",
+    "currentHead": "Bieżący HEAD (odłączony)",
+    "unavailable": "Możesz tutaj rozpocząć sesję. Gałęzie i worktree wymagają repozytorium Git.",
+    "branchHint": "Dotyczy pierwszego folderu projektu. Wysłanie przełącza ten folder na wybraną lokalną gałąź.",
+    "worktreeHint": "Tworzy odizolowaną gałąź sesji z wybranego commitu. Niezatwierdzone zmiany nie są kopiowane; pozostałe foldery projektu pozostają współdzielone."
   }
 }

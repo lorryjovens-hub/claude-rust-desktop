@@ -1,3 +1,4 @@
+import { readChatResponseError, formatChatStreamError } from './utils/chatErrors';
 import { pendingMarkerLength } from './utils/streamMarkers';
 import { processMetadata, restoreProcessMetadata } from './features/trajectory/model';
 import { useWorkspaceModeStore, conversationWorkspaceMode } from './stores/useWorkspaceModeStore';
@@ -22,81 +23,10 @@ import {
 } from './services/localStorageService';
 import type { LocalConversation } from './services/localStorageService';
 import { trackProviderDeletion, trackConversationDeletion } from './services/syncService';
-const DEFAULT_BRIDGE_PORT = 30085;
-let detectedBridgePort: number | null = null;
-
-export function resetBridgePort(): void {
-  // Bug #10 fix: Allow resetting cached port so Bridge restart on new port is detected
-  detectedBridgePort = null;
-  console.log('[API] Bridge port cache cleared');
-}
-
-export async function detectBridgePort(): Promise<number> {
-  if (detectedBridgePort) return detectedBridgePort;
-  console.log('[API] Starting Bridge port detection...');
-  for (let attempt = 0; attempt < 6; attempt++) {
-    for (let port = DEFAULT_BRIDGE_PORT; port < DEFAULT_BRIDGE_PORT + 10; port++) {
-      try {
-        const res = await fetch(`http://127.0.0.1:${port}/api/system-status`, { signal: AbortSignal.timeout(3000) });
-        if (res.ok) {
-          detectedBridgePort = port;
-          console.log(`[API] Bridge found on port ${port} (attempt ${attempt + 1})`);
-          return port;
-        }
-      } catch {}
-    }
-    if (attempt < 5) {
-      const delay = attempt < 2 ? 1500 : 2000;
-      console.log(`[API] Bridge not found on attempt ${attempt + 1}, retrying in ${delay}ms...`);
-      await new Promise(r => setTimeout(r, delay));
-    }
-  }
-  console.log(`[API] Bridge detection failed after 6 attempts. Using default port ${DEFAULT_BRIDGE_PORT}`);
-  return DEFAULT_BRIDGE_PORT;
-}
-
-function getApiBase(): string {
-  if (detectedBridgePort && detectedBridgePort !== DEFAULT_BRIDGE_PORT) {
-    return `http://127.0.0.1:${detectedBridgePort}/api`;
-  }
-  return `http://127.0.0.1:${DEFAULT_BRIDGE_PORT}/api`;
-}
-
-const useDevProxy = import.meta.env.DEV && !(window as any).__TAURI_INTERNALS__;
-let API_BASE = useDevProxy ? '/api' : `http://127.0.0.1:${DEFAULT_BRIDGE_PORT}/api`;
+import { API_BASE, isTauriApp, useDevProxy, detectBridgePort, waitForApiReady } from './services/bridgeConnection';
+export { detectBridgePort, resetBridgePort, waitForApiReady } from './services/bridgeConnection';
 const GATEWAY_BASE = 'http://127.0.0.1:30090';
 const CHENGDU_API = 'http://127.0.0.1:30090/api';
-const isTauriApp = typeof window !== 'undefined' && !!(window as any).__TAURI_INTERNALS__;
-
-let apiReady: Promise<void> | null = null;
-
-async function ensureBridgeToken() {
-  if (isTauriApp) {
-    try {
-      const { invoke } = await import('@tauri-apps/api/core');
-      const key: string = await invoke('get_bridge_api_key');
-      if (key) {
-        localStorage.setItem('bridge_api_key', key);
-      }
-    } catch (e) {
-      console.warn('[API] Failed to get bridge API key:', e);
-    }
-  }
-}
-
-if (isTauriApp) {
-  apiReady = (async () => {
-    const port = await detectBridgePort();
-    API_BASE = `http://127.0.0.1:${port}/api`;
-    detectedBridgePort = port;
-    await ensureBridgeToken();
-    console.log('[API] Bridge ready - port:', port);
-  })();
-}
-
-export async function waitForApiReady(): Promise<void> {
-  if (apiReady) await apiReady;
-}
 
 let nativeEngineInitialized = false;
 
@@ -221,6 +151,7 @@ export async function getSystemStatus(): Promise<{
   platform: string;
   gitBash: { required: boolean; found: boolean; path: string | null };
 }> {
+  await waitForApiReady();
   const res = await fetch(`${API_BASE}/system-status`);
   if (!res.ok) throw new Error('Failed to get system status');
   return res.json();
@@ -1335,7 +1266,7 @@ export function reconnectStream(
               if (fullText) { onDone(fullText); return; }
             }
             if (parsed.type === 'error') {
-              onError(parsed.error || 'Stream error');
+              onError(formatChatStreamError(parsed));
               return;
             }
           } catch (_) {}
@@ -1790,7 +1721,7 @@ async function parseProxyStream(stream: ReadableStream, handlers: {
           break;
 
         case 'error':
-          handlers.onError(event.error || 'Unknown error');
+          handlers.onError(formatChatStreamError(event));
           break;
       }
     } catch (e) {
@@ -1875,8 +1806,7 @@ export async function sendMessageNative(
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: '请求失败' }));
-      onError(err.error || '请求失败');
+      onError(await readChatResponseError(res));
       return () => {};
     }
 
@@ -1987,7 +1917,7 @@ export async function sendMessageNative(
               onDone(fullText);
             } else if (event.type === 'error') {
               console.log(`[API] SSE connection closed`);
-              onError(event.error || 'Unknown error');
+              onError(formatChatStreamError(event));
             }
           } catch (e) {
             // Skip malformed JSON
@@ -2108,8 +2038,7 @@ export async function sendMessage(
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: '请求失败' }));
-      onError(err.error || '请求失败');
+      onError(await readChatResponseError(res));
       return;
     }
 
@@ -2528,11 +2457,10 @@ export async function sendMessage(
           }
 
           if (parsed.type === 'error') {
-            const detail = parsed.detail ? `\n${parsed.detail}` : '';
             processInlineArtifactText('', true);
             flushPending();
             console.log(`[API] SSE connection closed`);
-            try { onError((parsed.error || '未知错误') + detail); } catch (err) { console.error('[API] onError callback error:', err); }
+            try { onError(formatChatStreamError(parsed)); } catch (err) { console.error('[API] onError callback error:', err); }
             return;
           }
         } catch (e) {

@@ -1,3 +1,4 @@
+import { readChatResponseError, formatChatStreamError } from '../utils/chatErrors';
 import { pendingMarkerLength } from '../utils/streamMarkers';
 import { getErrorMessage } from '../utils/errorHelpers';
 import { API_BASE, getToken, detectBridgePort, isTauriApp, isBridgeReachable, resetBridgeReachableCache, getUserModeForConversation, resolveEnvCreds } from './client';
@@ -249,7 +250,7 @@ async function parseProxyStream(stream: ReadableStream, handlers: {
           handlers.onDone(fullText);
           break;
         case 'error':
-          handlers.onError(event.error || 'Unknown error');
+          handlers.onError(formatChatStreamError(event));
           break;
       }
     } catch (e) {
@@ -345,8 +346,7 @@ export async function sendMessageNative(
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: '请求失败' }));
-      onError(err.error || '请求失败');
+      onError(await readChatResponseError(res));
       return () => {};
     }
 
@@ -429,7 +429,7 @@ export async function sendMessageNative(
               onDone(fullText);
             } else if (event.type === 'error') {
               console.log(`[API] SSE connection closed`);
-              onError(event.error || 'Unknown error');
+              onError(formatChatStreamError(event));
             }
           } catch (e) {
             // Skip malformed JSON
@@ -622,8 +622,7 @@ export async function sendMessage(
     }
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: '请求失败' }));
-      onError(err.error || '请求失败');
+      onError(await readChatResponseError(res));
       return true;
     }
 
@@ -1013,11 +1012,10 @@ export async function sendMessage(
             }
 
             if (parsed.type === 'error') {
-              const detail = parsed.detail ? `\n${parsed.detail}` : '';
               processInlineArtifactText('', true);
               flushPending();
               console.log(`[API] SSE connection closed`);
-              try { onError((parsed.error || '未知错误') + detail); } catch (err) { console.error('[API] onError callback error:', err); }
+              try { onError(formatChatStreamError(parsed)); } catch (err) { console.error('[API] onError callback error:', err); }
               return true;
             }
           } catch (e) {

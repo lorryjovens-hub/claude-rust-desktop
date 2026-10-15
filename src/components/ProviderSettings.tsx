@@ -96,7 +96,7 @@ export default function ProviderSettings() {
         </button>)}
       </div>
       <div className="flex-1 min-w-0">
-        {draft ? <form onSubmit={save} className="space-y-5 bg-claude-input border border-claude-border rounded-2xl p-6 shadow-sm">
+        {draft && <form onSubmit={save} className="space-y-5 bg-claude-input border border-claude-border rounded-2xl p-6 shadow-sm">
           {adding ? <>
             <div className="flex rounded-lg bg-claude-hover p-1 gap-1" role="tablist">
               {(['builtin', 'custom'] as const).map(c => <button type="button" role="tab" aria-selected={category === c} key={c} onClick={() => { setCategory(c); c === 'builtin' ? chooseBuiltin(builtinId) : setDraft(emptyProvider()); setPage(0); }} className={`flex-1 px-2 py-2 rounded-md text-sm ${category === c ? 'bg-claude-input shadow-sm' : 'text-claude-textSecondary'}`}>{c === 'builtin' ? '第三方模型供应商' : '自定义模型 API'}</button>)}
@@ -135,7 +135,7 @@ export default function ProviderSettings() {
             {visibleModels.length > pageSize && <div className="flex justify-between items-center text-xs"><button type="button" disabled={!page} onClick={() => setPage(page - 1)} className={buttonClass}>上一页</button>{page + 1} / {Math.ceil(visibleModels.length / pageSize)}<button type="button" disabled={(page + 1) * pageSize >= visibleModels.length} onClick={() => setPage(page + 1)} className={buttonClass}>下一页</button></div>}
           </div>
           <div className="flex justify-end items-center gap-2 border-t border-claude-border pt-4"><span role="status" className="text-xs text-claude-textSecondary flex-1">{notice}</span><button type="button" disabled={busy} className={buttonClass} onClick={() => { const original = providers.find(p => p.id === selectedId) || providers[0]; if (original) select(original); else { setDraft(null); setAdding(false); } }}>取消</button><button type="submit" disabled={busy} className="px-4 py-2 rounded-lg bg-claude-text text-claude-bg text-sm disabled:opacity-40">{busy ? '保存中…' : adding ? 'Apply' : '保存'}</button></div>
-        </form> : <button onClick={beginAdd} className="p-6 text-sm text-claude-textSecondary">+ 添加供应商</button>}
+        </form>}
       </div>
     </div>
   </div>;

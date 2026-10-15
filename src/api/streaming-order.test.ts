@@ -12,6 +12,22 @@ vi.mock('./client', () => ({
 afterEach(() => vi.unstubAllGlobals());
 
 describe.each([['desktop', sendDesktopMessage], ['modular', sendModularMessage]] as const)('%s streaming text', (_name, sendMessage) => {
+  it('forwards HTTP 400 with its original response body', async () => {
+    const body = '{"detail":"The model is not supported."}';
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(body, { status: 400 })));
+    const onError = vi.fn();
+    await sendMessage('test', 'hello', null, vi.fn(), vi.fn(), onError);
+    expect(onError).toHaveBeenCalledWith(`HTTP 400\n${body}`);
+  });
+  it('forwards a structured 400 error from an established stream', async () => {
+    const event = { type: 'error', status: 400, error: { message: 'Unsupported model' } };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(`data: ${JSON.stringify(event)}\n\n`)));
+    const onError = vi.fn();
+    const onDone = vi.fn();
+    await sendMessage('test', 'hello', null, vi.fn(), onDone, onError);
+    expect(onError).toHaveBeenCalledWith('HTTP 400\n{"message":"Unsupported model"}');
+    expect(onDone).not.toHaveBeenCalled();
+  });
   it('displays short Chinese text immediately, before a delayed tool starts', async () => {
     let controller!: ReadableStreamDefaultController<Uint8Array>;
     const stream = new ReadableStream<Uint8Array>({ start(value) { controller = value; } });

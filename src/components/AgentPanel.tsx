@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import AgentLauncher from './AgentLauncher';
 import { GitBranch, Plus, Trash2, Merge, RefreshCw, X, Loader2, CheckCircle, XCircle, AlertCircle, Monitor, Wifi, WifiOff, Plug } from 'lucide-react';
 import {
   createWorktree, listWorktrees, removeWorktree, mergeWorktree, syncWorktrees,
@@ -162,6 +163,7 @@ export default function AgentPanel({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
+          {tab === 'agents' && <AgentLauncher onOpen={onClose} />}
           {tab === 'worktrees' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between mb-4">

@@ -119,7 +119,7 @@ async fn run_search_test(
     // The form is tested without saving it or holding the global config lock
     // while the provider performs the network request.
     let started = std::time::Instant::now();
-    let output = crate::tools::provider_search::search(
+    let output = crate::tools::search_provider(
         json!({"query":"DeepSeek official API documentation"}),
         &provider,
     )

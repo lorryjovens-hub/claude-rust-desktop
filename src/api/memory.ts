@@ -31,6 +31,8 @@ async function json<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const memoryApi = {
+  exportArchive: () => json<{ version: number; memories: MemoryItem[] }>('/export'),
+  importArchive: (archive: unknown, preview: boolean) => json<{ imported: number; skipped: number; preview: boolean; backup: string | null }>('/import', { method: 'POST', body: JSON.stringify({ archive, preview }) }),
   stats: () => json<MemoryStats>('/stats'),
   config: () => json<MemoryConfig>('/config'),
   search: (query: string, top_k = 50) => json<MemoryItem[]>('/search', { method: 'POST', body: JSON.stringify({ query, top_k }) }),

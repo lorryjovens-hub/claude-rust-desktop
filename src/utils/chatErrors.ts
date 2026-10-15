@@ -1,3 +1,31 @@
+export interface RequestErrorDetails {
+  status: number;
+  detail: string;
+}
+
+/** Keep the HTTP status and the unmodified response body across string callbacks. */
+export async function readChatResponseError(response: Response): Promise<string> {
+  const body = await response.text();
+  return `HTTP ${response.status}${body ? `\n${body}` : ''}`;
+}
+
+export function formatChatStreamError(event: { error?: unknown; detail?: unknown; status?: number; status_code?: number }): string {
+  const raw = event.error;
+  const error = typeof raw === 'string' ? raw : raw ? JSON.stringify(raw) : '未知错误';
+  const detail = event.detail ? `\n${typeof event.detail === 'string' ? event.detail : JSON.stringify(event.detail)}` : '';
+  const status = event.status ?? event.status_code;
+  return `${status ? `HTTP ${status}\n` : ''}${error}${detail}`;
+}
+
+export function parseBadRequest(error: string): RequestErrorDetails | null {
+  const text = error.trim();
+  const status = /(?:\bHTTP(?:\/\d(?:\.\d)?)?\s+|\bstatus(?:_code|Code)?[\s"':=]+|\bAPI (?:error|错误)[:\s]+)400\b/i;
+  if (status.test(text) || /^(?:Error:\s*)?400\b/.test(text)) {
+    return { status: 400, detail: text.replace(/^HTTP 400\s*\n?/, '').trim() || 'Bad Request' };
+  }
+  return null;
+}
+
 export function formatChatError(err: string): string {
   const lower = (err || '').toLowerCase();
   if (lower.includes('quota_exceeded') || lower.includes('额度已用完') || lower.includes('额度已用尽') || lower.includes('时段额度') || lower.includes('周期额度')) {

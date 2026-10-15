@@ -1,57 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-mod bridge;
-mod api;
-mod commands;
-mod app_studio;
-mod engine;
 
-mod tools;
-mod research;
-mod prompt;
-mod mcp;
-mod streaming;
-mod task;
-mod skills;
-mod git;
-mod config;
-mod fs;
-mod terminal;
-mod process;
-mod watcher;
-mod clipboard;
-mod notification;
-mod logger;
-mod updater;
-mod worktree;
-mod ide;
-mod analytics;
-mod slash_commands;
-mod cost_tracker;
-mod native_engine;
-mod upload;
-mod project;
-mod computer_use;
-mod ask_user;
-mod document;
-mod sandbox;
-mod github;
-mod db;
-mod multiagent;
-mod orchestration;
-mod permissions;
-mod memory;
-mod remotion;
-mod diff;
-mod scheduler;
-mod im_integration;
-mod cache;
-mod prefetch;
-mod metrics;
-mod agent_bus;
-mod preview_engine;
-mod knowledge;
-mod secure_storage;
 
+use claude_desktop_tauri_lib::*;
 use bridge::BridgeServer;
 use native_engine::engine_core::NativeEngine;
 use native_engine::provider_manager::ProviderManager;
@@ -191,6 +141,7 @@ fn main() {
         .manage(Arc::new(Mutex::new(None::<SessionManager>)))
         .manage(Arc::new(Mutex::new(None::<Arc<PermissionManager>>)))
         .setup(|app| {
+            app.manage(commands::peripheral::PeripheralHost::default());
             let data_dir = app.path().app_data_dir().unwrap_or_else(|_| PathBuf::from("."));
             tracing::info!(module = "App", "Data dir: {:?}", data_dir);
 
@@ -653,6 +604,7 @@ fn main() {
                 let window_clone = window.clone();
                 tauri::async_runtime::spawn(async move {
                     cleanup_all_processes(&app_handle).await;
+                    commands::peripheral::shutdown(&app_handle).await;
                     window_clone.destroy().unwrap_or_else(|e| {
                         tracing::error!(module = "Shutdown", error = %e);
                     });
@@ -660,6 +612,12 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            commands::peripheral::peripheral_command,
+            commands::peripheral::peripheral_credential,
+            commands::peripheral::peripheral_credential_delete,
+            commands::peripheral::voice_begin,
+            commands::peripheral::voice_cancel,
+            commands::peripheral::voice_transcribe,
             commands::get_platform,
             commands::select_directory,
             commands::show_item_in_folder,
@@ -693,6 +651,7 @@ fn main() {
             commands::mcp_start_server,
             commands::mcp_stop_server,
             commands::mcp_restart_server,
+            commands::mcp_import_legacy,
             commands::mcp_add_server,
             commands::mcp_update_server,
             commands::mcp_remove_server,
@@ -792,30 +751,30 @@ fn main() {
             commands::feishu_chat::feishu_list_conversations,
             commands::feishu_chat::feishu_delete_conversation,
             // Knowledge Base commands
-            crate::knowledge::kb_list,
-            crate::knowledge::kb_get,
-            crate::knowledge::kb_search,
-            crate::knowledge::kb_add,
-            crate::knowledge::kb_delete,
-            crate::knowledge::kb_graph,
-            crate::knowledge::kb_import,
+            crate::commands::knowledge::kb_list,
+            crate::commands::knowledge::kb_get,
+            crate::commands::knowledge::kb_search,
+            crate::commands::knowledge::kb_add,
+            crate::commands::knowledge::kb_delete,
+            crate::commands::knowledge::kb_graph,
+            crate::commands::knowledge::kb_import,
             // Knowledge Flow commands
-            crate::knowledge::kb_ingest_conversation,
-            crate::knowledge::kb_prepare_context,
-            crate::knowledge::kb_digest,
-            crate::knowledge::kb_patterns,
+            crate::commands::knowledge::kb_ingest_conversation,
+            crate::commands::knowledge::kb_prepare_context,
+            crate::commands::knowledge::kb_digest,
+            crate::commands::knowledge::kb_patterns,
             // Project Intelligence commands
-            crate::knowledge::intel_analyze,
-            crate::knowledge::intel_find_fusions,
-            crate::knowledge::intel_generate_skill,
+            crate::commands::knowledge::intel_analyze,
+            crate::commands::knowledge::intel_find_fusions,
+            crate::commands::knowledge::intel_generate_skill,
             // GitHub Hub commands
-            crate::knowledge::gh_trending,
-            crate::knowledge::gh_search,
-            crate::knowledge::gh_user_repos,
-            crate::knowledge::gh_set_token,
-            crate::knowledge::gh_watch,
-            crate::knowledge::gh_get_watched,
-            crate::knowledge::gh_oauth_url,
+            crate::commands::knowledge::gh_trending,
+            crate::commands::knowledge::gh_search,
+            crate::commands::knowledge::gh_user_repos,
+            crate::commands::knowledge::gh_set_token,
+            crate::commands::knowledge::gh_watch,
+            crate::commands::knowledge::gh_get_watched,
+            crate::commands::knowledge::gh_oauth_url,
             // App Studio commands
             commands::app_studio_generate_project,
             commands::get_context_size,

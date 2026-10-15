@@ -54,10 +54,17 @@ export async function listSkills() {
   return res.json();
 }
 
-export async function executeSkill(id: string, input?: any) {
-  const res = await request(`/skills/${id}/execute`, {
+/** Returns the normal chat SSE response; consume it with the chat stream handler. */
+export async function executeSkill(id: string, options: {
+  input: string;
+  conversation_id: string;
+  model: string;
+  provider_id?: string;
+  workspace_path?: string;
+  variables?: Record<string, string>;
+}) {
+  return request(`/skills/${encodeURIComponent(id)}/execute`, {
     method: 'POST',
-    body: JSON.stringify({ input }),
+    body: JSON.stringify(options),
   });
-  return res.json();
 }

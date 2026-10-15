@@ -467,6 +467,36 @@
     "topK": "Top K"
   },
   "customize": {
+    "pluginCategories": {
+      "webTools": {
+        "name": "웹 도구",
+        "description": "브라우저 자동화, 웹 스크래핑 및 온라인 서비스 연동."
+      },
+      "codeTools": {
+        "name": "코드 도구",
+        "description": "코드 검사, 서식 지정 및 코드 생성 도구."
+      },
+      "aiModels": {
+        "name": "AI 모델",
+        "description": "전문 작업을 위한 추가 AI 모델 및 서비스."
+      },
+      "fileTools": {
+        "name": "파일 도구",
+        "description": "파일 변환, 문서 처리 및 미디어 도구."
+      },
+      "communication": {
+        "name": "커뮤니케이션",
+        "description": "메시지, 이메일 및 협업 도구."
+      },
+      "dataAnalytics": {
+        "name": "데이터 및 분석",
+        "description": "데이터 분석, 보고서 작성 및 비즈니스 인텔리전스 도구."
+      }
+    },
+    "noPluginsFound": "일치하는 플러그인 카테고리가 없습니다",
+    "searchPlugins": "플러그인 검색…",
+    "pluginsDescription": "카테고리를 탐색하고 아래에서 설치된 플러그인을 관리하세요.",
+    "plugins": "플러그인",
     "title": "맞춤 설정",
     "skills": "기술",
     "connectors": "커넥터",
@@ -660,5 +690,44 @@
     "title": "업그레이드 계획",
     "currentPlan": "현재 계획",
     "availablePlans": "이용 가능한 계획"
+  },
+  "sessionGit": {
+    "search": "브랜치 검색…",
+    "searchFiles": "변경된 파일 필터링…",
+    "viewChanges": "변경 사항 보기",
+    "refreshChanges": "변경 사항 새로 고침",
+    "workingTree": "작업 트리",
+    "explorer": "탐색기에서 보기",
+    "github": "GitHub에서 저장소 열기",
+    "copyPath": "경로 복사",
+    "changeFolder": "폴더 변경…",
+    "terminal": "터미널에서 열기",
+    "copyBranch": "브랜치 이름 복사",
+    "copyFailed": "클립보드에 복사할 수 없습니다",
+    "prHint": "GitHub에서 PR 페이지 열기",
+    "prOptions": "풀 리퀘스트 옵션",
+    "hideWorkspace": "작업 공간 표시줄 숨기기",
+    "showWorkspace": "작업 공간 표시",
+    "loadingDiff": "변경 사항 로딩 중…",
+    "noChanges": "이 작업 트리에 변경 사항이 없습니다.",
+    "noMatches": "일치하는 파일이 없습니다.",
+    "noTextDiff": "HEAD와 텍스트 차이가 없습니다(빈 파일, 메타데이터 또는 작업 트리 변경으로 상쇄된 스테이징 변경).",
+    "expand": "패널 펼치기 또는 접기",
+    "status_modified": "수정됨",
+    "status_added": "추가됨",
+    "status_deleted": "삭제됨",
+    "status_untracked": "추적되지 않음",
+    "status_conflict": "충돌",
+    "status_type": "유형 변경됨",
+    "settings": "세션 작업 공간",
+    "branch": "브랜치",
+    "worktree": "worktree 사용",
+    "refresh": "브랜치 새로 고침",
+    "loading": "브랜치 로딩 중…",
+    "notRepository": "Git 저장소가 아닙니다",
+    "currentHead": "현재 HEAD(분리됨)",
+    "unavailable": "여기서 세션을 시작할 수 있습니다. 브랜치와 worktree에는 Git 저장소가 필요합니다.",
+    "branchHint": "프로젝트의 첫 번째 폴더에 적용됩니다. 메시지를 보내면 이 폴더가 선택한 로컬 브랜치로 전환됩니다.",
+    "worktreeHint": "선택한 커밋에서 격리된 세션 브랜치를 만듭니다. 커밋하지 않은 변경 사항은 복사되지 않으며 다른 프로젝트 폴더는 계속 공유됩니다."
   }
 }

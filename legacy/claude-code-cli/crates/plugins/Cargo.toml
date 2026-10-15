@@ -1,0 +1,14 @@
+[package]
+name = "plugins"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Plugin lifecycle management"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+walkdir = "2"
+anyhow = "1.0"
+thiserror = "1.0"

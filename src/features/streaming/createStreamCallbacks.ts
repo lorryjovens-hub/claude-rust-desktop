@@ -5,6 +5,7 @@ import { useTabStore } from '../../stores/useTabStore';
 import { executeCode, sendCodeResult } from '../../pyodideRunner';
 import { trackTokensUsed } from '../../hooks/useAnalytics';
 import { recordText, recordTool, finishProcess } from '../trajectory/model';
+import { parseBadRequest } from '../../utils/chatErrors';
 import {
   mergeDocumentsIntoMessage,
   mergeDocumentDraftIntoMessage,
@@ -176,9 +177,12 @@ export function createStreamCallbacks(ctx: StreamContext) {
       const newMsgs = [...prev];
       if (newMsgs[newMsgs.length - 1] && newMsgs[newMsgs.length - 1].role === 'assistant') {
         const lastMsg = newMsgs[newMsgs.length - 1];
-        const content = `${lastMsg.content || ''}\n\nError: ${err}`.trim();
-        recordText(lastMsg, 'text', content);
-        lastMsg.content = content;
+        lastMsg.requestError = parseBadRequest(err);
+        if (!lastMsg.requestError) {
+          const content = `${lastMsg.content || ''}\n\nError: ${err}`.trim();
+          recordText(lastMsg, 'text', content);
+          lastMsg.content = content;
+        }
         lastMsg.isThinking = false;
         finishProcess(lastMsg);
       }

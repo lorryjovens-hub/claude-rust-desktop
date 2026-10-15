@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Puzzle, Search } from 'lucide-react';
 import { useI18n } from '../hooks/useI18n';
+import InstalledPlugins from './InstalledPlugins';
 
 const categories = ['webTools', 'codeTools', 'aiModels', 'fileTools', 'communication', 'dataAnalytics'] as const;
 
@@ -37,6 +38,7 @@ export default function PluginsPage() {
         ))}
       </div>
       {filtered.length === 0 && <p role="status" className="py-8 text-sm text-claude-textSecondary">{t('customize.noPluginsFound')}</p>}
+      <InstalledPlugins />
     </section>
   );
 }

@@ -567,7 +567,8 @@ const ProjectsPage = () => {
 
   if (isCreating) {
     return <CreateProjectDialog onClose={() => setIsCreating(false)} onCreated={project => {
-      setIsCreating(false); setSearchParams({ project: project.id }); loadProjects();
+      setIsCreating(false);
+      navigate('/', { state: { createdProjectId: project.id } });
     }} />;
   }
 

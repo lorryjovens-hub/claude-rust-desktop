@@ -17,7 +17,7 @@ use crate::native_engine::engine_core::ChatRequest;
 use crate::streaming::{StreamManager, SSE_IDLE_TIMEOUT_SECS, SSE_MAX_DURATION_SECS};
 use crate::config::ConfigManager;
 
-async fn chat_handler(
+pub(super) async fn chat_handler(
     State(state): State<AppState>,
     Json(req): Json<ChatRequest>,
 ) -> impl IntoResponse {
@@ -146,35 +146,7 @@ async fn chat_handler(
     let providers_to_sync = {
         let cm_guard: tokio::sync::MutexGuard<'_, Option<ConfigManager>> = config_manager.lock().await;
         if let Some(cm) = cm_guard.as_ref() {
-            cm.get_config().providers.iter().map(|p| {
-                crate::native_engine::provider_manager::Provider {
-                    id: p.id.clone(),
-                    builtin_id: p.settings.get("builtinId").and_then(|v| v.as_str()).map(String::from),
-                    name: p.name.clone(),
-                    base_url: p.base_url.clone(),
-                    api_key: p.api_key.clone().unwrap_or_default(),
-                    api_format: {
-                        // DeepSeek uses OpenAI-compatible API even if user selected wrong format
-                        let is_deepseek = p.base_url.contains("deepseek");
-                        if p.provider_type == "anthropic" && !is_deepseek {
-                            crate::native_engine::provider_manager::ApiFormat::Anthropic
-                        } else {
-                            crate::native_engine::provider_manager::ApiFormat::OpenAI
-                        }
-                    },
-                    models: p.models.iter().map(|m| crate::native_engine::provider_manager::ModelConfig {
-                        id: m.id.clone(),
-                        name: m.name.clone(),
-                        enabled: m.enabled,
-                        max_tokens: m.max_tokens,
-                        supports_vision: m.supports_vision,
-                        context_window: m.context_window, supports_text: m.supports_text, api: m.api.clone(), effort: None,
-                        supports_web_search: false,
-                    }).collect(),
-                    enabled: p.enabled,
-                    web_search_strategy: p.web_search_strategy.clone(),
-                }
-            }).collect::<Vec<_>>()
+            cm.get_config().providers.iter().map(crate::runtime::provider_from_config).collect::<Vec<_>>()
         } else {
             Vec::new()
         }
@@ -227,6 +199,8 @@ async fn chat_handler(
     };
     tracing::info!(module = "Chat", "[7/7] Engine guard released, building SSE stream...");
 
+    let (sse_tx, sse_rx) = tokio::sync::mpsc::channel(64);
+    let transport = sse_tx.clone();
     let db_for_stream = state.db_manager.clone();
     crate::metrics::ACTIVE_SSE_CONNECTIONS.inc();
     let stream = async_stream::stream! {
@@ -252,7 +226,15 @@ async fn chat_handler(
         let mut collected_tool_calls: Vec<(String, String, String, Option<String>, bool)> = Vec::new(); // (tool_use_id, tool_name, input_json, output, is_error)
 
         loop {
-            let event = match rx.recv().await {
+            let next = tokio::select! {
+                biased;
+                _ = transport.closed() => {
+                    terminal_event = Some(serde_json::json!({"type":"message_stop","stop_reason":"cancelled","full_text":full_text,"error":"Response transport disconnected"}));
+                    break;
+                }
+                event = rx.recv() => event,
+            };
+            let event = match next {
                 Some(e) => e,
                 None => {
                     tracing::error!(module = "Chat", "Event channel closed unexpectedly for conv_id={}", conv_id);
@@ -439,6 +421,8 @@ async fn chat_handler(
             }
         }
 
+        // Closing this turn's receiver cancels its executor without addressing a newer turn.
+        drop(rx);
         tracing::info!(module = "Chat", "Stream ended for conv_id={}", conv_id);
 
         crate::metrics::ACTIVE_SSE_CONNECTIONS.dec();
@@ -523,9 +507,8 @@ async fn chat_handler(
         }
     };
 
-    // Keep collecting and persisting engine events if the WebView disconnects.
-    // The transport must not own the lifetime of the database writer.
-    let (sse_tx, sse_rx) = tokio::sync::mpsc::channel(64);
+    // The collector observes transport closure, cancels only its executor, and
+    // finishes persisting the partial trajectory before this writer exits.
     tokio::spawn(async move {
         use futures::StreamExt;
         futures::pin_mut!(stream);

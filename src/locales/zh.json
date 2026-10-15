@@ -1,42 +1,42 @@
 {
   "sessionGit": {
     "search": "搜索分支…",
-    "searchFiles": "筛选变更文件…",
-    "viewChanges": "查看变更",
-    "refreshChanges": "刷新变更",
+    "searchFiles": "筛选更改的文件…",
+    "viewChanges": "查看更改",
+    "refreshChanges": "刷新更改",
     "workingTree": "工作区",
     "explorer": "在资源管理器中显示",
     "github": "在 GitHub 打开仓库",
     "copyPath": "复制路径",
-    "changeFolder": "更换项目目录…",
+    "changeFolder": "更换文件夹…",
     "terminal": "在终端中打开",
     "copyBranch": "复制分支名",
     "copyFailed": "无法复制到剪贴板",
-    "prHint": "打开 GitHub 的 PR 创建页面",
-    "prOptions": "Pull request 选项",
-    "hideWorkspace": "收起工作区栏",
+    "prHint": "在 GitHub 打开 PR 页面",
+    "prOptions": "拉取请求选项",
+    "hideWorkspace": "隐藏工作区栏",
     "showWorkspace": "显示工作区",
-    "loadingDiff": "正在加载变更…",
-    "noChanges": "当前工作区没有变更。",
+    "loadingDiff": "正在加载更改…",
+    "noChanges": "此工作区没有更改。",
     "noMatches": "没有匹配的文件。",
-    "noTextDiff": "相对 HEAD 无文本差异（空文件、元数据变更或暂存内容被工作区修改抵消）。",
-    "expand": "切换面板大小",
-    "status_modified": "修改",
-    "status_added": "新增",
-    "status_deleted": "删除",
+    "noTextDiff": "与 HEAD 没有文本差异（空文件、元数据或暂存更改被工作区更改抵消）。",
+    "expand": "展开或收起面板",
+    "status_modified": "已修改",
+    "status_added": "已添加",
+    "status_deleted": "已删除",
     "status_untracked": "未跟踪",
     "status_conflict": "冲突",
-    "status_type": "类型变更",
-    "settings": "会话工作目录",
+    "status_type": "类型已更改",
+    "settings": "会话工作区",
     "branch": "分支",
-    "worktree": "启用 worktree",
+    "worktree": "使用 worktree",
     "refresh": "刷新分支",
     "loading": "正在加载分支…",
-    "notRepository": "非 Git 仓库",
-    "currentHead": "当前 HEAD（游离状态）",
-    "unavailable": "此目录可以正常开始会话；分支和 worktree 功能需要 Git 仓库。",
-    "branchHint": "作用于项目的第一个目录，发送消息时切换到所选本地分支。",
-    "worktreeHint": "基于所选分支的提交创建独立会话分支，不复制未提交修改；项目中的其他目录仍共用。"
+    "notRepository": "不是 Git 仓库",
+    "currentHead": "当前 HEAD（分离状态）",
+    "unavailable": "可以在此启动会话。分支和 worktree 需要 Git 仓库。",
+    "branchHint": "适用于项目的第一个文件夹。发送消息时会将此文件夹切换到所选本地分支。",
+    "worktreeHint": "从所选提交创建独立的会话分支。不复制未提交的更改；项目中的其他文件夹仍然共享。"
   },
   "general": {
     "modeModels": "各模式默认模型",
@@ -526,16 +526,34 @@
   "customize": {
     "title": "自定义",
     "plugins": "插件",
-    "pluginsDescription": "浏览插件分类，暂不支持安装和启用。",
+    "pluginsDescription": "浏览插件分类，并在下方管理已安装的插件。",
     "searchPlugins": "搜索插件…",
     "noPluginsFound": "没有匹配的插件分类",
     "pluginCategories": {
-      "webTools": { "name": "网页工具", "description": "浏览器自动化、网页采集与在线服务集成。" },
-      "codeTools": { "name": "代码工具", "description": "代码检查、格式化与代码生成工具。" },
-      "aiModels": { "name": "AI 模型", "description": "面向专门任务的其他 AI 模型与服务。" },
-      "fileTools": { "name": "文件工具", "description": "文件转换、文档处理与媒体工具。" },
-      "communication": { "name": "通信协作", "description": "消息、邮件与团队协作工具。" },
-      "dataAnalytics": { "name": "数据分析", "description": "数据分析、报表与商业智能工具。" }
+      "webTools": {
+        "name": "网页工具",
+        "description": "浏览器自动化、网页采集与在线服务集成。"
+      },
+      "codeTools": {
+        "name": "编程工具",
+        "description": "代码检查、格式化和代码生成工具。"
+      },
+      "aiModels": {
+        "name": "AI 模型",
+        "description": "用于专业任务的其他 AI 模型和服务。"
+      },
+      "fileTools": {
+        "name": "文件工具",
+        "description": "文件转换、文档处理和媒体工具。"
+      },
+      "communication": {
+        "name": "通信",
+        "description": "消息、电子邮件和协作工具。"
+      },
+      "dataAnalytics": {
+        "name": "数据与分析",
+        "description": "数据分析、报告和商业智能工具。"
+      }
     },
     "skills": "技能",
     "connectors": "连接器",

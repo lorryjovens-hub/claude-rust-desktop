@@ -467,6 +467,36 @@
     "topK": "Top K"
   },
   "customize": {
+    "pluginCategories": {
+      "webTools": {
+        "name": "Công cụ web",
+        "description": "Tự động hóa trình duyệt, thu thập dữ liệu web và tích hợp dịch vụ trực tuyến."
+      },
+      "codeTools": {
+        "name": "Công cụ lập trình",
+        "description": "Công cụ kiểm tra, định dạng và tạo mã."
+      },
+      "aiModels": {
+        "name": "Mô hình AI",
+        "description": "Các mô hình và dịch vụ AI bổ sung cho tác vụ chuyên biệt."
+      },
+      "fileTools": {
+        "name": "Công cụ tệp",
+        "description": "Chuyển đổi tệp, xử lý tài liệu và công cụ đa phương tiện."
+      },
+      "communication": {
+        "name": "Liên lạc",
+        "description": "Công cụ nhắn tin, email và cộng tác."
+      },
+      "dataAnalytics": {
+        "name": "Dữ liệu và phân tích",
+        "description": "Công cụ phân tích dữ liệu, báo cáo và phân tích kinh doanh."
+      }
+    },
+    "noPluginsFound": "Không có danh mục tiện ích phù hợp",
+    "searchPlugins": "Tìm tiện ích…",
+    "pluginsDescription": "Duyệt danh mục và quản lý tiện ích đã cài đặt bên dưới.",
+    "plugins": "Tiện ích",
     "title": "Tùy chỉnh",
     "skills": "Kỹ năng",
     "connectors": "Đầu nối",
@@ -660,5 +690,44 @@
     "title": "Kế hoạch nâng cấp",
     "currentPlan": "Kế hoạch hiện tại",
     "availablePlans": "Các gói có sẵn"
+  },
+  "sessionGit": {
+    "search": "Tìm nhánh…",
+    "searchFiles": "Lọc tệp đã thay đổi…",
+    "viewChanges": "Xem thay đổi",
+    "refreshChanges": "Làm mới thay đổi",
+    "workingTree": "Cây làm việc",
+    "explorer": "Hiển thị trong Explorer",
+    "github": "Mở kho mã trên GitHub",
+    "copyPath": "Sao chép đường dẫn",
+    "changeFolder": "Đổi thư mục…",
+    "terminal": "Mở trong terminal",
+    "copyBranch": "Sao chép tên nhánh",
+    "copyFailed": "Không thể sao chép vào bộ nhớ tạm",
+    "prHint": "Mở trang PR trên GitHub",
+    "prOptions": "Tùy chọn yêu cầu hợp nhất",
+    "hideWorkspace": "Ẩn thanh không gian làm việc",
+    "showWorkspace": "Hiện không gian làm việc",
+    "loadingDiff": "Đang tải thay đổi…",
+    "noChanges": "Không có thay đổi trong cây làm việc này.",
+    "noMatches": "Không có tệp phù hợp.",
+    "noTextDiff": "Không có khác biệt văn bản so với HEAD (tệp trống, siêu dữ liệu hoặc thay đổi đã đưa vào vùng chờ bị thay đổi cục bộ triệt tiêu).",
+    "expand": "Mở rộng hoặc thu gọn bảng",
+    "status_modified": "Đã sửa",
+    "status_added": "Đã thêm",
+    "status_deleted": "Đã xóa",
+    "status_untracked": "Chưa được theo dõi",
+    "status_conflict": "Xung đột",
+    "status_type": "Đã đổi loại",
+    "settings": "Không gian làm việc của phiên",
+    "branch": "Nhánh",
+    "worktree": "Dùng worktree",
+    "refresh": "Làm mới nhánh",
+    "loading": "Đang tải nhánh…",
+    "notRepository": "Không phải kho Git",
+    "currentHead": "HEAD hiện tại (tách rời)",
+    "unavailable": "Bạn có thể bắt đầu phiên tại đây. Nhánh và worktree cần có kho Git.",
+    "branchHint": "Áp dụng cho thư mục đầu tiên của dự án. Khi gửi, thư mục này chuyển sang nhánh cục bộ đã chọn.",
+    "worktreeHint": "Tạo nhánh phiên riêng biệt từ commit đã chọn. Không sao chép thay đổi chưa commit; các thư mục khác trong dự án vẫn dùng chung."
   }
 }

@@ -1,0 +1,3 @@
+# Share build artifacts across the workspace in the root target directory.
+[build]
+target-dir = "target"

@@ -1,3 +1,4 @@
+import McpLegacyImport from './McpLegacyImport';
 import React, { useState, useEffect } from 'react';
 import { Plus, Play, Square, RotateCw, Trash2, Edit2, ChevronDown, ChevronRight, Wrench, Globe, Server } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
@@ -8,6 +9,7 @@ interface McpServer {
   command: string;
   args: string[];
   env?: Record<string, string>;
+  cwd?: string | null;
   enabled: boolean;
   running: boolean;
   pid?: number;
@@ -34,6 +36,7 @@ const McpSettingsPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     command: '',
+    cwd: '',
     args: '',
     env: '',
     transport_type: 'stdio',
@@ -50,7 +53,7 @@ const McpSettingsPage = () => {
     try {
       console.log('[MCP] Calling mcp_list_servers...');
       const result = await invoke<McpServer[]>('mcp_list_servers');
-      console.log('[MCP] mcp_list_servers returned:', result);
+
       setServers(result);
     } catch (e: unknown) {
       console.error('[MCP] Failed to load MCP servers:', e);
@@ -134,7 +137,8 @@ const McpSettingsPage = () => {
     setFormData({
       name: server.name,
       command: server.command,
-      args: server.args.join(' '),
+      cwd: server.cwd || '',
+      args: JSON.stringify(server.args),
       env: server.env ? JSON.stringify(server.env, null, 2) : '',
       transport_type: server.transport_type,
     });
@@ -148,8 +152,12 @@ const McpSettingsPage = () => {
     }
 
     try {
-      const args = formData.args.trim() ? formData.args.trim().split(/\s+/) : [];
-      const env = formData.env ? JSON.parse(formData.env) : undefined;
+      const argumentText = formData.args.trim();
+      const args = argumentText.startsWith('[') ? JSON.parse(argumentText) : argumentText ? argumentText.split(/\s+/) : [];
+      if (!Array.isArray(args) || !args.every(arg => typeof arg === 'string')) {
+        throw new Error('Arguments must be a JSON array of strings');
+      }
+      const env = formData.env ? JSON.parse(formData.env) : {};
 
       if (editingServer) {
         await invoke('mcp_update_server', {
@@ -158,10 +166,11 @@ const McpSettingsPage = () => {
             id: editingServer,
             name: formData.name,
             command: formData.command,
+            cwd: formData.cwd || null,
             args,
             env,
             transport_type: formData.transport_type,
-            enabled: true,
+            enabled: servers.find(server => server.id === editingServer)?.enabled ?? true,
           },
         });
         showMessage('Server updated');
@@ -171,6 +180,7 @@ const McpSettingsPage = () => {
             id: formData.name.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
             name: formData.name,
             command: formData.command,
+            cwd: formData.cwd || null,
             args,
             env,
             transport_type: formData.transport_type,
@@ -191,7 +201,7 @@ const McpSettingsPage = () => {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', command: '', args: '', env: '', transport_type: 'stdio' });
+    setFormData({ name: '', command: '', cwd: '', args: '', env: '', transport_type: 'stdio' });
   };
 
   const toggleToolExpansion = (serverName: string) => {
@@ -218,6 +228,7 @@ const McpSettingsPage = () => {
 
   return (
     <div className="space-y-6">
+      <McpLegacyImport onImported={loadServers} />
       <div className="flex items-center justify-between">
         <h3 className="text-[18px] font-medium text-claude-text">MCP Servers</h3>
         <button
@@ -271,7 +282,12 @@ const McpSettingsPage = () => {
           </div>
 
           <div>
-            <label className="block text-[13px] text-[#666] mb-1">Arguments</label>
+            <label className="block text-[13px] text-[#666] mb-1">Working directory</label>
+            <input aria-label="MCP 工作目录" placeholder="工作目录（可选，绝对路径）" value={formData.cwd} onChange={e => setFormData({ ...formData, cwd: e.target.value })} className="w-full rounded border p-2" />
+          </div>
+
+          <div>
+            <label className="block text-[13px] text-[#666] mb-1">Arguments (JSON array or space-separated)</label>
             <input
               type="text"
               value={formData.args}
@@ -485,6 +501,7 @@ const McpSettingsPage = () => {
                   setFormData({
                     name: template.name.toLowerCase(),
                     command: template.command,
+                    cwd: '',
                     args: template.args,
                     env: '',
                     transport_type: 'stdio',

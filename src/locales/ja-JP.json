@@ -467,6 +467,36 @@
     "topK": "Top K"
   },
   "customize": {
+    "pluginCategories": {
+      "webTools": {
+        "name": "Web ツール",
+        "description": "ブラウザーの自動化、Web スクレイピング、オンラインサービスとの連携。"
+      },
+      "codeTools": {
+        "name": "コードツール",
+        "description": "コードの静的解析、整形、生成のためのツール。"
+      },
+      "aiModels": {
+        "name": "AI モデル",
+        "description": "専門的なタスク向けの追加 AI モデルとサービス。"
+      },
+      "fileTools": {
+        "name": "ファイルツール",
+        "description": "ファイル変換、文書処理、メディアツール。"
+      },
+      "communication": {
+        "name": "コミュニケーション",
+        "description": "メッセージ、メール、共同作業のためのツール。"
+      },
+      "dataAnalytics": {
+        "name": "データと分析",
+        "description": "データ分析、レポート作成、ビジネスインテリジェンスのツール。"
+      }
+    },
+    "noPluginsFound": "一致するプラグインカテゴリーがありません",
+    "searchPlugins": "プラグインを検索…",
+    "pluginsDescription": "カテゴリーを参照し、インストール済みプラグインを下で管理できます。",
+    "plugins": "プラグイン",
     "title": "カスタマイズ",
     "skills": "スキル",
     "connectors": "コネクタ",
@@ -660,5 +690,44 @@
     "title": "アップグレード計画",
     "currentPlan": "現在の計画",
     "availablePlans": "利用可能なプラン"
+  },
+  "sessionGit": {
+    "search": "ブランチを検索…",
+    "searchFiles": "変更されたファイルを絞り込み…",
+    "viewChanges": "変更を表示",
+    "refreshChanges": "変更を更新",
+    "workingTree": "作業ツリー",
+    "explorer": "エクスプローラーで表示",
+    "github": "GitHub でリポジトリを開く",
+    "copyPath": "パスをコピー",
+    "changeFolder": "フォルダーを変更…",
+    "terminal": "ターミナルで開く",
+    "copyBranch": "ブランチ名をコピー",
+    "copyFailed": "クリップボードにコピーできませんでした",
+    "prHint": "GitHub で PR ページを開く",
+    "prOptions": "プルリクエストのオプション",
+    "hideWorkspace": "ワークスペースバーを非表示",
+    "showWorkspace": "ワークスペースを表示",
+    "loadingDiff": "変更を読み込み中…",
+    "noChanges": "この作業ツリーに変更はありません。",
+    "noMatches": "一致するファイルがありません。",
+    "noTextDiff": "HEAD とのテキスト差分はありません（空のファイル、メタデータ、または作業ツリーの変更で相殺されたステージ済みの変更）。",
+    "expand": "パネルの展開を切り替え",
+    "status_modified": "変更済み",
+    "status_added": "追加済み",
+    "status_deleted": "削除済み",
+    "status_untracked": "未追跡",
+    "status_conflict": "競合",
+    "status_type": "種類が変更されました",
+    "settings": "セッションのワークスペース",
+    "branch": "ブランチ",
+    "worktree": "worktree を使用",
+    "refresh": "ブランチを更新",
+    "loading": "ブランチを読み込み中…",
+    "notRepository": "Git リポジトリではありません",
+    "currentHead": "現在の HEAD（分離状態）",
+    "unavailable": "ここでセッションを開始できます。ブランチと worktree には Git リポジトリが必要です。",
+    "branchHint": "プロジェクトの最初のフォルダーに適用されます。送信時に、このフォルダーを選択したローカルブランチに切り替えます。",
+    "worktreeHint": "選択したコミットから独立したセッション用ブランチを作成します。未コミットの変更はコピーされず、他のプロジェクトフォルダーは共有されたままです。"
   }
 }

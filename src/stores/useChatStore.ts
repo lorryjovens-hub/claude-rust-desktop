@@ -34,6 +34,7 @@ export interface CompactStatus {
 }
 
 export interface ChatMessage {
+  requestError?: import('../utils/chatErrors').RequestErrorDetails | null;
   id?: string;
   role?: string;
   content?: string;

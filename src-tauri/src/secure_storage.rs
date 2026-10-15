@@ -16,6 +16,15 @@ pub enum SecureStorageError {
 pub struct SecureKeyStore;
 
 impl SecureKeyStore {
+    pub fn get_service_credential<R: tauri::Runtime>(&self, app: &tauri::AppHandle<R>, name: &str) -> Result<Option<String>, SecureStorageError> {
+        self.get(app, &format!("claude_peripheral_{name}"))
+    }
+    pub fn set_service_credential<R: tauri::Runtime>(&self, app: &tauri::AppHandle<R>, name: &str, value: &str) -> Result<(), SecureStorageError> {
+        self.set(app, &format!("claude_peripheral_{name}"), value)
+    }
+    pub fn delete_service_credential<R: tauri::Runtime>(&self, app: &tauri::AppHandle<R>, name: &str) -> Result<(), SecureStorageError> {
+        self.delete(app, &format!("claude_peripheral_{name}"))
+    }
     pub fn new() -> Self {
         Self
     }

@@ -467,6 +467,36 @@
     "topK": "Top K"
   },
   "customize": {
+    "pluginCategories": {
+      "webTools": {
+        "name": "Web-Werkzeuge",
+        "description": "Browserautomatisierung, Web-Scraping und Integration von Onlinediensten."
+      },
+      "codeTools": {
+        "name": "Programmierwerkzeuge",
+        "description": "Werkzeuge für Codeprüfung, Formatierung und Codegenerierung."
+      },
+      "aiModels": {
+        "name": "KI-Modelle",
+        "description": "Zusätzliche KI-Modelle und Dienste für spezielle Aufgaben."
+      },
+      "fileTools": {
+        "name": "Dateiwerkzeuge",
+        "description": "Dateikonvertierung, Dokumentenverarbeitung und Medienwerkzeuge."
+      },
+      "communication": {
+        "name": "Kommunikation",
+        "description": "Werkzeuge für Nachrichten, E-Mail und Zusammenarbeit."
+      },
+      "dataAnalytics": {
+        "name": "Daten und Analysen",
+        "description": "Werkzeuge für Datenanalyse, Berichte und Business Intelligence."
+      }
+    },
+    "noPluginsFound": "Keine passenden Plugin-Kategorien",
+    "searchPlugins": "Plugins suchen…",
+    "pluginsDescription": "Plugin-Kategorien durchsuchen und installierte Plugins unten verwalten.",
+    "plugins": "Plugins",
     "title": "Anpassen",
     "skills": "Fähigkeiten",
     "connectors": "Steckverbinder",
@@ -660,5 +690,44 @@
     "title": "Upgrade-Plan",
     "currentPlan": "Aktueller Plan",
     "availablePlans": "Verfügbare Pläne"
+  },
+  "sessionGit": {
+    "search": "Branches suchen…",
+    "searchFiles": "Geänderte Dateien filtern…",
+    "viewChanges": "Änderungen anzeigen",
+    "refreshChanges": "Änderungen aktualisieren",
+    "workingTree": "Arbeitsverzeichnis",
+    "explorer": "Im Explorer anzeigen",
+    "github": "Repository auf GitHub öffnen",
+    "copyPath": "Pfad kopieren",
+    "changeFolder": "Ordner wechseln…",
+    "terminal": "Im Terminal öffnen",
+    "copyBranch": "Branch-Namen kopieren",
+    "copyFailed": "Kopieren in die Zwischenablage fehlgeschlagen",
+    "prHint": "PR-Seite auf GitHub öffnen",
+    "prOptions": "Pull-Request-Optionen",
+    "hideWorkspace": "Arbeitsbereichsleiste ausblenden",
+    "showWorkspace": "Arbeitsbereich anzeigen",
+    "loadingDiff": "Änderungen werden geladen…",
+    "noChanges": "Keine Änderungen in diesem Arbeitsverzeichnis.",
+    "noMatches": "Keine passenden Dateien.",
+    "noTextDiff": "Kein Textunterschied zu HEAD (leere Datei, Metadaten oder durch lokale Änderungen aufgehobene vorgemerkte Änderungen).",
+    "expand": "Panel ein- oder ausklappen",
+    "status_modified": "Geändert",
+    "status_added": "Hinzugefügt",
+    "status_deleted": "Gelöscht",
+    "status_untracked": "Nicht versioniert",
+    "status_conflict": "Konflikt",
+    "status_type": "Typ geändert",
+    "settings": "Sitzungsarbeitsbereich",
+    "branch": "Branch",
+    "worktree": "Worktree verwenden",
+    "refresh": "Branches aktualisieren",
+    "loading": "Branches werden geladen…",
+    "notRepository": "Kein Git-Repository",
+    "currentHead": "Aktueller HEAD (losgelöst)",
+    "unavailable": "Hier kann eine Sitzung gestartet werden. Branches und Worktrees erfordern ein Git-Repository.",
+    "branchHint": "Gilt für den ersten Projektordner. Beim Senden wird dieser Ordner auf den gewählten lokalen Branch umgestellt.",
+    "worktreeHint": "Erstellt einen isolierten Sitzungsbranch aus dem gewählten Commit. Nicht eingecheckte Änderungen werden nicht kopiert; andere Projektordner bleiben gemeinsam genutzt."
   }
 }

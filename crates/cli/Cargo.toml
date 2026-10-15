@@ -1,0 +1,28 @@
+[package]
+name = "claude-code-cli"
+version.workspace = true
+edition.workspace = true
+description = "Standalone terminal frontend for the shared Claude Rust engine"
+license = "MIT"
+
+[[bin]]
+name = "claude-code"
+path = "src/main.rs"
+
+[dependencies]
+claude-core = { path = "../core" }
+anyhow = "1"
+clap = { version = "4.5", features = ["derive", "env"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1", features = ["v4"] }
+chrono = "0.4"
+dirs = "5"
+cpal = "0.15"
+axum = "0.8"
+
+[dev-dependencies]
+tempfile = "3"
+axum = "0.8"

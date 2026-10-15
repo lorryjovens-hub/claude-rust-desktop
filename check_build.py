@@ -1,8 +1,11 @@
-import os, subprocess, sys
+import json, os, subprocess, sys
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-release_dir = "src-tauri/target/release"
+metadata = json.loads(subprocess.check_output(
+    ["cargo", "metadata", "--no-deps", "--format-version", "1"], encoding="utf-8"
+))
+release_dir = os.path.join(metadata["target_directory"], "release")
 if os.path.exists(release_dir):
     exes = [f for f in os.listdir(release_dir) if f.endswith('.exe')]
     if exes:

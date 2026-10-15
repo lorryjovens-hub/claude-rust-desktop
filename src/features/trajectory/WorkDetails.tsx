@@ -3,6 +3,7 @@ import { ChevronRight, Code2, Terminal, Brain } from 'lucide-react';
 import { useGeneralSettingsStore, type WorkDetails as DetailLevel } from '../../stores/useGeneralSettingsStore';
 import { useWorkspaceModeStore } from '../../stores/useWorkspaceModeStore';
 import MarkdownRenderer from '../../components/MarkdownRenderer';
+import RequestErrorCard from '../../components/chat/RequestErrorCard';
 import ToolDiffView, { shouldUseDiffView } from '../../components/ToolDiffView';
 import CopyButton from './CopyButton';
 import ToolOutput from './ToolOutput';
@@ -99,5 +100,6 @@ export default function WorkDetails({ message, index, live, onInspect }: { messa
       if (s.kind === 'thinking') return level === 'compact' || level === 'standard' ? null : <div key={`${s.id}:${level}`} className="my-3 text-sm text-claude-textSecondary"><details open={level === 'verbose'}><summary className="flex cursor-pointer items-center gap-2"><Brain size={14} /><span>Think</span><span className="truncate">· {s.text}</span></summary><div className="mt-2 max-h-96 overflow-auto whitespace-pre-wrap border-l border-claude-border pl-4">{s.text}</div></details></div>;
       return <div key={s.id} className="my-3"><MarkdownRenderer content={s.text || ''} citations={message.citations} isStreaming={live && s === steps[steps.length - 1]} /></div>;
     })}
+    {message.requestError && <RequestErrorCard error={message.requestError} />}
   </div>;
 }
